@@ -9,6 +9,12 @@ history to make an old decision look current.
 
 ## Records
 
+- [2026-10-08 — Use risk-based local validation](2026-10-08-use-risk-based-local-validation.md)
+
+- [2026-10-08 — Isolate step state and failure policies (proposed)](2026-10-08-isolate-step-state-and-failure-policies.md)
+
+- [2026-10-07 — Own job child executions until termination](2026-10-07-own-job-child-executions.md)
+
 - [2026-10-07 — Share context and overflow menus](2026-10-07-share-context-and-overflow-menus.md)
 
 - [2026-10-06 — Support Velopack and MSIX](2026-10-06-support-velopack-and-msix.md)
@@ -35,7 +41,7 @@ history to make an old decision look current.
 - [2026-10-01 — Present job steps as connected blocks](2026-10-01-present-job-steps-as-connected-blocks.md)
 
 - [2026-09-28 — Repository knowledge authority](2026-09-28-repository-knowledge-authority.md)
-- [2026-09-28 — Deterministic verification gate](2026-09-28-deterministic-verification-gate.md)
+- [2026-09-28 — Deterministic verification gate (superseded)](2026-09-28-deterministic-verification-gate.md)
 - [2026-09-28 — Behavior-oriented test layers](2026-09-28-behavior-oriented-test-layers.md)
 - [2026-09-28 — Single owner for business rules](2026-09-28-single-owner-for-business-rules.md)
 - [2026-09-29 — Treat step enums as stable closed tokens](2026-09-29-treat-step-enums-as-stable-closed-tokens.md)

@@ -1,0 +1,18 @@
+{
+  "type": "save_image",
+  "settings": {
+    "save_path": "",
+    "file_name": "image.png",
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "overlay": {
+      "detection_results": [],
+      "text_results": []
+    }
+  },
+  "id": "469a3886-c8fa-1eba-0a8f-bbed4435a3cc",
+  "inputs": {},
+  "is_enabled": true
+}

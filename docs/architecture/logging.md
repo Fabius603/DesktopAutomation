@@ -1,4 +1,4 @@
-# Structured user logs
+﻿# Structured user logs
 
 The backend uses one schema-v2 repository under `AppPaths.StructuredLogsDirectory` (`Logs/v2`).
 Historical log files remain on disk, but are never read, merged, migrated, or displayed by the new model.
@@ -49,8 +49,10 @@ events. See [the aggregation decision](../decisions/2026-10-06-summarize-success
 `StepLogResults` covers all built-in result families with an explicit privacy allowlist, enforced by
 contract coverage tests. A user-cancelled choice is distinct from cancellation of the whole job.
 
-Non-waiting execution records acknowledge dispatch. Background script events and output observations
-retain the original execution context; output records contain stream and character count only.
+Non-waiting step records acknowledge dispatch. The owning job stays active until background
+scripts and sub-jobs actually terminate, and joins them before its end phase. Background script
+events and output observations retain the original execution context; output records contain
+stream and character count only. A child failure fails its owner and stops sibling work.
 Late problems update completed-run quality without replacing lifecycle completion records. Run-bound
 exception diagnostics preserve exception types, HRESULTs, and stacks while excluding input-bearing
 exception messages. Script/process arguments and displayed text are not logged.

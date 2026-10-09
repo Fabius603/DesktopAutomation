@@ -9,6 +9,33 @@ namespace TaskAutomation.Tests.Jobs;
 
 public sealed class StepResourceInputTests
 {
+
+    [Fact]
+    public async Task SeparateVideoSteps_KeepIndependentPathsDimensionsAndFrames()
+    {
+        using var firstImage = new Bitmap(6, 4);
+        using var secondImage = new Bitmap(10, 8);
+        var recordings = new List<RecordingVideoRecorder>();
+        var sizes = new List<(int, int)>();
+        var context = new PipelineContextStub
+        {
+            RecorderFactory = (width, height, _) =>
+        { sizes.Add((width, height)); var recorder = new RecordingVideoRecorder(); recordings.Add(recorder); return recorder; }
+        };
+        context.Results.Set<DesktopDuplicationStep>(new DesktopDuplicationResult { WasExecuted = true, Image = firstImage }, "first");
+        context.Results.Set<DesktopDuplicationStep>(new DesktopDuplicationResult { WasExecuted = true, Image = secondImage }, "second");
+        var first = new VideoCreationStep { Id = "v1", Settings = new() { SavePath = Path.GetTempPath(), FileName = "first.mp4", ImageSource = ResultBinding.ForStepResult("first", "image") } };
+        var second = new VideoCreationStep { Id = "v2", Settings = new() { SavePath = Path.GetTempPath(), FileName = "second.mp4", ImageSource = ResultBinding.ForStepResult("second", "image") } };
+        var handler = new VideoCreationStepHandler();
+        await handler.ExecuteAsync(first, context, default);
+        await handler.ExecuteAsync(second, context, default);
+        await handler.ExecuteAsync(first, context, default);
+        Assert.Equal([(6, 4), (10, 8)], sizes);
+        Assert.Equal(["first.mp4", "second.mp4"], recordings.Select(recorder => recorder.FileName));
+        Assert.Equal([2L, 1L], recordings.Select(recorder => recorder.SubmittedFrameCount));
+        Assert.Equal(2, context.VideoRecorders.Count);
+    }
+
     [Fact]
     public async Task ReopenedYoloPreloadsAndUnloadsResolvedModelAndIgnoresDisabledSteps()
     {
@@ -83,7 +110,7 @@ public sealed class StepResourceInputTests
         Assert.Equal(Path.GetTempPath(), recorder.OutputDirectory);
         Assert.Equal("saved-name.mp4", recorder.FileName);
         Assert.Equal(2, recorder.SubmittedFrameCount);
-        Assert.Same(recorder, context.VideoRecorder);
+        Assert.Same(recorder, context.VideoRecorders[video.Id]);
     }
 
     [Fact]
@@ -102,7 +129,7 @@ public sealed class StepResourceInputTests
         var context = new PipelineContextStub { RecorderFactory = (_, _, _) => throw new InvalidOperationException("unexpected recorder") };
         context.Results.Set<DesktopDuplicationStep>(new DesktopDuplicationResult { WasExecuted = true }, capture.Id);
         await new VideoCreationStepHandler().ExecuteAsync(video, context, CancellationToken.None);
-        Assert.Null(context.VideoRecorder);
+        Assert.Empty(context.VideoRecorders);
         Assert.False(context.Results.GetById<VideoCreationResult>(video.Id).Success);
     }
 
@@ -126,7 +153,7 @@ public sealed class StepResourceInputTests
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new VideoCreationStepHandler().ExecuteAsync(video, context, CancellationToken.None));
         Assert.True(recorder.Disposed);
-        Assert.Null(context.VideoRecorder);
+        Assert.Empty(context.VideoRecorders);
     }
 
     private static Job Roundtrip(Job job)

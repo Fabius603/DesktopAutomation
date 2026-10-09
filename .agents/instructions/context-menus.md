@@ -20,6 +20,7 @@ collection surfaces. Update `docs/architecture/context-menus.md` alongside the i
   for custom row labels and batch labels; never infer an action from command type names or broad
   text fragments. Add appropriate mappings for new actions and distinguish their opposites.
 - Add risk-based tests for target selection, batch limits and changed persistence/export behavior.
-  Render changed popup states in both themes and inspect them. Run the mandatory Full gate.
+  Render changed popup states in both themes and inspect them. Select repository checks according
+  to `testing.md`.
 
 If a surface deliberately has no menu or no multiple selection, record the reason in the matrix.

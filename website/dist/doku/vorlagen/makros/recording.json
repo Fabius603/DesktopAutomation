@@ -1,0 +1,20 @@
+{
+  "formatVersion": 3,
+  "id": "95725efa-50bf-07cb-abf1-4f87f86b2103",
+  "name": "Mein Makro",
+  "commands": [],
+  "groups": [],
+  "recordingSettings": {
+    "mode": 1,
+    "minimumIntervalUs": 1000,
+    "minimumDistancePixels": 0,
+    "recordKeyboard": true,
+    "combineKeyboardInputs": false,
+    "recordMouseButtons": true,
+    "removeStopGesture": true,
+    "automaticMovementGroups": true,
+    "recordingHotkeyModifiers": 0,
+    "recordingHotkeyVirtualKey": 120
+  },
+  "recordedEnvironment": null
+}

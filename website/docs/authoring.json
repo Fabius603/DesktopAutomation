@@ -1,0 +1,1419 @@
+{
+  "formatVersions": {
+    "job": 4,
+    "macro": 3,
+    "automation": 1
+  },
+  "examples": {
+    "valueBindingJob": {
+      "formatVersion": 4,
+      "id": "11111111-1111-4111-8111-111111111111",
+      "name": "Werteverbindung: 250 ms warten",
+      "repeating": false,
+      "variables": [],
+      "localValues": [
+        {
+          "owner_step_id": "warten",
+          "input_path": "delay_ms",
+          "id": "bc418998-b3f1-a400-4db9-20e0d03deeda",
+          "name": "timeout_delay_ms",
+          "description": "timeout.delay_ms",
+          "scope": "StepValue",
+          "value_kind": "Integer",
+          "cardinality": "Single",
+          "value": 250
+        }
+      ],
+      "startSteps": [],
+      "steps": [
+        {
+          "type": "timeout",
+          "id": "warten",
+          "inputs": {
+            "delay_ms": {
+              "provider_id": "local_value",
+              "source_id": "bc418998-b3f1-a400-4db9-20e0d03deeda"
+            }
+          },
+          "is_enabled": true
+        }
+      ],
+      "endSteps": [],
+      "endPhaseTimeoutSeconds": 10
+    },
+    "logEvent": {
+      "SchemaVersion": 2,
+      "Id": "22222222-2222-4222-8222-222222222222",
+      "Sequence": 2,
+      "Timestamp": "2030-01-01T08:00:01\u002B00:00",
+      "Source": "Job",
+      "SourceId": "11111111-1111-4111-8111-111111111111",
+      "SourceName": "Werteverbindung: 250 ms warten",
+      "Area": "Execution",
+      "Level": "Information",
+      "Code": "step.completed",
+      "Message": "Beispiel: Warte-Step beendet.",
+      "Details": null,
+      "Context": {
+        "RunId": "33333333-3333-4333-8333-333333333333",
+        "InstanceId": null,
+        "TriggerId": null,
+        "AutomationId": null,
+        "StepId": "warten",
+        "StepExecutionId": "44444444-4444-4444-8444-444444444444",
+        "ParentRunId": null
+      },
+      "ProblemId": null,
+      "DiagnosticCode": null,
+      "Phase": "Main",
+      "Iteration": 1,
+      "DurationMs": 250,
+      "Parameters": {},
+      "BranchDecision": null,
+      "Trigger": null,
+      "Paths": [],
+      "FlowEffect": null,
+      "Category": "Execution",
+      "RelatedInstanceIds": []
+    }
+  },
+  "bindingSchemas": [
+    {
+      "Id": "desktopautomation.point-entries/v1",
+      "Members": {},
+      "ItemSchemaId": "desktopautomation.point-entry/v1"
+    },
+    {
+      "Id": "desktopautomation.point-entry/v1",
+      "Members": {
+        "manual_x": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "manual_y": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.process-target/v1",
+      "Members": {
+        "process_name": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": [
+            "secret"
+          ]
+        },
+        "executable_path": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": [
+            "secret"
+          ]
+        },
+        "window_title_contains": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": [
+            "secret"
+          ]
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.roi/v1",
+      "Members": {
+        "enabled": {
+          "ValueKind": "Boolean",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "x": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "y": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "width": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "height": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.screen-point/v1",
+      "Members": {
+        "monitor_index": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "x": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "y": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.user-choice-option/v1",
+      "Members": {
+        "label": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": [
+            "secret"
+          ]
+        },
+        "value": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": [
+            "secret"
+          ]
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.user-choice-options/v1",
+      "Members": {},
+      "ItemSchemaId": "desktopautomation.user-choice-option/v1"
+    },
+    {
+      "Id": "desktopautomation.visual-overlay-text-entries/v1",
+      "Members": {},
+      "ItemSchemaId": "desktopautomation.visual-overlay-text-entry/v1"
+    },
+    {
+      "Id": "desktopautomation.visual-overlay-text-entry/v1",
+      "Members": {
+        "font_size": {
+          "ValueKind": "Number",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "font_color": {
+          "ValueKind": "Color",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": [
+            "secret"
+          ]
+        },
+        "opacity": {
+          "ValueKind": "Number",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "desktop_index": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "offset_x": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "offset_y": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "duration_ms": {
+          "ValueKind": "Integer",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "clear_on_job_end": {
+          "ValueKind": "Boolean",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.visual-overlay/v1",
+      "Members": {
+        "text_results": {
+          "ValueKind": "ResultObject",
+          "Cardinality": "Collection",
+          "NestedSchemaId": "desktopautomation.visual-overlay-text-entries/v1",
+          "AllowedProviderIds": [
+            "local_value",
+            "job_variable",
+            "step_result"
+          ],
+          "LegacyAllowedProviderIds": []
+        }
+      },
+      "ItemSchemaId": null
+    },
+    {
+      "Id": "desktopautomation.yolo-selection/v1",
+      "Members": {
+        "model": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value"
+          ],
+          "LegacyAllowedProviderIds": []
+        },
+        "class_name": {
+          "ValueKind": "Text",
+          "Cardinality": "Single",
+          "NestedSchemaId": null,
+          "AllowedProviderIds": [
+            "local_value"
+          ],
+          "LegacyAllowedProviderIds": []
+        }
+      },
+      "ItemSchemaId": null
+    }
+  ],
+  "fieldSchemas": {
+    "timeout": {},
+    "block_input": {},
+    "unblock_input": {},
+    "end_job": {},
+    "continue_job": {},
+    "desktop_duplication": {},
+    "script_execution": {},
+    "get_process": {},
+    "makro_execution": {},
+    "job_execution": {},
+    "active_process": {
+      "process_target": "desktopautomation.process-target/v1"
+    },
+    "active_window": {
+      "process_target": "desktopautomation.process-target/v1"
+    },
+    "terminate_process": {
+      "process_target": "desktopautomation.process-target/v1"
+    },
+    "focus_process": {
+      "process_target": "desktopautomation.process-target/v1"
+    },
+    "start_process": {
+      "process_target": "desktopautomation.process-target/v1"
+    },
+    "dynamic_roi": {},
+    "predict_movement": {},
+    "klick_on_point": {},
+    "klick_on_point_3d": {
+      "origin": "desktopautomation.screen-point/v1"
+    },
+    "file_system_operation": {},
+    "show_text": {},
+    "user_choice": {
+      "options": "desktopautomation.user-choice-options/v1"
+    },
+    "point_comparison": {
+      "points": "desktopautomation.point-entries/v1"
+    },
+    "if": {},
+    "else_if": {},
+    "windows_state_query": {},
+    "windows_setting_change": {},
+    "else": {},
+    "end_if": {},
+    "camera_capture": {},
+    "show_image": {
+      "overlay": "desktopautomation.visual-overlay/v1"
+    },
+    "show_on_desktop": {
+      "overlay": "desktopautomation.visual-overlay/v1"
+    },
+    "video_creation": {
+      "overlay": "desktopautomation.visual-overlay/v1"
+    },
+    "save_image": {
+      "overlay": "desktopautomation.visual-overlay/v1"
+    },
+    "template_matching": {
+      "roi": "desktopautomation.roi/v1"
+    },
+    "ocr": {
+      "roi": "desktopautomation.roi/v1"
+    },
+    "color_detection": {
+      "roi": "desktopautomation.roi/v1"
+    },
+    "yolo_detection": {
+      "yolo_selection": "desktopautomation.yolo-selection/v1",
+      "roi": "desktopautomation.roi/v1"
+    },
+    "keypoint_matching": {
+      "roi": "desktopautomation.roi/v1"
+    }
+  },
+  "templates": {
+    "steps": {
+      "active_process": {
+        "type": "active_process",
+        "settings": {
+          "target": {
+            "process_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "process_name": "",
+            "executable_path": "",
+            "window_title_contains": ""
+          }
+        },
+        "id": "7d3962ef-45d1-44a8-69db-2fa973922fc6",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "active_window": {
+        "type": "active_window",
+        "settings": {
+          "target": {
+            "process_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "process_name": "",
+            "executable_path": "",
+            "window_title_contains": ""
+          },
+          "cache_ms": 0
+        },
+        "id": "5677c907-b7f4-9a68-922c-bdab08b907ff",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "block_input": {
+        "type": "block_input",
+        "settings": {
+          "safety_timeout_seconds": 30
+        },
+        "id": "c79b421d-88ca-12f3-f47f-cb78a41eab44",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "camera_capture": {
+        "type": "camera_capture",
+        "settings": {
+          "camera_id": "",
+          "camera_name": "",
+          "quality_mode": "Automatic",
+          "width": 0,
+          "height": 0,
+          "frames_per_second": 0,
+          "pixel_format": ""
+        },
+        "id": "f86a035d-110f-72d1-11bd-b0e1f4d55409",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "color_detection": {
+        "type": "color_detection",
+        "settings": {
+          "color_hex": "#FF0000",
+          "confidence_threshold": 0.9,
+          "min_size": 25,
+          "max_size": 2147483647,
+          "min_width": 1,
+          "min_height": 1,
+          "downscale_factor": 1,
+          "roi": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "enable_roi": false,
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "dynamic_roi_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "cc6df427-37e9-687a-3dfa-9333bf16bb90",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "continue_job": {
+        "type": "continue_job",
+        "id": "8fa2573a-6b40-da60-9573-8867d24bb02a",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "desktop_duplication": {
+        "type": "desktop_duplication",
+        "settings": {
+          "desktop_idx": 0,
+          "capture_cursor": false,
+          "monitor_device_name": "",
+          "wait_for_new_frame": true,
+          "timeout_ms": 250,
+          "allow_cached_fallback": true
+        },
+        "id": "ffa47583-1458-1a09-c1e7-2592222fbe7b",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "dynamic_roi": {
+        "type": "dynamic_roi",
+        "settings": {
+          "bounds_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "padding": -1,
+          "padding_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "minimum_confidence": 0,
+          "full_search_interval": 10,
+          "reset_after_misses": 3
+        },
+        "id": "5daa1a25-95e8-a1e7-7645-817670fbad9a",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "else": {
+        "type": "else",
+        "CanBeDisabled": false,
+        "id": "406c7dce-4d6e-a052-8eee-c80fd32ecfdb",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "else_if": {
+        "type": "else_if",
+        "settings": {
+          "match_mode": "All",
+          "conditions": []
+        },
+        "CanBeDisabled": false,
+        "id": "79e1b543-d926-da4d-1f16-fcb2f330150b",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "end_if": {
+        "type": "end_if",
+        "CanBeDisabled": false,
+        "id": "053969e6-9cd5-cbef-242e-4679d246788b",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "end_job": {
+        "type": "end_job",
+        "settings": {
+          "skip_end_steps": false
+        },
+        "id": "116e7ca0-813b-7273-8e1a-ca1f817c3ace",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "file_system_operation": {
+        "type": "file_system_operation",
+        "settings": {
+          "operation": "Copy",
+          "source_mode": "ExplicitPath",
+          "source_path": "",
+          "source_result": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "target_mode": "ExplicitPath",
+          "target_path": "",
+          "target_result": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "new_name": "",
+          "filter": "",
+          "create_parent_directories": true,
+          "retry_locked_files": true,
+          "retry_count": 3,
+          "retry_delay_ms": 100
+        },
+        "id": "fd4d948b-8366-d9ec-c236-0eb9d97b2607",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "focus_process": {
+        "type": "focus_process",
+        "settings": {
+          "target": {
+            "process_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "process_name": "",
+            "executable_path": "",
+            "window_title_contains": ""
+          },
+          "action": "BringToFront",
+          "window_mode": "Normal"
+        },
+        "id": "57d5804e-5282-502f-0454-33619a4efedb",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "get_process": {
+        "type": "get_process",
+        "settings": {
+          "query": {
+            "process_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "process_name": "",
+            "executable_path": "",
+            "window_title_contains": ""
+          }
+        },
+        "id": "4d2791b6-420f-dcae-97a3-f32ff904ab70",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "if": {
+        "type": "if",
+        "settings": {
+          "match_mode": "All",
+          "conditions": []
+        },
+        "CanBeDisabled": false,
+        "id": "d63699e5-2497-796d-bcbd-666b1c4a79ab",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "job_execution": {
+        "type": "job_execution",
+        "settings": {
+          "job_name": "",
+          "job_id": null,
+          "wait_for_completion": true
+        },
+        "id": "7deb7f0c-62e0-194e-3194-da75007c16ed",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "keypoint_matching": {
+        "type": "keypoint_matching",
+        "settings": {
+          "template_path": "",
+          "min_match_count": 10,
+          "lowes_ratio_threshold": 0.75,
+          "enable_roi": false,
+          "roi": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "dynamic_roi_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "4e14e928-862e-8c96-5024-1350f0969673",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "klick_on_point": {
+        "type": "klick_on_point",
+        "settings": {
+          "double_click": false,
+          "click_type": "left",
+          "timeout_ms": 0,
+          "offset_x": 0,
+          "offset_y": 0,
+          "points_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "12ba351e-b0cc-6cb8-3277-7dcc5cc6353f",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "klick_on_point_3d": {
+        "type": "klick_on_point_3d",
+        "settings": {
+          "movement_threshold_px": 10,
+          "double_click": false,
+          "click_type": "left",
+          "timeout_ms": 0,
+          "origin_x": 0,
+          "origin_y": 0,
+          "origin_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "origin_monitor_index": 0,
+          "origin_coordinate_space": "monitor_local",
+          "movement_factor_x": null,
+          "movement_factor_y": null,
+          "offset_x": 0,
+          "offset_y": 0,
+          "points_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "23b322d2-328c-1eab-64b5-9a027aaa036d",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "makro_execution": {
+        "type": "makro_execution",
+        "settings": {
+          "makro_name": "",
+          "makro_id": null
+        },
+        "id": "9fd9f44c-6450-a88e-c624-8a1b7e809975",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "ocr": {
+        "type": "ocr",
+        "settings": {
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "languages": "deu\u002Beng",
+          "page_layout": "Automatic",
+          "roi": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "enable_roi": false,
+          "dynamic_roi_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "4bfa512d-7ade-7be2-0978-97fc17f2f70d",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "point_comparison": {
+        "type": "point_comparison",
+        "settings": {
+          "mode": "Offset",
+          "match_requirement": "All",
+          "points": [
+            {
+              "source": "Manual",
+              "manual_x": 0,
+              "manual_y": 0,
+              "points_source": {
+                "provider_id": "",
+                "source_id": ""
+              }
+            }
+          ],
+          "offset_settings": {
+            "reference_source": "Manual",
+            "reference_x": 0,
+            "reference_y": 0,
+            "reference_points_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "offset_x": 10,
+            "offset_y": 10
+          },
+          "expression_settings": {
+            "expressions": [
+              {
+                "axis": "X",
+                "operator": "LessThan",
+                "value": 0
+              }
+            ],
+            "combine_mode": "And"
+          }
+        },
+        "id": "e82b1d75-e0de-5ff6-a44a-a5c26f839b7f",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "predict_movement": {
+        "type": "predict_movement",
+        "settings": {
+          "points_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "min_samples": 3,
+          "prediction_ms": 0,
+          "reset_distance_threshold": 250,
+          "max_sample_age_ms": 500,
+          "prediction_model": "Automatic",
+          "time_basis": "Execution",
+          "max_prediction_distance": 500,
+          "max_fit_error": 75,
+          "minimum_confidence": 0.15
+        },
+        "id": "85d18ddf-cfef-1f36-8b83-b38783c5f34b",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "save_image": {
+        "type": "save_image",
+        "settings": {
+          "save_path": "",
+          "file_name": "image.png",
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "overlay": {
+            "detection_results": [],
+            "text_results": []
+          }
+        },
+        "id": "469a3886-c8fa-1eba-0a8f-bbed4435a3cc",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "script_execution": {
+        "type": "script_execution",
+        "settings": {
+          "script_path": "",
+          "arguments": "",
+          "wait_for_exit": false
+        },
+        "id": "ed6670e1-efaa-085a-1445-700c4fc2d2bb",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "show_image": {
+        "type": "show_image",
+        "settings": {
+          "window_name": "MyWindow",
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "detections_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "overlay": {
+            "detection_results": [],
+            "text_results": []
+          }
+        },
+        "id": "e8080526-e62e-f27f-fe43-49586d257e39",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "show_on_desktop": {
+        "type": "show_on_desktop",
+        "settings": {
+          "detections_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "overlay": {
+            "detection_results": [],
+            "text_results": []
+          }
+        },
+        "id": "b77b3a43-7414-193b-5f4e-63675ea46498",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "show_text": {
+        "type": "show_text",
+        "settings": {
+          "text_source": "TaskResult",
+          "text": "",
+          "text_result": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "font_size": 24,
+          "font_color": "#FFFFFF",
+          "opacity": 1,
+          "desktop_index": 0,
+          "offset_x": 100,
+          "offset_y": 100,
+          "duration_ms": 5000,
+          "clear_on_job_end": false
+        },
+        "id": "53488c77-d339-7ac1-2fc2-7774b8ec431e",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "start_process": {
+        "type": "start_process",
+        "settings": {
+          "target": {
+            "process_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "process_name": "",
+            "executable_path": "",
+            "window_title_contains": ""
+          },
+          "action": "Start",
+          "executable_path": "",
+          "arguments": "",
+          "working_directory": "",
+          "wait_for_exit": false,
+          "monitor_index": 0,
+          "placement_mode": "Centered",
+          "offset_x": 0,
+          "offset_y": 0,
+          "window_mode": "ApplicationDefault"
+        },
+        "id": "6fbbf6ae-f17e-bbfb-d307-3c3f4e398d7a",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "template_matching": {
+        "type": "template_matching",
+        "settings": {
+          "template_path": "",
+          "template_match_mode": "CCoeffNormed",
+          "multiple_points": false,
+          "confidence_threshold": 0.9,
+          "roi": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "enable_roi": false,
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "dynamic_roi_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "fecba802-7139-a95a-9712-cc418e4a3527",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "terminate_process": {
+        "type": "terminate_process",
+        "settings": {
+          "target": {
+            "process_source": {
+              "provider_id": "",
+              "source_id": ""
+            },
+            "process_name": "",
+            "executable_path": "",
+            "window_title_contains": ""
+          }
+        },
+        "id": "1a0a37d7-cbd4-4080-4162-27be3efcf1d4",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "timeout": {
+        "type": "timeout",
+        "settings": {
+          "delay_ms": 1000
+        },
+        "id": "f8468467-aabe-4960-2611-1a0bcd68497c",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "unblock_input": {
+        "type": "unblock_input",
+        "id": "ebfe1a0a-c733-fcf3-dae8-97b992a5ff8e",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "user_choice": {
+        "type": "user_choice",
+        "settings": {
+          "title": "",
+          "question": "",
+          "description": "",
+          "desktopIndex": 0,
+          "options": [
+            {
+              "id": "c4de30c6-f016-2700-00a7-c656a7abcf11",
+              "label": "",
+              "value": ""
+            },
+            {
+              "id": "5c562fe4-9360-401a-e540-39a24df5f2aa",
+              "label": "",
+              "value": ""
+            }
+          ]
+        },
+        "id": "50a7ffc1-3f4c-06a1-4d31-b5461fe898cb",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "video_creation": {
+        "type": "video_creation",
+        "settings": {
+          "save_path": "",
+          "file_name": "output.mp4",
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "detections_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "overlay": {
+            "detection_results": [],
+            "text_results": []
+          }
+        },
+        "id": "2d39ad30-66ba-a116-67f8-f7ef96c0f247",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "windows_setting_change": {
+        "type": "windows_setting_change",
+        "settings": {
+          "setting_id": "audio.master_volume",
+          "parameters": {}
+        },
+        "id": "cdf47e67-4f34-aa28-2720-e262a0db31d5",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "windows_state_query": {
+        "type": "windows_state_query",
+        "settings": {
+          "query_type": "network.connectivity",
+          "parameters": {}
+        },
+        "id": "6e1150cf-6454-7283-17b2-4a12a6c84fb9",
+        "inputs": {},
+        "is_enabled": true
+      },
+      "yolo_detection": {
+        "type": "yolo_detection",
+        "settings": {
+          "model": "",
+          "confidence_threshold": 0.5,
+          "class_name": "",
+          "roi": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "enable_roi": false,
+          "image_source": {
+            "provider_id": "",
+            "source_id": ""
+          },
+          "dynamic_roi_source": {
+            "provider_id": "",
+            "source_id": ""
+          }
+        },
+        "id": "84d7921e-2d7a-d7f3-ad05-8f65a32352c8",
+        "inputs": {},
+        "is_enabled": true
+      }
+    },
+    "automations": {
+      "file_system_event": {
+        "$type": "file_system_event",
+        "Kind": "FileSystemEvent",
+        "event_kind": "Created",
+        "directory_path": "",
+        "filter": "*.*",
+        "include_subdirectories": false,
+        "wait_until_ready": true,
+        "kind": "FileSystemEvent"
+      },
+      "hotkey": {
+        "$type": "hotkey",
+        "Kind": "Hotkey",
+        "modifiers": 0,
+        "virtual_key_code": 0,
+        "debounce": "00:00:00",
+        "delay_after_event": "00:00:00",
+        "kind": "Hotkey"
+      },
+      "interval": {
+        "$type": "interval",
+        "Kind": "Interval",
+        "interval": "00:15:00",
+        "start_immediately": true,
+        "kind": "Interval"
+      },
+      "once_at": {
+        "$type": "once_at",
+        "Kind": "OnceAt",
+        "run_at": "2030-01-01T08:00:00\u002B00:00",
+        "kind": "OnceAt"
+      },
+      "process_exited": {
+        "$type": "process_exited",
+        "Kind": "ProcessExited",
+        "process_name": "",
+        "window_title_contains": "",
+        "delay_after_event": "00:00:00",
+        "kind": "ProcessExited"
+      },
+      "process_started": {
+        "$type": "process_started",
+        "Kind": "ProcessStarted",
+        "process_name": "",
+        "window_title_contains": "",
+        "delay_after_event": "00:00:00",
+        "kind": "ProcessStarted"
+      },
+      "schedule": {
+        "$type": "schedule",
+        "Kind": "Schedule",
+        "time_of_day": "08:00:00",
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "kind": "Schedule"
+      },
+      "system_event": {
+        "$type": "system_event",
+        "Kind": "SystemEvent",
+        "event_kind": "SessionLocked",
+        "kind": "SystemEvent"
+      },
+      "webhook": {
+        "$type": "webhook",
+        "Kind": "Webhook",
+        "hook_id": "d4fa91c4-b683-2c23-b89c-7ab50f8b606c",
+        "network_mode": "Offline",
+        "port": 17843,
+        "secret": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        "online_base_url": "",
+        "kind": "Webhook"
+      },
+      "window_event": {
+        "$type": "window_event",
+        "Kind": "WindowEvent",
+        "event_kind": "Opened",
+        "process_name": "",
+        "window_title_contains": "",
+        "delay_after_event": "00:00:00",
+        "kind": "WindowEvent"
+      },
+      "windows_event": {
+        "$type": "windows_event",
+        "Kind": "WindowsEvent",
+        "event_type": "network.availability.changed",
+        "filters": {},
+        "debounce": "00:00:01",
+        "delay_after_event": "00:00:00",
+        "kind": "WindowsEvent"
+      }
+    },
+    "macros": {
+      "key_combination": {
+        "type": "key_combination",
+        "keys": [],
+        "durationUs": 0,
+        "id": "13effec4-5e09-0872-eac1-b63a4eb7e8e5"
+      },
+      "key_down": {
+        "type": "key_down",
+        "key": "",
+        "id": "aef67dd6-b7dd-b8b8-aedc-a7352bb0dd9d"
+      },
+      "key_up": {
+        "type": "key_up",
+        "key": "",
+        "id": "e471f899-41c4-c89c-4e3b-8d51c98356c1"
+      },
+      "mouse_down": {
+        "type": "mouse_down",
+        "button": "",
+        "id": "57b76900-3086-9cc2-d4ab-dcc175ad9b46"
+      },
+      "mouse_move_absolute": {
+        "type": "mouse_move_absolute",
+        "x": 0,
+        "y": 0,
+        "id": "743a6baa-76dc-d235-0599-ad83c3203476"
+      },
+      "mouse_move_relative": {
+        "type": "mouse_move_relative",
+        "deltaX": 0,
+        "deltaY": 0,
+        "id": "318c6a13-2d74-5343-dfaf-cf44e5cc1875"
+      },
+      "mouse_up": {
+        "type": "mouse_up",
+        "button": "",
+        "id": "7f76f50e-db68-58c0-70e8-e97158e6b0a1"
+      },
+      "mouse_wheel": {
+        "type": "mouse_wheel",
+        "deltaX": 0,
+        "deltaY": 0,
+        "id": "3015398d-f01d-5b06-9899-4110bf157815"
+      },
+      "text_input": {
+        "type": "text_input",
+        "text": "",
+        "durationUs": 0,
+        "id": "8175bccd-480d-2892-ec75-d89f4337f976"
+      },
+      "timeout": {
+        "type": "timeout",
+        "duration": 0,
+        "id": "f8468467-aabe-4960-2611-1a0bcd68497c"
+      }
+    },
+    "job": {
+      "formatVersion": 4,
+      "id": "de2ef407-cc66-24bc-cdcd-9d258b46cc59",
+      "name": "Mein Job",
+      "repeating": false,
+      "variables": [],
+      "localValues": [],
+      "startSteps": [],
+      "steps": [],
+      "endSteps": [],
+      "endPhaseTimeoutSeconds": 10
+    },
+    "macro": {
+      "formatVersion": 3,
+      "id": "95725efa-50bf-07cb-abf1-4f87f86b2103",
+      "name": "Mein Makro",
+      "commands": [],
+      "groups": [],
+      "recordingSettings": {
+        "mode": 1,
+        "minimumIntervalUs": 1000,
+        "minimumDistancePixels": 0,
+        "recordKeyboard": true,
+        "combineKeyboardInputs": false,
+        "recordMouseButtons": true,
+        "removeStopGesture": true,
+        "automaticMovementGroups": true,
+        "recordingHotkeyModifiers": 0,
+        "recordingHotkeyVirtualKey": 120
+      },
+      "recordedEnvironment": null
+    },
+    "automation": {
+      "formatVersion": 1,
+      "id": "57f39786-8cfe-eb47-9796-a3248b787cf8",
+      "name": "Meine Automation",
+      "description": "",
+      "active": false,
+      "trigger": {
+        "$type": "hotkey",
+        "Kind": "Hotkey",
+        "modifiers": 0,
+        "virtual_key_code": 0,
+        "debounce": "00:00:00",
+        "delay_after_event": "00:00:00",
+        "kind": "Hotkey"
+      },
+      "action": {
+        "name": "",
+        "job_id": null,
+        "makro_id": null,
+        "action_type": "Job"
+      },
+      "run_policy": {
+        "already_running_behavior": "Ignore",
+        "cooldown": "00:00:00",
+        "enabled_from": null,
+        "enabled_until": null
+      },
+      "created_at": "2030-01-01T08:00:00\u002B00:00",
+      "updated_at": "2030-01-01T08:00:00\u002B00:00",
+      "last_run_at": null
+    }
+  }
+}

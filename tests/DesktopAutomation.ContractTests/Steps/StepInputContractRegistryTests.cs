@@ -38,7 +38,8 @@ public sealed class StepInputContractRegistryTests
             padding.AllowedProviderIds!.OrderBy(value => value));
         Assert.Equal([ValueProviderIds.StepResult], points.AllowedProviderIds);
         Assert.False(points.AllowsDirectValue);
-        Assert.True(clickPoints.AllowsDirectValue);
+        Assert.False(clickPoints.AllowsDirectValue);
+        Assert.Contains(ValueProviderIds.LocalValue, clickPoints.LegacyAllowedProviderIds);
         Assert.True(clickPoints.AllowsProvider(ValueProviderIds.JobVariable));
         Assert.True(clickPoints.AllowsProvider(ValueProviderIds.StepResult));
         Assert.False(clickPoints.AllowsProvider(ValueProviderIds.Secret));

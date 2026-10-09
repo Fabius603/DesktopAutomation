@@ -1,0 +1,144 @@
+## Werte und Ergebnisse: PointComparisonResult
+
+ID: PointComparisonResult
+Website: /doku/werte/PointComparisonResult/
+
+### errors
+
+Ein konfigurierte Quelle hat noch nicht zwingend einen Wert geliefert. Prüfe den fachlichen Erfolgswert, fehlende optionale Eigenschaften und den Ausführungszustand des Produzenten. Nur DynamicRoi besitzt die dokumentierte Ausnahme für späteres Feedback; andere Verbraucher dürfen keine beliebigen Vorwärtsreferenzen verwenden.
+
+### example
+
+Eine Ergebnisreferenz verwendet provider_id=step_result und source_id=v1/<kodierte-Step-ID>/<kodierte-Ergebnis-ID>. Die Anleitung „Werte verbinden“ zeigt eine vollständige Verbindung. Prüfe Typ und Kardinalität vor der Verwendung in einer Bedingung oder Folgeaktion.
+
+### purpose
+
+Typisierter Ergebnisvertrag PointComparisonResult. Wird von Punkte vergleichen geliefert. Die stabilen Ergebnis-IDs unten sind unabhängig von CLR-Namen und UI-Übersetzungen. Wähle im Ergebnis-Auswahldialog eine kompatible Eigenschaft statt das ganze Objekt ungeprüft als Text zu verwenden.
+
+### result.match_count
+
+Anzahl passender Prozesse oder Merkmalszuordnungen im konkreten Ergebnis; der Ergebnis-Typ bestimmt, was gezählt wird. Einzelwert dieses Ergebnisses.
+
+### result.matches
+
+Einzelne OCR-/Punktvergleichstreffer mit ihren Detailwerten. Der Ergebnis-Typ bestimmt die Elementstruktur. Einzelwert dieses Ergebnisses.
+
+### result.total_count
+
+Gesamtzahl der im konkreten Abfrageergebnis gelieferten Einträge. Einzelwert dieses Ergebnisses.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "PointComparisonResult",
+  "name": "PointComparisonResult",
+  "result": {
+    "TypeName": "PointComparisonResult",
+    "DisplayName": "PointComparisonResult",
+    "Properties": [
+      {
+        "Name": "Matches",
+        "DisplayName": "Matches",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "matches",
+        "EnumDisplayNames": null,
+        "StableId": "matches"
+      },
+      {
+        "Name": "MatchCount",
+        "DisplayName": "Match Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "match_count",
+        "EnumDisplayNames": null,
+        "StableId": "match_count"
+      },
+      {
+        "Name": "TotalCount",
+        "DisplayName": "Total Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "total_count",
+        "EnumDisplayNames": null,
+        "StableId": "total_count"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "Matches",
+        "DisplayName": "Matches",
+        "Property": {
+          "Name": "Matches",
+          "DisplayName": "Matches",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "matches",
+          "EnumDisplayNames": null,
+          "StableId": "matches"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "MatchCount",
+        "DisplayName": "Match Count",
+        "Property": {
+          "Name": "MatchCount",
+          "DisplayName": "Match Count",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "match_count",
+          "EnumDisplayNames": null,
+          "StableId": "match_count"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "TotalCount",
+        "DisplayName": "Total Count",
+        "Property": {
+          "Name": "TotalCount",
+          "DisplayName": "Total Count",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "total_count",
+          "EnumDisplayNames": null,
+          "StableId": "total_count"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+

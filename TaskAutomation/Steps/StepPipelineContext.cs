@@ -14,6 +14,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Logging;
 using TaskAutomation.Makros;
 using TaskAutomation.Scripts;
+using TaskAutomation.Orchestration;
 
 namespace TaskAutomation.Steps
 {
@@ -29,6 +30,27 @@ namespace TaskAutomation.Steps
         // ── IStepPipelineContext ───────────────────────────────────────────────
 
         public IJobResultStore Results => _results;
+        public OwnedExecutionScope OwnedExecutions { get; private set; }
+        private readonly JobExecutionCancellation? _cancellation;
+        private TimeSpan StopBudget => TimeSpan.FromSeconds(Math.Clamp(CurrentJob.EndPhaseTimeoutSeconds,
+            Job.MinEndPhaseTimeoutSeconds, Job.MaxEndPhaseTimeoutSeconds));
+        public void BeginEndExecutions()
+        {
+            OwnedExecutions.Dispose();
+            OwnedExecutions = new OwnedExecutionScope(forceToken: _cancellation?.EndPhaseToken ?? default, stopBudget: StopBudget);
+        }
+        public Guid ResourceOwnerId { get; } = Guid.NewGuid();
+        public string ResourceKey(string stepId) => $"{ResourceOwnerId:N}:{stepId}";
+        private readonly Dictionary<string, IDisposable> _modelLeases = new(StringComparer.OrdinalIgnoreCase);
+        public async Task AcquireYoloModelAsync(string model, CancellationToken ct)
+        {
+            lock (_modelLeases) if (_modelLeases.ContainsKey(model)) return;
+            var lease = await YoloManager.AcquireModelAsync(model, ct).ConfigureAwait(false);
+            lock (_modelLeases)
+            {
+                if (!_modelLeases.TryAdd(model, lease)) lease.Dispose();
+            }
+        }
         public IDictionary<string, DynamicRoiState> DynamicRoiStates { get; } =
             new Dictionary<string, DynamicRoiState>(StringComparer.OrdinalIgnoreCase);
 
@@ -45,14 +67,11 @@ namespace TaskAutomation.Steps
         public IExecutionLogService ExecutionLogService { get; }
         public Job CurrentJob { get; }
         public Func<Guid, CancellationToken, Task> ExecuteJob { get; }
-        public Func<Guid, Guid>? StartJobViaDispatcher { get; }
         public Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; }
-        public Action<Guid>? CancelJobViaDispatcher { get; }
 
         public IDesktopCaptureService DesktopCaptureService { get; }
         public ICameraCaptureService CameraCaptureService { get; }
         public ISet<string> OpenedWindowNames { get; } = new HashSet<string>(StringComparer.Ordinal);
-        public IList<Guid> ChildJobInstanceIds { get; } = new List<Guid>();
         public TemplateMatching? TemplateMatcher { get; set; }
         public ColorDetector? ColorDetector { get; set; }
         public KeyPointMatcher? KeyPointMatcher { get; set; }
@@ -61,7 +80,10 @@ namespace TaskAutomation.Steps
         public void RegisterYoloModel(string model) => _loadedYoloModels.TryAdd(model, 0);
         public IReadOnlyCollection<string> LoadedYoloModels => _loadedYoloModels.Keys.ToArray();
 
-        public IVideoRecorder? VideoRecorder { get; set; }
+        private readonly Func<int, int, int, IVideoRecorder> _videoRecorderFactory;
+        public IVideoRecorder CreateVideoRecorder(int width, int height, int fps) => _videoRecorderFactory(width, height, fps);
+
+        public IDictionary<string, IVideoRecorder> VideoRecorders { get; } = new Dictionary<string, IVideoRecorder>(StringComparer.OrdinalIgnoreCase);
 
         public Dictionary<string, DateTime> StepTimeouts { get; } =
             new(StringComparer.OrdinalIgnoreCase);
@@ -96,11 +118,15 @@ namespace TaskAutomation.Steps
             ICameraCaptureService cameraCaptureService,
             ExecutionLogSession? executionLogSession = null,
             IExecutionLogService? executionLogService = null,
-            Func<Guid, Guid>? startJobViaDispatcher = null,
-            Action<Guid>? cancelJobViaDispatcher = null,
             Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null,
-            IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null)
+            IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null,
+            JobExecutionCancellation? cancellation = null,
+            Func<int, int, int, IVideoRecorder>? videoRecorderFactory = null)
         {
+            _videoRecorderFactory = videoRecorderFactory ?? ((width, height, fps) => new StreamVideoRecorder(width, height, fps));
+            _cancellation = cancellation;
+            OwnedExecutions = new OwnedExecutionScope(() => cancellation?.RequestStop(), cancellation?.EndPhaseToken ?? default,
+                TimeSpan.FromSeconds(Math.Clamp(currentJob.EndPhaseTimeoutSeconds, Job.MinEndPhaseTimeoutSeconds, Job.MaxEndPhaseTimeoutSeconds)));
             Logger = logger;
             DxgiResources = dxgiResources;
             AllJobs = allJobs;
@@ -120,8 +146,6 @@ namespace TaskAutomation.Steps
             ExecuteJob = executeJob;
             DesktopCaptureService = desktopCaptureService;
             CameraCaptureService = cameraCaptureService;
-            StartJobViaDispatcher = startJobViaDispatcher;
-            CancelJobViaDispatcher = cancelJobViaDispatcher;
             StartJobViaDispatcherAsync = startJobViaDispatcherAsync;
         }
 
@@ -157,6 +181,12 @@ namespace TaskAutomation.Steps
         public void Dispose()
         {
             _results.DisposeAndClear();
+            OwnedExecutions.Dispose();
+            lock (_modelLeases)
+            {
+                foreach (var lease in _modelLeases.Values) lease.Dispose();
+                _modelLeases.Clear();
+            }
             TemplateMatcher?.Dispose();
             // DesktopCaptureService ist ein Singleton und wird NICHT hier disposed.
             ColorDetector?.Dispose();

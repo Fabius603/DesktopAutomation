@@ -15,6 +15,7 @@ namespace TaskAutomation.Makros
     public class MakroExecutor : IMakroExecutor
     {
         private readonly IInputController _input;
+        private readonly SemaphoreSlim _executionGate = new(1, 1);
         private readonly ILogger<MakroExecutor> _logger;
         private readonly IPreciseDelayService _delayService;
 
@@ -32,6 +33,13 @@ namespace TaskAutomation.Makros
         public async Task ExecuteMakro(Makro makro, DxgiResources dxgi, CancellationToken ct)
         {
             ArgumentNullException.ThrowIfNull(makro);
+            await _executionGate.WaitAsync(ct).ConfigureAwait(false);
+            try { await ExecuteExclusiveAsync(makro, dxgi, ct).ConfigureAwait(false); }
+            finally { _executionGate.Release(); }
+        }
+
+        private async Task ExecuteExclusiveAsync(Makro makro, DxgiResources dxgi, CancellationToken ct)
+        {
             WarnIfAbsoluteRecordingEnvironmentChanged(makro);
             // Alle Timeout-Befehle liegen auf einer absoluten Stopwatch-Zeitachse.
             // Dadurch wird eine Abweichung nicht auf nachfolgende Wartezeiten addiert.

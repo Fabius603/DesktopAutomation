@@ -1,0 +1,16 @@
+{
+  "type": "show_on_desktop",
+  "settings": {
+    "detections_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "overlay": {
+      "detection_results": [],
+      "text_results": []
+    }
+  },
+  "id": "b77b3a43-7414-193b-5f4e-63675ea46498",
+  "inputs": {},
+  "is_enabled": true
+}

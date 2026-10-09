@@ -1,0 +1,32 @@
+{
+  "formatVersion": 1,
+  "id": "0b09bb78-fabc-a14e-8cbc-dabc13722915",
+  "name": "Eingang mit Best\u00E4tigung sichern",
+  "description": "",
+  "active": false,
+  "trigger": {
+    "$type": "file_system_event",
+    "Kind": "FileSystemEvent",
+    "event_kind": "Created",
+    "directory_path": "C:\\DesktopAutomation-Beispiele\\Rechnungen",
+    "filter": "*.txt",
+    "include_subdirectories": false,
+    "wait_until_ready": true,
+    "kind": "FileSystemEvent"
+  },
+  "action": {
+    "name": "Eingang mit Best\u00E4tigung sichern",
+    "job_id": "57688acd-8067-3af9-22e4-d36616242722",
+    "makro_id": null,
+    "action_type": "Job"
+  },
+  "run_policy": {
+    "already_running_behavior": "Ignore",
+    "cooldown": "00:00:00",
+    "enabled_from": null,
+    "enabled_until": null
+  },
+  "created_at": "2026-10-08T00:00:00+00:00",
+  "updated_at": "2026-10-08T00:00:00+00:00",
+  "last_run_at": null
+}

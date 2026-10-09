@@ -70,10 +70,12 @@ public sealed class ScriptExecutionStepHandlerTests
         var path = Path.GetTempFileName();
         try
         {
+            using var owned = new TaskAutomation.Orchestration.OwnedExecutionScope();
             var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var context = new PipelineContextStub
             {
+                OwnedExecutions = owned,
                 ScriptExecutor = new DelegateScriptExecutor
                 {
                     Execute = async (_, _, _) =>
@@ -85,6 +87,7 @@ public sealed class ScriptExecutionStepHandlerTests
             Assert.True(result.Success);
             await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
             release.TrySetResult();
+            await owned.DrainAsync();
         }
         finally { File.Delete(path); }
     }

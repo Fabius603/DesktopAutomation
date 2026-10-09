@@ -43,6 +43,8 @@ namespace TaskAutomation.Steps
             if (ctx.TemplateMatcher == null)
                 ctx.TemplateMatcher = new TemplateMatching(step.Settings.TemplateMatchMode);
 
+            ctx.TemplateMatcher.SetTemplateMatchMode(step.Settings.TemplateMatchMode);
+
             var dynamicRoi = DynamicRoiResolver.Resolve(
                 step.Settings.DynamicRoiSource,
                 capture,
@@ -51,11 +53,12 @@ namespace TaskAutomation.Steps
             ctx.TemplateMatcher.SetROI((dynamicRoi ?? step.Settings.ROI).ToOpenCvRect());
             if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.TemplateMatcher.EnableROI();
             else ctx.TemplateMatcher.DisableROI();
-            ctx.TemplateMatcher.EnableMultiplePoints();
+            if (step.Settings.MultiplePoints) ctx.TemplateMatcher.EnableMultiplePoints();
+            else ctx.TemplateMatcher.DisableMultiplePoints();
             ctx.TemplateMatcher.SetTemplate(step.Settings.TemplatePath);
             ctx.TemplateMatcher.SetThreshold(step.Settings.ConfidenceThreshold);
 
-            var rawResult = ctx.TemplateMatcher.Detect(input.Image);
+            var rawResult = ctx.TemplateMatcher.Detect(input.Image, ct);
 
             if (!rawResult.Success)
             {
@@ -95,7 +98,7 @@ namespace TaskAutomation.Steps
                             r.BoundingBox.Value.Width,
                             r.BoundingBox.Value.Height)
                         : null;
-                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = rawResult.Confidence };
+                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = r.Confidence };
                 })
                 .ToList();
 

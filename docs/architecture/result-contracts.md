@@ -94,3 +94,24 @@ result properties or compatibility rules.
 
 The complete project checklist for adding a new step is documented in
 [`add-job-step`](../../.agents/skills/add-job-step/SKILL.md).
+
+
+## Execution availability and temporal ROI feedback
+
+`StepInputMaterializer` is the runtime owner for input contract validation and missing-value
+policy. An unavailable existing optional step source with a valid accepted property skips its
+consumer; required sources and malformed references fail. `JobExecutor` records this expected
+skip through `StepLogScope` using the existing NoInput reason. Executed null/empty values keep
+handler-specific semantics.
+
+`JobValidation` owns the narrow forward-reference rule for the dynamicRoi input: a later enabled
+DynamicRoiStep can provide feedback. `DynamicRoiResolver` initially uses the base search area
+and may subsequently read that step's retained GlobalBounds state when its current-iteration
+result is unavailable. Other inputs cannot read retained old results. The source picker projects
+this backend rule, and all picker catalogs continue sharing one mutable variable/provider catalog.
+
+Detection and OCR confidences use 0..1 throughout; individual detections retain their own score.
+Prediction age is measured against the current clock even for frozen source frames.
+Recorders are owned by step ID and each finalization is attributed to its producing step.
+The implementation choices and their user consequences are recorded in
+[the step isolation decision](../decisions/2026-10-08-isolate-step-state-and-failure-policies.md).

@@ -1,0 +1,77 @@
+{
+  "appVersion": "1.6.1",
+  "contract": {
+    "id": "key_down",
+    "name": "Taste drücken",
+    "fields": [
+      {
+        "id": "delayBeforeUs",
+        "name": "delayBeforeUs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "groupId",
+        "name": "groupId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "id",
+        "name": "id",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "key",
+        "name": "key",
+        "type": "String",
+        "options": [],
+        "defaultValue": ""
+      }
+    ]
+  },
+  "explanations": {
+    "purpose": "Drückt eine einzelne Taste und hält sie bis zum passenden key_up. Füge die Freigabe derselben Taste ein; bei Abbruch gibt der Executor seine noch gehaltenen Tasten beim Aufräumen frei.",
+    "example": "Füge diesen Befehl im Makro-Editor in einen Testablauf ein. Down-Befehle durch passende Up-Befehle abschließen; die JSON-Vorlage darunter zeigt type, id und die konkreten Wertefelder dieses Befehls.",
+    "errors": "Ungültige Tasten-/Maustastenkennungen, doppelte IDs, fehlerhafte Gruppenreferenzen und negative/ungültige Zeitwerte vor Ausführung korrigieren. Eingaben wirken auf das aktive Fenster. Bei absoluten Bewegungen die Aufnahmeumgebung prüfen; ein Abbruch gibt die vom Executor gehaltenen Tasten/Maustasten frei, rekonstruiert aber keine bereits eingegebenen Texte.",
+    "field.delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms. null kennzeichnet ältere oder manuell angelegte Befehle ohne aufgezeichnete Vorverzögerung.",
+    "field.groupId": "Optionale Referenz auf groups[].id. Gruppen ordnen zusammengehörige aufgezeichnete Befehle, ändern aber nicht ihre Reihenfolge in commands. Jede Gruppe muss Befehle enthalten; Befehle derselben Gruppe müssen einen zusammenhängenden Block bilden.",
+    "field.id": "Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.",
+    "field.key": "Windows-Tastenkennung des Makrobefehls, zum Beispiel A oder CONTROL. Der Executor muss die Kennung in einen Virtual-Key-Code übersetzen können."
+  },
+  "template": {
+    "type": "key_down",
+    "key": "",
+    "id": "aef67dd6-b7dd-b8b8-aedc-a7352bb0dd9d"
+  },
+  "screenshots": [
+    {
+      "id": "ref-macro-key-down",
+      "file": "ref-macro-key-down.detail.png",
+      "title": "Taste drücken",
+      "caption": "Detailansicht: Taste drücken. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "width": 364,
+      "height": 533,
+      "pages": [
+        "/doku/makros/key_down/"
+      ],
+      "markers": [
+        {
+          "number": 1,
+          "label": "Key",
+          "explanation": "Taste bzw. Tastenkombination für diesen Befehl."
+        },
+        {
+          "number": 2,
+          "label": "Verzögerung davor",
+          "explanation": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen."
+        }
+      ]
+    }
+  ],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

@@ -1,0 +1,13 @@
+{
+  "$type": "schedule",
+  "Kind": "Schedule",
+  "time_of_day": "08:00:00",
+  "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "kind": "Schedule"
+}

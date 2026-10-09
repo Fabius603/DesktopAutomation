@@ -18,6 +18,7 @@ internal sealed class ControllableJobExecutor : IJobExecutor
     public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
     public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
     public List<ExecutorInvocation> Invocations { get; } = [];
+    public List<Job> ExecutedDefinitions { get; } = [];
     public IReadOnlyDictionary<string, Job> AllJobs => _jobs;
     public IReadOnlyDictionary<string, Makro> AllMakros => _makros;
     public IYoloManager YoloManager { get; } = new NoOpYoloManager();
@@ -40,6 +41,14 @@ internal sealed class ControllableJobExecutor : IJobExecutor
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (_gate) Invocations.Add(new(jobId, startContext, cancellation, completion));
         return completion.Task;
+    }
+
+    public async Task<JobExecutionOutcome> ExecuteDefinitionAsync(Job job, JobStartContext context,
+        JobExecutionCancellation cancellation, JobDebugSession? debugSession = null)
+    {
+        lock (_gate) ExecutedDefinitions.Add(job);
+        await ExecuteJob(job.Id, context, cancellation, debugSession);
+        return new(cancellation.State.IsTerminal() ? cancellation.State : JobExecutionState.Completed);
     }
 
     public Task ExecuteJob(string jobName, CancellationToken ct = default) => Task.CompletedTask;

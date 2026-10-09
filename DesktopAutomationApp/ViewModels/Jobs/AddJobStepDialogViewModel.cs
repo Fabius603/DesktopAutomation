@@ -595,13 +595,14 @@ namespace DesktopAutomationApp.ViewModels
                 (field, value) => ResolveGeneratedUserChoiceOptions(definition, field, value, step?.Inputs),
                 (field, value) => ResolveGeneratedPointEntryList(definition, field, value, step?.Inputs),
                 ResolveGeneratedAxisExpressionList,
-                (field, binding) => ResolveGeneratedInputReference(definition, field, binding),
+                (field, binding) => ResolveGeneratedInputReference(definition, field, binding, step),
                 (field, fallback) => ResolveStoredFieldValue(field.Id, fallback, step?.Inputs));
 
         private GeneratedResultBindingEditorViewModel? ResolveGeneratedInputReference(
             IStepDefinition definition,
             StepFieldDescriptor field,
-            ResultBinding? binding)
+            ResultBinding? binding,
+            JobStep? step = null)
         {
             var contract = StepInputContractRegistry.Resolve(definition.StepType, field);
             if (binding?.IsConfigured == true
@@ -613,7 +614,7 @@ namespace DesktopAutomationApp.ViewModels
             if (binding?.IsConfigured != true
                 && (field.ValueKind != StepValueKind.ResultBinding || contract.AllowsDirectValue))
             {
-                var variable = CreateDraftStepVariable(definition, field, contract);
+                var variable = CreateDraftStepVariable(definition, field, contract, JobVariableInputMigration.GetLegacyDirectValue(step, field));
                 binding = new ResultBinding
                 {
                     ProviderId = ValueProviderIds.LocalValue,
@@ -629,7 +630,8 @@ namespace DesktopAutomationApp.ViewModels
         private JobVariable CreateDraftStepVariable(
             IStepDefinition definition,
             StepFieldDescriptor field,
-            StepInputDescriptor? contract = null)
+            StepInputDescriptor? contract = null,
+            JsonNode? initialValue = null)
         {
             var stem = $"{Loc.Get(definition.Descriptor.DisplayNameKey)} · {Loc.Get(field.LabelKey)}";
             var names = CurrentVariables().Select(variable => variable.Name)
@@ -651,9 +653,9 @@ namespace DesktopAutomationApp.ViewModels
                               ?? (field.ValueKind == StepValueKind.Collection
                                   ? ResultCardinality.Collection
                                   : ResultCardinality.Single),
-                // The generated field initializes this from the actual draft, including
-                // legacy settings. A descriptor default must not overwrite a loaded value.
-                Value = null
+                // Binding fields use their literal default; loaded local values are reused above.
+                // Other fields initialize from the actual draft in the generated editor.
+                Value = initialValue?.DeepClone() ?? (field.ValueKind == StepValueKind.ResultBinding ? field.DefaultValue?.DeepClone() : null)
             };
             ApplyEnumMetadata(variable, $"{definition.Descriptor.TypeId}.{field.Id}", field);
             _draftStepVariables.Add(variable);
@@ -938,8 +940,12 @@ namespace DesktopAutomationApp.ViewModels
             StepInputDescriptor contract,
             bool selectDefault)
         {
+            var sources = contract.Key == "dynamicRoi"
+                ? _valueReferenceSources.WithAdditionalSources(
+                    BuildConditionSourceCatalog(JobValidation.GetRoiFeedbackSources(_allJobSteps)))
+                : _valueReferenceSources;
             return new ValueReferencePickerViewModel(
-                _valueReferenceSources,
+                sources,
                 contract,
                 selectDefault,
                 CreateValueReferenceContext(definition, field));

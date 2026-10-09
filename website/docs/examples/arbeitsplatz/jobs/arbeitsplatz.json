@@ -1,0 +1,912 @@
+{
+  "formatVersion": 4,
+  "id": "100a7e62-a96e-01e2-c292-e5d7263b5528",
+  "name": "Arbeitsplatz nach Zeitplan",
+  "repeating": false,
+  "variables": [],
+  "localValues": [
+    {
+      "owner_step_id": "arbeitsplatz-0",
+      "input_path": "process_target",
+      "id": "81f0705c-f8f7-e5a5-1d8c-102c45aaeaf9",
+      "name": "active_process_process_target",
+      "description": "active_process.process_target",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "process_source": {
+          "provider_id": "",
+          "source_id": ""
+        },
+        "process_name": "notepad",
+        "executable_path": "",
+        "window_title_contains": ""
+      }
+    },
+    {
+      "owner_step_id": "arbeitsplatz-1",
+      "input_path": "conditions",
+      "id": "3ec09023-8db7-f62c-adc3-e9fe19f3fc62",
+      "name": "if_conditions",
+      "description": "if.conditions",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "match_mode": "All",
+        "conditions": [
+          {
+            "operator": "Equals",
+            "comparison_value": "False",
+            "provider_id": "step_result",
+            "source_id": "v1/arbeitsplatz-0/is_running"
+          }
+        ]
+      }
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "action",
+      "id": "be8dbf0b-7053-77af-df44-e362c1366672",
+      "name": "start_process_action",
+      "description": "start_process.action",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Start",
+      "enum_type_name": "start_process.action",
+      "enum_values": [
+        "Start",
+        "Terminate"
+      ]
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "process_target",
+      "id": "b6da3311-f93e-d802-6c6c-4a9e8988cb3b",
+      "name": "start_process_process_target",
+      "description": "start_process.process_target",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "process_source": {
+          "provider_id": "",
+          "source_id": ""
+        },
+        "process_name": "",
+        "executable_path": "",
+        "window_title_contains": ""
+      }
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "executable_path",
+      "id": "f68e16a1-d35a-2134-2474-717ca79dfaf6",
+      "name": "start_process_executable_path",
+      "description": "start_process.executable_path",
+      "scope": "StepValue",
+      "value_kind": "FilePath",
+      "cardinality": "Single",
+      "value": "C:\\Windows\\System32\\notepad.exe"
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "wait_for_exit",
+      "id": "78468173-6a39-8765-8c9a-c8fca55decd4",
+      "name": "start_process_wait_for_exit",
+      "description": "start_process.wait_for_exit",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "arguments",
+      "id": "b80f0aca-0793-fd79-9e9f-89ffa5366678",
+      "name": "start_process_arguments",
+      "description": "start_process.arguments",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "working_directory",
+      "id": "de58c033-2816-2e12-6b90-f739aa37cc93",
+      "name": "start_process_working_directory",
+      "description": "start_process.working_directory",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "monitor_index",
+      "id": "44f48342-c772-d771-03cd-d7a74cd92aee",
+      "name": "start_process_monitor_index",
+      "description": "start_process.monitor_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "window_mode",
+      "id": "727bfacd-7fa1-42be-0a2f-e07433c12dc6",
+      "name": "start_process_window_mode",
+      "description": "start_process.window_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "ApplicationDefault",
+      "enum_type_name": "start_process.window_mode",
+      "enum_values": [
+        "ApplicationDefault",
+        "Normal",
+        "Maximized"
+      ]
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "placement_mode",
+      "id": "ae9109c1-8c4b-f116-064e-735f06ad885f",
+      "name": "start_process_placement_mode",
+      "description": "start_process.placement_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Centered",
+      "enum_type_name": "start_process.placement_mode",
+      "enum_values": [
+        "Centered",
+        "Custom"
+      ]
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "offset_x",
+      "id": "fc76d961-c13e-750c-f493-ebf96128f4e0",
+      "name": "start_process_offset_x",
+      "description": "start_process.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-2",
+      "input_path": "offset_y",
+      "id": "7e6a35b3-bda8-3337-335b-31aa7680d54e",
+      "name": "start_process_offset_y",
+      "description": "start_process.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "text_result",
+      "id": "7df6a9e1-b17e-903e-ce63-8349177b56e0",
+      "name": "show_text_text_result",
+      "description": "show_text.text_result",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Editor wurde gestartet."
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "desktop_index",
+      "id": "2f09aedd-9964-4593-9db7-34411875b90d",
+      "name": "show_text_desktop_index",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "font_size",
+      "id": "05391519-6b3c-8f81-a65c-31ba9ab109d8",
+      "name": "show_text_font_size",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "font_color",
+      "id": "c8b8e506-3204-e862-2ab9-f7dc34cb7fa0",
+      "name": "show_text_font_color",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "opacity",
+      "id": "5a2b1cda-fa09-936f-fa3f-fbc1a7930b55",
+      "name": "show_text_opacity",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "duration_ms",
+      "id": "5257fd96-f7ea-2fec-a3f1-8b2bacd58227",
+      "name": "show_text_duration_ms",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "clear_on_job_end",
+      "id": "f382852c-fff7-3fbd-e9c4-c5964c7f2b95",
+      "name": "show_text_clear_on_job_end",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "offset_x",
+      "id": "b4e4ecea-9b69-b2ae-008f-428353ab7e36",
+      "name": "show_text_offset_x",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "arbeitsplatz-3",
+      "input_path": "offset_y",
+      "id": "5b243836-4173-6277-a591-906ea950acc5",
+      "name": "show_text_offset_y",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "text_result",
+      "id": "c60f46b0-fbcb-d7ed-f403-6e20b0d791d0",
+      "name": "show_text_text_result_2",
+      "description": "show_text.text_result",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Editor l\u00E4uft bereits."
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "desktop_index",
+      "id": "1edffd8b-c7cb-4ce4-3cce-6956e2792247",
+      "name": "show_text_desktop_index_2",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "font_size",
+      "id": "5593ca37-5d07-2755-352c-fab11e98e36f",
+      "name": "show_text_font_size_2",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "font_color",
+      "id": "c407edf9-5d4a-c002-e5df-cc576f71239a",
+      "name": "show_text_font_color_2",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "opacity",
+      "id": "c2f32c7a-2600-e97c-3384-92f1f5b0e00d",
+      "name": "show_text_opacity_2",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "duration_ms",
+      "id": "5c0b23e0-a1a4-6a23-14fe-a77c335273d2",
+      "name": "show_text_duration_ms_2",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "clear_on_job_end",
+      "id": "e27aa9dd-b446-e4bb-dcde-910b7cf15831",
+      "name": "show_text_clear_on_job_end_2",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "offset_x",
+      "id": "e6299e7c-0a9c-1ff5-cff6-56db0fb6a61b",
+      "name": "show_text_offset_x_2",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "arbeitsplatz-5",
+      "input_path": "offset_y",
+      "id": "e5b10bf9-707a-a58f-0d98-1ec3fe0b9d4d",
+      "name": "show_text_offset_y_2",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "action",
+      "id": "b0b082f2-4035-1397-52be-85b79d1d6eb5",
+      "name": "start_process_action_2",
+      "description": "start_process.action",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Start",
+      "enum_type_name": "start_process.action",
+      "enum_values": [
+        "Start",
+        "Terminate"
+      ]
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "process_target",
+      "id": "64841ed0-8883-15c7-33e5-efa7eb506540",
+      "name": "start_process_process_target_2",
+      "description": "start_process.process_target",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "process_source": {
+          "provider_id": "",
+          "source_id": ""
+        },
+        "process_name": "",
+        "executable_path": "",
+        "window_title_contains": ""
+      }
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "executable_path",
+      "id": "0a2dd2ae-2256-a43e-fd7c-16b4157a05e6",
+      "name": "start_process_executable_path_2",
+      "description": "start_process.executable_path",
+      "scope": "StepValue",
+      "value_kind": "FilePath",
+      "cardinality": "Single",
+      "value": "C:\\Windows\\System32\\calc.exe"
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "wait_for_exit",
+      "id": "c44a2771-b4f1-5cc6-478c-904dc13db69b",
+      "name": "start_process_wait_for_exit_2",
+      "description": "start_process.wait_for_exit",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "arguments",
+      "id": "b7862bf5-42c8-2d3a-421b-455a93d41563",
+      "name": "start_process_arguments_2",
+      "description": "start_process.arguments",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "working_directory",
+      "id": "a12834d7-a4d1-2888-c2a5-c4eb524612a4",
+      "name": "start_process_working_directory_2",
+      "description": "start_process.working_directory",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "monitor_index",
+      "id": "f0eceba5-8efb-766a-513b-511da15be5be",
+      "name": "start_process_monitor_index_2",
+      "description": "start_process.monitor_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "window_mode",
+      "id": "4f6244ab-2c57-b6c7-8eae-322c303b148d",
+      "name": "start_process_window_mode_2",
+      "description": "start_process.window_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "ApplicationDefault",
+      "enum_type_name": "start_process.window_mode",
+      "enum_values": [
+        "ApplicationDefault",
+        "Normal",
+        "Maximized"
+      ]
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "placement_mode",
+      "id": "32276316-f857-bbe8-30f2-28383f798d25",
+      "name": "start_process_placement_mode_2",
+      "description": "start_process.placement_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Centered",
+      "enum_type_name": "start_process.placement_mode",
+      "enum_values": [
+        "Centered",
+        "Custom"
+      ]
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "offset_x",
+      "id": "edc98def-762f-1f84-85f0-c8f1769b1cb3",
+      "name": "start_process_offset_x_2",
+      "description": "start_process.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-7",
+      "input_path": "offset_y",
+      "id": "f341f523-8f25-a267-0736-99827113bd9a",
+      "name": "start_process_offset_y_2",
+      "description": "start_process.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "text_result",
+      "id": "ed63cfc3-0d90-98eb-aefb-f5c4dd725d66",
+      "name": "show_text_text_result_3",
+      "description": "show_text.text_result",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Arbeitsplatz ist vorbereitet."
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "desktop_index",
+      "id": "7ae90b39-a120-e8ed-cd84-4e1841ba1903",
+      "name": "show_text_desktop_index_3",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "font_size",
+      "id": "54ba136a-7fb4-89bd-8f54-3d4c2df95589",
+      "name": "show_text_font_size_3",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "font_color",
+      "id": "f0750639-9735-ae28-6277-d2eaf21775e9",
+      "name": "show_text_font_color_3",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "opacity",
+      "id": "8455f93c-296c-2213-2eb2-3a96d00e3223",
+      "name": "show_text_opacity_3",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "duration_ms",
+      "id": "1a5be7b9-2da2-0d65-f6f4-028813161558",
+      "name": "show_text_duration_ms_3",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "clear_on_job_end",
+      "id": "a8c1752f-06b1-32e5-c3ec-b5f0c19a4391",
+      "name": "show_text_clear_on_job_end_3",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "offset_x",
+      "id": "39249bd7-cb7a-4497-96ab-feca22e60f78",
+      "name": "show_text_offset_x_3",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "arbeitsplatz-8",
+      "input_path": "offset_y",
+      "id": "552ae0eb-35cc-c6e3-96c3-b7fc99f38c1f",
+      "name": "show_text_offset_y_3",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    }
+  ],
+  "startSteps": [],
+  "steps": [
+    {
+      "type": "active_process",
+      "id": "arbeitsplatz-0",
+      "inputs": {
+        "process_target": {
+          "schema_id": "desktopautomation.process-target/v1",
+          "provider_id": "local_value",
+          "source_id": "81f0705c-f8f7-e5a5-1d8c-102c45aaeaf9"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "if",
+      "CanBeDisabled": false,
+      "id": "arbeitsplatz-1",
+      "inputs": {
+        "conditions": {
+          "provider_id": "local_value",
+          "source_id": "3ec09023-8db7-f62c-adc3-e9fe19f3fc62"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "start_process",
+      "id": "arbeitsplatz-2",
+      "inputs": {
+        "action": {
+          "provider_id": "local_value",
+          "source_id": "be8dbf0b-7053-77af-df44-e362c1366672"
+        },
+        "process_target": {
+          "schema_id": "desktopautomation.process-target/v1",
+          "provider_id": "local_value",
+          "source_id": "b6da3311-f93e-d802-6c6c-4a9e8988cb3b"
+        },
+        "executable_path": {
+          "provider_id": "local_value",
+          "source_id": "f68e16a1-d35a-2134-2474-717ca79dfaf6"
+        },
+        "wait_for_exit": {
+          "provider_id": "local_value",
+          "source_id": "78468173-6a39-8765-8c9a-c8fca55decd4"
+        },
+        "arguments": {
+          "provider_id": "local_value",
+          "source_id": "b80f0aca-0793-fd79-9e9f-89ffa5366678"
+        },
+        "working_directory": {
+          "provider_id": "local_value",
+          "source_id": "de58c033-2816-2e12-6b90-f739aa37cc93"
+        },
+        "monitor_index": {
+          "provider_id": "local_value",
+          "source_id": "44f48342-c772-d771-03cd-d7a74cd92aee"
+        },
+        "window_mode": {
+          "provider_id": "local_value",
+          "source_id": "727bfacd-7fa1-42be-0a2f-e07433c12dc6"
+        },
+        "placement_mode": {
+          "provider_id": "local_value",
+          "source_id": "ae9109c1-8c4b-f116-064e-735f06ad885f"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "fc76d961-c13e-750c-f493-ebf96128f4e0"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "7e6a35b3-bda8-3337-335b-31aa7680d54e"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "show_text",
+      "id": "arbeitsplatz-3",
+      "inputs": {
+        "text_result": {
+          "provider_id": "local_value",
+          "source_id": "7df6a9e1-b17e-903e-ce63-8349177b56e0"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "2f09aedd-9964-4593-9db7-34411875b90d"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "05391519-6b3c-8f81-a65c-31ba9ab109d8"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "c8b8e506-3204-e862-2ab9-f7dc34cb7fa0"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "5a2b1cda-fa09-936f-fa3f-fbc1a7930b55"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "5257fd96-f7ea-2fec-a3f1-8b2bacd58227"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "f382852c-fff7-3fbd-e9c4-c5964c7f2b95"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "b4e4ecea-9b69-b2ae-008f-428353ab7e36"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "5b243836-4173-6277-a591-906ea950acc5"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "else",
+      "CanBeDisabled": false,
+      "id": "arbeitsplatz-4",
+      "inputs": {},
+      "is_enabled": true
+    },
+    {
+      "type": "show_text",
+      "id": "arbeitsplatz-5",
+      "inputs": {
+        "text_result": {
+          "provider_id": "local_value",
+          "source_id": "c60f46b0-fbcb-d7ed-f403-6e20b0d791d0"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "1edffd8b-c7cb-4ce4-3cce-6956e2792247"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "5593ca37-5d07-2755-352c-fab11e98e36f"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "c407edf9-5d4a-c002-e5df-cc576f71239a"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "c2f32c7a-2600-e97c-3384-92f1f5b0e00d"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "5c0b23e0-a1a4-6a23-14fe-a77c335273d2"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "e27aa9dd-b446-e4bb-dcde-910b7cf15831"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "e6299e7c-0a9c-1ff5-cff6-56db0fb6a61b"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "e5b10bf9-707a-a58f-0d98-1ec3fe0b9d4d"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "end_if",
+      "CanBeDisabled": false,
+      "id": "arbeitsplatz-6",
+      "inputs": {},
+      "is_enabled": true
+    },
+    {
+      "type": "start_process",
+      "id": "arbeitsplatz-7",
+      "inputs": {
+        "action": {
+          "provider_id": "local_value",
+          "source_id": "b0b082f2-4035-1397-52be-85b79d1d6eb5"
+        },
+        "process_target": {
+          "schema_id": "desktopautomation.process-target/v1",
+          "provider_id": "local_value",
+          "source_id": "64841ed0-8883-15c7-33e5-efa7eb506540"
+        },
+        "executable_path": {
+          "provider_id": "local_value",
+          "source_id": "0a2dd2ae-2256-a43e-fd7c-16b4157a05e6"
+        },
+        "wait_for_exit": {
+          "provider_id": "local_value",
+          "source_id": "c44a2771-b4f1-5cc6-478c-904dc13db69b"
+        },
+        "arguments": {
+          "provider_id": "local_value",
+          "source_id": "b7862bf5-42c8-2d3a-421b-455a93d41563"
+        },
+        "working_directory": {
+          "provider_id": "local_value",
+          "source_id": "a12834d7-a4d1-2888-c2a5-c4eb524612a4"
+        },
+        "monitor_index": {
+          "provider_id": "local_value",
+          "source_id": "f0eceba5-8efb-766a-513b-511da15be5be"
+        },
+        "window_mode": {
+          "provider_id": "local_value",
+          "source_id": "4f6244ab-2c57-b6c7-8eae-322c303b148d"
+        },
+        "placement_mode": {
+          "provider_id": "local_value",
+          "source_id": "32276316-f857-bbe8-30f2-28383f798d25"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "edc98def-762f-1f84-85f0-c8f1769b1cb3"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "f341f523-8f25-a267-0736-99827113bd9a"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "show_text",
+      "id": "arbeitsplatz-8",
+      "inputs": {
+        "text_result": {
+          "provider_id": "local_value",
+          "source_id": "ed63cfc3-0d90-98eb-aefb-f5c4dd725d66"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "7ae90b39-a120-e8ed-cd84-4e1841ba1903"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "54ba136a-7fb4-89bd-8f54-3d4c2df95589"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "f0750639-9735-ae28-6277-d2eaf21775e9"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "8455f93c-296c-2213-2eb2-3a96d00e3223"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "1a5be7b9-2da2-0d65-f6f4-028813161558"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "a8c1752f-06b1-32e5-c3ec-b5f0c19a4391"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "39249bd7-cb7a-4497-96ab-feca22e60f78"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "552ae0eb-35cc-c6e3-96c3-b7fc99f38c1f"
+        }
+      },
+      "is_enabled": true
+    }
+  ],
+  "endSteps": [],
+  "endPhaseTimeoutSeconds": 10
+}

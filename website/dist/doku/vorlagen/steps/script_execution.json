@@ -1,0 +1,11 @@
+{
+  "type": "script_execution",
+  "settings": {
+    "script_path": "",
+    "arguments": "",
+    "wait_for_exit": false
+  },
+  "id": "ed6670e1-efaa-085a-1445-700c4fc2d2bb",
+  "inputs": {},
+  "is_enabled": true
+}

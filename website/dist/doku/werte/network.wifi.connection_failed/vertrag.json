@@ -1,0 +1,27 @@
+{
+  "appVersion": "1.6.1",
+  "contract": {
+    "id": "network.wifi.connection_failed",
+    "name": "WLAN-Verbindung fehlgeschlagen",
+    "fields": [
+      {
+        "id": "ssid",
+        "name": "WLAN-Name (SSID)",
+        "type": "Text",
+        "Required": false,
+        "defaultValue": null,
+        "options": []
+      }
+    ],
+    "result": null
+  },
+  "explanations": {
+    "purpose": "Ereignis: WLAN-Verbindung fehlgeschlagen. Die Automation reagiert auf eine beobachtete Änderung; ein Ereignis ersetzt keine aktuelle Zustandsabfrage. Wähle die Funktion im Windows-Auswahldialog; die verfügbaren Parameter stehen unten. Der Katalog verlangt keine erhöhte Ausführung; einzelne Systemzugriffe können dennoch Rechte voraussetzen.",
+    "example": "Wähle network.wifi.connection_failed als Windows-Ereignis einer deaktivierten Automation und ergänze die angebotenen Filter; teste das Ziel zunächst manuell.",
+    "errors": "Verfügbarkeit und Ereignisevidenz hängen von Windows-Version, installiertem Gerät/Dienst und Rechten ab. Die Abfrage ist ein zeitlicher Snapshot. Nur die im Katalog gesetzten Unterstützungsmerkmale verwenden: eine reine Änderungsfunktion liefert keinen eigenen Abfragevertrag, eine reine Abfrage ist kein Ereignistrigger. Bei Windows-Einstellungen den Erfolg und Fehlercode im Step-Ergebnis prüfen.",
+    "field.ssid": "Optionaler WLAN-Netzname zum Eingrenzen der dafür angebotenen WLAN-Ereignisse."
+  },
+  "template": null,
+  "screenshots": [],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

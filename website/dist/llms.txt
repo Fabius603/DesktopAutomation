@@ -1,0 +1,357 @@
+# DesktopAutomation
+
+Produktdokumentation für UI-Benutzer und Agenten.
+
+Entwicklungsstand 1.6.1 (Arbeitsbaum, 2026-10-08). Formatversionen: Job 4, Makro 3, Automation 1.
+
+- [Erste Schritte in der UI](/doku/erste-schritte/): Einen Ablauf erstellen, kontrolliert ausprobieren und anschließend automatisieren – ohne JSON bearbeiten zu müssen.
+- [Jobs und Abläufe](/doku/jobs/): Ein Job besteht aus drei Phasen. Reihenfolge, Blockstruktur und Werteverbindungen bestimmen gemeinsam, was ausgeführt wird.
+- [Werte verbinden](/doku/werte-verbinden/): Eine Eingabe enthält entweder einen direkten Wert, eine wiederverwendbare Variable, eine Geheimnisreferenz oder einen Ergebniswert eines anderen Steps. Anbieter, Typ und Anzahl müssen zum Verbraucher passen.
+- [Jobs und Konfigurationen als JSON](/doku/dateiformate/): Die App speichert Jobs, Makros und Automationen als getrennte UTF-8-JSON-Dateien. Diese Anleitung beschreibt den aktuellen Entwicklungsstand, nicht ein beliebiges älteres Release.
+- [Makros aufnehmen und bearbeiten](/doku/makros-bearbeiten/): Ein Makro führt eine geordnete Folge von Maus- und Tastaturbefehlen aus. Die Aufnahmeumgebung und die Zeiteinheiten sind Teil des Vertrags.
+- [Automationen einrichten](/doku/automationen-einrichten/): Ein Trigger beobachtet etwas. Die Startregeln entscheiden anschließend, ob der ausgewählte Job oder das Makro tatsächlich gestartet wird.
+- [Logs lesen und auswerten](/doku/logs-verstehen/): Logs unterscheiden den Start eines Ablaufs, seinen belegten Abschluss, fachliche Ergebnisse und die Vollständigkeit der gespeicherten Daten.
+- [Windows-Funktionen verwenden](/doku/windows-funktionen/): Der Windows-Katalog unterscheidet Ereignisse, typisierte Zustandsabfragen und Einstellungsänderungen. Eine Funktion unterstützt nur die im Katalog gesetzten Fähigkeiten.
+- [Dokumentation für Agenten](/doku/agenten/): Ein Agent kann diese Referenz ohne Browser lesen und daraus Dateien erstellen oder bestehende Konfigurationen bearbeiten. Die UI- und Dateianleitungen verwenden dieselben kanonischen Verträge.
+- [Fehler systematisch eingrenzen](/doku/fehlerbehebung/): Beginne beim ersten belegten Fehler und prüfe Quelle, fachliche Voraussetzungen und Startentscheidung getrennt.
+- [Version und Kompatibilität](/doku/kompatibilitaet/): Diese Referenz beschreibt den Repository-Entwicklungsstand 1.6.1 vom 8. Oktober 2026.
+
+- [Vollständige Referenz](/llms-full.txt)
+- [Verträge, Erklärungen und Serializer-Vorlagen](/doku/vertragsdaten.json)
+- [Illustrierte Beispielabläufe](/beispiele/)
+
+IDs und Enum-Schreibweisen aus den Verträgen übernehmen. Jobs/Makros verwenden type, Trigger $type. URI-kodierte step_result-Referenzen und inputs/localValues beachten. Defaultvorlagen sind keine getesteten ausführbaren Abläufe. Dateien fachlich validieren; aktive Automationen erst nach manuellem Test. Bei Loglücken keinen Erfolg erfinden.
+
+
+[Entwickler- und Agenten-Doku](/doku/entwickler/) · [Benutzer-Doku](/doku/benutzer/)
+
+## Referenzen gezielt lesen
+
+[Maschinenlesbarer Referenzindex](/doku/referenz-index.json). Jede Referenz besitzt eine einzelne Markdown-Datei und einen einzelnen JSON-Vertrag; für gezielte Änderungen genügt der betreffende Eintrag. Zusammengesetzte Binding-Schemas und vollständige Dateihüllen stehen im gesamten Vertragsdatensatz.
+
+- [Prozessstatus prüfen](/doku/steps/active_process/referenz.md) · steps · active_process
+- [Vordergrundfenster prüfen](/doku/steps/active_window/referenz.md) · steps · active_window
+- [Eingaben blockieren](/doku/steps/block_input/referenz.md) · steps · block_input
+- [Kamerabild aufnehmen](/doku/steps/camera_capture/referenz.md) · steps · camera_capture
+- [Farberkennung](/doku/steps/color_detection/referenz.md) · steps · color_detection
+- [Nächsten Durchlauf starten](/doku/steps/continue_job/referenz.md) · steps · continue_job
+- [Bildschirm aufnehmen](/doku/steps/desktop_duplication/referenz.md) · steps · desktop_duplication
+- [Dynamischen Bildbereich erstellen](/doku/steps/dynamic_roi/referenz.md) · steps · dynamic_roi
+- [Sonst](/doku/steps/else/referenz.md) · steps · else
+- [Sonst wenn](/doku/steps/else_if/referenz.md) · steps · else_if
+- [Ende wenn](/doku/steps/end_if/referenz.md) · steps · end_if
+- [Job beenden](/doku/steps/end_job/referenz.md) · steps · end_job
+- [Datei oder Ordner bearbeiten](/doku/steps/file_system_operation/referenz.md) · steps · file_system_operation
+- [Fenster anzeigen oder minimieren](/doku/steps/focus_process/referenz.md) · steps · focus_process
+- [Laufenden Prozess suchen](/doku/steps/get_process/referenz.md) · steps · get_process
+- [Wenn](/doku/steps/if/referenz.md) · steps · if
+- [Job ausführen](/doku/steps/job_execution/referenz.md) · steps · job_execution
+- [Bildmerkmale vergleichen](/doku/steps/keypoint_matching/referenz.md) · steps · keypoint_matching
+- [Punkt anklicken](/doku/steps/klick_on_point/referenz.md) · steps · klick_on_point
+- [3D-Ziel anklicken](/doku/steps/klick_on_point_3d/referenz.md) · steps · klick_on_point_3d
+- [Makro ausführen](/doku/steps/makro_execution/referenz.md) · steps · makro_execution
+- [Text erkennen](/doku/steps/ocr/referenz.md) · steps · ocr
+- [Punkte vergleichen](/doku/steps/point_comparison/referenz.md) · steps · point_comparison
+- [Bewegung vorhersagen](/doku/steps/predict_movement/referenz.md) · steps · predict_movement
+- [Bild speichern](/doku/steps/save_image/referenz.md) · steps · save_image
+- [Skript ausführen](/doku/steps/script_execution/referenz.md) · steps · script_execution
+- [Bild anzeigen](/doku/steps/show_image/referenz.md) · steps · show_image
+- [Auf Desktop anzeigen](/doku/steps/show_on_desktop/referenz.md) · steps · show_on_desktop
+- [Text auf Desktop anzeigen](/doku/steps/show_text/referenz.md) · steps · show_text
+- [Prozess starten](/doku/steps/start_process/referenz.md) · steps · start_process
+- [Bildvorlage erkennen](/doku/steps/template_matching/referenz.md) · steps · template_matching
+- [Prozess beenden](/doku/steps/terminate_process/referenz.md) · steps · terminate_process
+- [Warten](/doku/steps/timeout/referenz.md) · steps · timeout
+- [Eingaben freigeben](/doku/steps/unblock_input/referenz.md) · steps · unblock_input
+- [Benutzerauswahl abfragen](/doku/steps/user_choice/referenz.md) · steps · user_choice
+- [Video erstellen](/doku/steps/video_creation/referenz.md) · steps · video_creation
+- [Windows-Einstellung ändern](/doku/steps/windows_setting_change/referenz.md) · steps · windows_setting_change
+- [Windows-Zustand abfragen](/doku/steps/windows_state_query/referenz.md) · steps · windows_state_query
+- [Objekte erkennen](/doku/steps/yolo_detection/referenz.md) · steps · yolo_detection
+- [Datei- oder Ordnerereignis](/doku/automationen/file_system_event/referenz.md) · automationen · file_system_event
+- [Hotkey](/doku/automationen/hotkey/referenz.md) · automationen · hotkey
+- [Intervall](/doku/automationen/interval/referenz.md) · automationen · interval
+- [Einmalig](/doku/automationen/once_at/referenz.md) · automationen · once_at
+- [Prozess beendet](/doku/automationen/process_exited/referenz.md) · automationen · process_exited
+- [Prozess gestartet](/doku/automationen/process_started/referenz.md) · automationen · process_started
+- [Zeitplan](/doku/automationen/schedule/referenz.md) · automationen · schedule
+- [Windows-Systemereignis](/doku/automationen/system_event/referenz.md) · automationen · system_event
+- [Webhook](/doku/automationen/webhook/referenz.md) · automationen · webhook
+- [Fensterereignis](/doku/automationen/window_event/referenz.md) · automationen · window_event
+- [Windows-Ereignis](/doku/automationen/windows_event/referenz.md) · automationen · windows_event
+- [AutomationAction](/doku/automationen/AutomationAction/referenz.md) · automationen · AutomationAction
+- [AutomationRunPolicy](/doku/automationen/AutomationRunPolicy/referenz.md) · automationen · AutomationRunPolicy
+- [Tastenkombination](/doku/makros/key_combination/referenz.md) · makros · key_combination
+- [Taste drücken](/doku/makros/key_down/referenz.md) · makros · key_down
+- [Taste loslassen](/doku/makros/key_up/referenz.md) · makros · key_up
+- [Maustaste drücken](/doku/makros/mouse_down/referenz.md) · makros · mouse_down
+- [Maus absolut bewegen](/doku/makros/mouse_move_absolute/referenz.md) · makros · mouse_move_absolute
+- [Maus relativ bewegen](/doku/makros/mouse_move_relative/referenz.md) · makros · mouse_move_relative
+- [Maustaste loslassen](/doku/makros/mouse_up/referenz.md) · makros · mouse_up
+- [Mausrad bewegen](/doku/makros/mouse_wheel/referenz.md) · makros · mouse_wheel
+- [Text eingeben](/doku/makros/text_input/referenz.md) · makros · text_input
+- [Wartezeit](/doku/makros/timeout/referenz.md) · makros · timeout
+- [Aufnahme und Gruppen](/doku/makros/recording/referenz.md) · makros · recording
+- [LogEvent](/doku/logs/LogEvent/referenz.md) · logs · LogEvent
+- [LogContext](/doku/logs/LogContext/referenz.md) · logs · LogContext
+- [LogRun](/doku/logs/LogRun/referenz.md) · logs · LogRun
+- [LogStepSnapshot](/doku/logs/LogStepSnapshot/referenz.md) · logs · LogStepSnapshot
+- [LogTriggerSnapshot](/doku/logs/LogTriggerSnapshot/referenz.md) · logs · LogTriggerSnapshot
+- [LogOutcome](/doku/logs/LogOutcome/referenz.md) · logs · LogOutcome
+- [StepLogOutcome](/doku/logs/StepLogOutcome/referenz.md) · logs · StepLogOutcome
+- [ExecutionLogLevel](/doku/logs/ExecutionLogLevel/referenz.md) · logs · ExecutionLogLevel
+- [LogReadState](/doku/logs/LogReadState/referenz.md) · logs · LogReadState
+- [LogSource](/doku/logs/LogSource/referenz.md) · logs · LogSource
+- [LogArea](/doku/logs/LogArea/referenz.md) · logs · LogArea
+- [LogQuery](/doku/logs/LogQuery/referenz.md) · logs · LogQuery
+- [LogPage](/doku/logs/LogPage/referenz.md) · logs · LogPage
+- [LogStepExecution](/doku/logs/LogStepExecution/referenz.md) · logs · LogStepExecution
+- [LogAction](/doku/logs/LogAction/referenz.md) · logs · LogAction
+- [LogDiagnostic](/doku/logs/LogDiagnostic/referenz.md) · logs · LogDiagnostic
+- [AutomationTriggerContext](/doku/logs/AutomationTriggerContext/referenz.md) · logs · AutomationTriggerContext
+- [ExecutionLogKind](/doku/logs/ExecutionLogKind/referenz.md) · logs · ExecutionLogKind
+- [AccessDenied](/doku/logs/LOG-ACCESS-001/referenz.md) · logs · LOG-ACCESS-001
+- [AutomationDecision](/doku/logs/automation.decision/referenz.md) · logs · automation.decision
+- [FileUnavailable](/doku/logs/LOG-FILE-004/referenz.md) · logs · LOG-FILE-004
+- [IterationCompleted](/doku/logs/run.iteration-completed/referenz.md) · logs · run.iteration-completed
+- [Message](/doku/logs/diagnostic.message/referenz.md) · logs · diagnostic.message
+- [RunCompleted](/doku/logs/run.completed/referenz.md) · logs · run.completed
+- [RunStarted](/doku/logs/run.started/referenz.md) · logs · run.started
+- [RunState](/doku/logs/run.state/referenz.md) · logs · run.state
+- [StartRejected](/doku/logs/run.start-rejected/referenz.md) · logs · run.start-rejected
+- [StepBackgroundCancelled](/doku/logs/step.background-cancelled/referenz.md) · logs · step.background-cancelled
+- [StepBackgroundCompleted](/doku/logs/step.background-completed/referenz.md) · logs · step.background-completed
+- [StepBackgroundFailed](/doku/logs/step.background-failed/referenz.md) · logs · step.background-failed
+- [StepBackgroundStarted](/doku/logs/step.background-started/referenz.md) · logs · step.background-started
+- [StepCancelled](/doku/logs/step.cancelled/referenz.md) · logs · step.cancelled
+- [StepCompleted](/doku/logs/step.completed/referenz.md) · logs · step.completed
+- [StepFailed](/doku/logs/step.failed/referenz.md) · logs · step.failed
+- [StepOutput](/doku/logs/step.output/referenz.md) · logs · step.output
+- [StepPaths](/doku/logs/step.paths/referenz.md) · logs · step.paths
+- [StepSkipped](/doku/logs/step.skipped/referenz.md) · logs · step.skipped
+- [StepStarted](/doku/logs/step.started/referenz.md) · logs · step.started
+- [StorageGap](/doku/logs/storage.gap/referenz.md) · logs · storage.gap
+- [Trigger](/doku/logs/automation.trigger/referenz.md) · logs · automation.trigger
+- [Unexpected](/doku/logs/LOG-UNEXPECTED-001/referenz.md) · logs · LOG-UNEXPECTED-001
+- [ActiveProcessResult](/doku/werte/ActiveProcessResult/referenz.md) · werte · ActiveProcessResult
+- [ActiveWindowResult](/doku/werte/ActiveWindowResult/referenz.md) · werte · ActiveWindowResult
+- [AudioDevicesQueryResult](/doku/werte/AudioDevicesQueryResult/referenz.md) · werte · AudioDevicesQueryResult
+- [AudioVolumeQueryResult](/doku/werte/AudioVolumeQueryResult/referenz.md) · werte · AudioVolumeQueryResult
+- [CameraCaptureResult](/doku/werte/CameraCaptureResult/referenz.md) · werte · CameraCaptureResult
+- [ClipboardContentQueryResult](/doku/werte/ClipboardContentQueryResult/referenz.md) · werte · ClipboardContentQueryResult
+- [ColorDetectionResult](/doku/werte/ColorDetectionResult/referenz.md) · werte · ColorDetectionResult
+- [DesktopDuplicationResult](/doku/werte/DesktopDuplicationResult/referenz.md) · werte · DesktopDuplicationResult
+- [DeviceCollectionQueryResult](/doku/werte/DeviceCollectionQueryResult/referenz.md) · werte · DeviceCollectionQueryResult
+- [DynamicRoiResult](/doku/werte/DynamicRoiResult/referenz.md) · werte · DynamicRoiResult
+- [FileSystemOperationResult](/doku/werte/FileSystemOperationResult/referenz.md) · werte · FileSystemOperationResult
+- [FileSystemPathQueryResult](/doku/werte/FileSystemPathQueryResult/referenz.md) · werte · FileSystemPathQueryResult
+- [FocusProcessResult](/doku/werte/FocusProcessResult/referenz.md) · werte · FocusProcessResult
+- [ForegroundWindowQueryResult](/doku/werte/ForegroundWindowQueryResult/referenz.md) · werte · ForegroundWindowQueryResult
+- [GetProcessResult](/doku/werte/GetProcessResult/referenz.md) · werte · GetProcessResult
+- [InputControlResult](/doku/werte/InputControlResult/referenz.md) · werte · InputControlResult
+- [InputIdleQueryResult](/doku/werte/InputIdleQueryResult/referenz.md) · werte · InputIdleQueryResult
+- [JobExecutionResult](/doku/werte/JobExecutionResult/referenz.md) · werte · JobExecutionResult
+- [KeyPointMatchingResult](/doku/werte/KeyPointMatchingResult/referenz.md) · werte · KeyPointMatchingResult
+- [KlickOnPoint3DResult](/doku/werte/KlickOnPoint3DResult/referenz.md) · werte · KlickOnPoint3DResult
+- [KlickOnPointResult](/doku/werte/KlickOnPointResult/referenz.md) · werte · KlickOnPointResult
+- [MakroExecutionResult](/doku/werte/MakroExecutionResult/referenz.md) · werte · MakroExecutionResult
+- [MonitorCollectionQueryResult](/doku/werte/MonitorCollectionQueryResult/referenz.md) · werte · MonitorCollectionQueryResult
+- [NetworkConnectivityQueryResult](/doku/werte/NetworkConnectivityQueryResult/referenz.md) · werte · NetworkConnectivityQueryResult
+- [OcrResult](/doku/werte/OcrResult/referenz.md) · werte · OcrResult
+- [PointComparisonResult](/doku/werte/PointComparisonResult/referenz.md) · werte · PointComparisonResult
+- [PowerStatusQueryResult](/doku/werte/PowerStatusQueryResult/referenz.md) · werte · PowerStatusQueryResult
+- [PredictMovementResult](/doku/werte/PredictMovementResult/referenz.md) · werte · PredictMovementResult
+- [PrinterStatusQueryResult](/doku/werte/PrinterStatusQueryResult/referenz.md) · werte · PrinterStatusQueryResult
+- [ProcessRunningQueryResult](/doku/werte/ProcessRunningQueryResult/referenz.md) · werte · ProcessRunningQueryResult
+- [SaveImageResult](/doku/werte/SaveImageResult/referenz.md) · werte · SaveImageResult
+- [ScriptExecutionResult](/doku/werte/ScriptExecutionResult/referenz.md) · werte · ScriptExecutionResult
+- [SecurityStatusQueryResult](/doku/werte/SecurityStatusQueryResult/referenz.md) · werte · SecurityStatusQueryResult
+- [SessionStateQueryResult](/doku/werte/SessionStateQueryResult/referenz.md) · werte · SessionStateQueryResult
+- [ShowImageResult](/doku/werte/ShowImageResult/referenz.md) · werte · ShowImageResult
+- [ShowOnDesktopResult](/doku/werte/ShowOnDesktopResult/referenz.md) · werte · ShowOnDesktopResult
+- [ShowTextResult](/doku/werte/ShowTextResult/referenz.md) · werte · ShowTextResult
+- [StartProcessResult](/doku/werte/StartProcessResult/referenz.md) · werte · StartProcessResult
+- [StorageDrivesQueryResult](/doku/werte/StorageDrivesQueryResult/referenz.md) · werte · StorageDrivesQueryResult
+- [SystemLifecycleQueryResult](/doku/werte/SystemLifecycleQueryResult/referenz.md) · werte · SystemLifecycleQueryResult
+- [SystemSettingsQueryResult](/doku/werte/SystemSettingsQueryResult/referenz.md) · werte · SystemSettingsQueryResult
+- [TemplateMatchingResult](/doku/werte/TemplateMatchingResult/referenz.md) · werte · TemplateMatchingResult
+- [TerminateProcessResult](/doku/werte/TerminateProcessResult/referenz.md) · werte · TerminateProcessResult
+- [TimeoutResult](/doku/werte/TimeoutResult/referenz.md) · werte · TimeoutResult
+- [UnsupportedWindowsQueryResult](/doku/werte/UnsupportedWindowsQueryResult/referenz.md) · werte · UnsupportedWindowsQueryResult
+- [UserChoiceResult](/doku/werte/UserChoiceResult/referenz.md) · werte · UserChoiceResult
+- [VideoCreationResult](/doku/werte/VideoCreationResult/referenz.md) · werte · VideoCreationResult
+- [WindowsSettingChangeResult](/doku/werte/WindowsSettingChangeResult/referenz.md) · werte · WindowsSettingChangeResult
+- [WindowsUpdateStatusQueryResult](/doku/werte/WindowsUpdateStatusQueryResult/referenz.md) · werte · WindowsUpdateStatusQueryResult
+- [YOLODetectionResult](/doku/werte/YOLODetectionResult/referenz.md) · werte · YOLODetectionResult
+- [audio.default_input](/doku/werte/audio.default_input/referenz.md) · werte · audio.default_input
+- [audio.default_output](/doku/werte/audio.default_output/referenz.md) · werte · audio.default_output
+- [Audiogerät hinzugefügt](/doku/werte/audio.device.added/referenz.md) · werte · audio.device.added
+- [Audiogerät geändert](/doku/werte/audio.device.changed/referenz.md) · werte · audio.device.changed
+- [Audiogerät verbunden](/doku/werte/audio.device.connected/referenz.md) · werte · audio.device.connected
+- [Standard-Audiogerät geändert](/doku/werte/audio.device.default_changed/referenz.md) · werte · audio.device.default_changed
+- [Audiogerät getrennt](/doku/werte/audio.device.disconnected/referenz.md) · werte · audio.device.disconnected
+- [Audiogeräteeigenschaft geändert](/doku/werte/audio.device.property_changed/referenz.md) · werte · audio.device.property_changed
+- [Audiogerät entfernt](/doku/werte/audio.device.removed/referenz.md) · werte · audio.device.removed
+- [Audiogerätestatus geändert](/doku/werte/audio.device.state_changed/referenz.md) · werte · audio.device.state_changed
+- [Audiogeräte](/doku/werte/audio.devices/referenz.md) · werte · audio.devices
+- [audio.master_volume](/doku/werte/audio.master_volume/referenz.md) · werte · audio.master_volume
+- [audio.mute](/doku/werte/audio.mute/referenz.md) · werte · audio.mute
+- [Lautstärke und Stummschaltung](/doku/werte/audio.volume/referenz.md) · werte · audio.volume
+- [Lautstärke geändert](/doku/werte/audio.volume.changed/referenz.md) · werte · audio.volume.changed
+- [Lautstärke geändert](/doku/werte/audio.volume.level_changed/referenz.md) · werte · audio.volume.level_changed
+- [Audio stummgeschaltet](/doku/werte/audio.volume.muted/referenz.md) · werte · audio.volume.muted
+- [Stummschaltung aufgehoben](/doku/werte/audio.volume.unmuted/referenz.md) · werte · audio.volume.unmuted
+- [Bluetooth-Geräte](/doku/werte/bluetooth.devices/referenz.md) · werte · bluetooth.devices
+- [Bluetooth-Geräteliste geändert](/doku/werte/bluetooth.state.changed/referenz.md) · werte · bluetooth.state.changed
+- [Zwischenablage geändert](/doku/werte/clipboard.changed/referenz.md) · werte · clipboard.changed
+- [Zwischenablage geleert](/doku/werte/clipboard.cleared/referenz.md) · werte · clipboard.cleared
+- [Zwischenablageninhalt](/doku/werte/clipboard.content/referenz.md) · werte · clipboard.content
+- [Zwischenablageninhalt geändert](/doku/werte/clipboard.content_changed/referenz.md) · werte · clipboard.content_changed
+- [Dateien in Zwischenablage](/doku/werte/clipboard.files_changed/referenz.md) · werte · clipboard.files_changed
+- [Bild in Zwischenablage](/doku/werte/clipboard.image_changed/referenz.md) · werte · clipboard.image_changed
+- [Text in Zwischenablage](/doku/werte/clipboard.text_changed/referenz.md) · werte · clipboard.text_changed
+- [Hardwaregeräte](/doku/werte/device.hardware/referenz.md) · werte · device.hardware
+- [Hardwaregerät geändert](/doku/werte/device.hardware.changed/referenz.md) · werte · device.hardware.changed
+- [Hardwaregerät verbunden](/doku/werte/device.hardware.connected/referenz.md) · werte · device.hardware.connected
+- [Hardwaregerät getrennt](/doku/werte/device.hardware.disconnected/referenz.md) · werte · device.hardware.disconnected
+- [Hardwarekonfiguration aktualisiert](/doku/werte/device.hardware.updated/referenz.md) · werte · device.hardware.updated
+- [USB-Geräte](/doku/werte/device.usb/referenz.md) · werte · device.usb
+- [USB-Gerät geändert](/doku/werte/device.usb.changed/referenz.md) · werte · device.usb.changed
+- [USB-Gerät verbunden](/doku/werte/device.usb.connected/referenz.md) · werte · device.usb.connected
+- [USB-Gerät getrennt](/doku/werte/device.usb.disconnected/referenz.md) · werte · device.usb.disconnected
+- [Bildschirmkonfiguration geändert](/doku/werte/display.configuration.changed/referenz.md) · werte · display.configuration.changed
+- [Bildschirm verbunden](/doku/werte/display.connected/referenz.md) · werte · display.connected
+- [Bildschirm getrennt](/doku/werte/display.disconnected/referenz.md) · werte · display.disconnected
+- [display.mode](/doku/werte/display.mode/referenz.md) · werte · display.mode
+- [Angeschlossene Monitore](/doku/werte/display.monitors/referenz.md) · werte · display.monitors
+- [Bildschirmausrichtung geändert](/doku/werte/display.orientation_changed/referenz.md) · werte · display.orientation_changed
+- [display.primary](/doku/werte/display.primary/referenz.md) · werte · display.primary
+- [Hauptbildschirm geändert](/doku/werte/display.primary_changed/referenz.md) · werte · display.primary_changed
+- [Bildschirmauflösung geändert](/doku/werte/display.resolution_changed/referenz.md) · werte · display.resolution_changed
+- [Bildschirmeinstellungen geändert](/doku/werte/display.settings.changed/referenz.md) · werte · display.settings.changed
+- [Datei oder Ordner geändert](/doku/werte/filesystem.changed/referenz.md) · werte · filesystem.changed
+- [Datei oder Ordner erstellt](/doku/werte/filesystem.created/referenz.md) · werte · filesystem.created
+- [Datei oder Ordner gelöscht](/doku/werte/filesystem.deleted/referenz.md) · werte · filesystem.deleted
+- [Datei- oder Ordnerzustand](/doku/werte/filesystem.path/referenz.md) · werte · filesystem.path
+- [Datei oder Ordner umbenannt](/doku/werte/filesystem.renamed/referenz.md) · werte · filesystem.renamed
+- [Zeit seit letzter Eingabe](/doku/werte/input.idle/referenz.md) · werte · input.idle
+- [Leerlaufgrenze erreicht oder verlassen](/doku/werte/input.idle.changed/referenz.md) · werte · input.idle.changed
+- [Leerlaufgrenze erreicht](/doku/werte/input.idle.entered/referenz.md) · werte · input.idle.entered
+- [Leerlauf beendet](/doku/werte/input.idle.left/referenz.md) · werte · input.idle.left
+- [Netzwerkadresse geändert](/doku/werte/network.address.changed/referenz.md) · werte · network.address.changed
+- [Netzwerkverfügbarkeit geändert](/doku/werte/network.availability.changed/referenz.md) · werte · network.availability.changed
+- [Netzwerk verfügbar](/doku/werte/network.connected/referenz.md) · werte · network.connected
+- [Aktuelle Netzwerkverbindung](/doku/werte/network.connectivity/referenz.md) · werte · network.connectivity
+- [Netzwerk nicht verfügbar](/doku/werte/network.disconnected/referenz.md) · werte · network.disconnected
+- [network.vpn_connection](/doku/werte/network.vpn_connection/referenz.md) · werte · network.vpn_connection
+- [network.wifi_connection](/doku/werte/network.wifi_connection/referenz.md) · werte · network.wifi_connection
+- [WLAN-Schnittstelle hinzugefügt oder aktiviert](/doku/werte/network.wifi.adapter_added/referenz.md) · werte · network.wifi.adapter_added
+- [WLAN-Schnittstelle entfernt oder deaktiviert](/doku/werte/network.wifi.adapter_removed/referenz.md) · werte · network.wifi.adapter_removed
+- [WLAN zugeordnet](/doku/werte/network.wifi.associated/referenz.md) · werte · network.wifi.associated
+- [WLAN-Zuordnung wird aufgebaut](/doku/werte/network.wifi.associating/referenz.md) · werte · network.wifi.associating
+- [WLAN wird authentifiziert](/doku/werte/network.wifi.authenticating/referenz.md) · werte · network.wifi.authenticating
+- [WLAN-Autokonfiguration deaktiviert](/doku/werte/network.wifi.autoconfig_disabled/referenz.md) · werte · network.wifi.autoconfig_disabled
+- [WLAN-Autokonfiguration aktiviert](/doku/werte/network.wifi.autoconfig_enabled/referenz.md) · werte · network.wifi.autoconfig_enabled
+- [WLAN-Ereignis](/doku/werte/network.wifi.changed/referenz.md) · werte · network.wifi.changed
+- [WLAN verbunden](/doku/werte/network.wifi.connected/referenz.md) · werte · network.wifi.connected
+- [WLAN-Verbindung wird aufgebaut](/doku/werte/network.wifi.connecting/referenz.md) · werte · network.wifi.connecting
+- [WLAN-Verbindung fehlgeschlagen](/doku/werte/network.wifi.connection_failed/referenz.md) · werte · network.wifi.connection_failed
+- [WLAN-Verbindung getrennt](/doku/werte/network.wifi.disconnected/referenz.md) · werte · network.wifi.disconnected
+- [WLAN wird getrennt](/doku/werte/network.wifi.disconnecting/referenz.md) · werte · network.wifi.disconnecting
+- [WLAN-Netzwerk verfügbar](/doku/werte/network.wifi.network_available/referenz.md) · werte · network.wifi.network_available
+- [WLAN-Netzwerk nicht verfügbar](/doku/werte/network.wifi.network_unavailable/referenz.md) · werte · network.wifi.network_unavailable
+- [WLAN-Profil geändert](/doku/werte/network.wifi.profile_changed/referenz.md) · werte · network.wifi.profile_changed
+- [WLAN-Funkstatus geändert](/doku/werte/network.wifi.radio_state_changed/referenz.md) · werte · network.wifi.radio_state_changed
+- [WLAN-Roaming abgeschlossen](/doku/werte/network.wifi.roaming_completed/referenz.md) · werte · network.wifi.roaming_completed
+- [WLAN-Roaming gestartet](/doku/werte/network.wifi.roaming_started/referenz.md) · werte · network.wifi.roaming_started
+- [WLAN-Suche abgeschlossen](/doku/werte/network.wifi.scan_completed/referenz.md) · werte · network.wifi.scan_completed
+- [WLAN-Suche fehlgeschlagen](/doku/werte/network.wifi.scan_failed/referenz.md) · werte · network.wifi.scan_failed
+- [WLAN-Signalstärke geändert](/doku/werte/network.wifi.signal_quality_changed/referenz.md) · werte · network.wifi.signal_quality_changed
+- [notifications.focus_mode](/doku/werte/notifications.focus_mode/referenz.md) · werte · notifications.focus_mode
+- [personalization.theme](/doku/werte/personalization.theme/referenz.md) · werte · personalization.theme
+- [personalization.wallpaper](/doku/werte/personalization.wallpaper/referenz.md) · werte · personalization.wallpaper
+- [Netzteil angeschlossen](/doku/werte/power.ac_connected/referenz.md) · werte · power.ac_connected
+- [Netzteil getrennt](/doku/werte/power.ac_disconnected/referenz.md) · werte · power.ac_disconnected
+- [Akkustand geändert](/doku/werte/power.battery_level_changed/referenz.md) · werte · power.battery_level_changed
+- [Laden begonnen](/doku/werte/power.charging_started/referenz.md) · werte · power.charging_started
+- [Laden beendet](/doku/werte/power.charging_stopped/referenz.md) · werte · power.charging_stopped
+- [power.display_timeout](/doku/werte/power.display_timeout/referenz.md) · werte · power.display_timeout
+- [Energiemodus geändert](/doku/werte/power.mode.changed/referenz.md) · werte · power.mode.changed
+- [Standby beendet](/doku/werte/power.resumed/referenz.md) · werte · power.resumed
+- [power.scheme](/doku/werte/power.scheme/referenz.md) · werte · power.scheme
+- [power.sleep_timeout](/doku/werte/power.sleep_timeout/referenz.md) · werte · power.sleep_timeout
+- [Akku und Energiequelle](/doku/werte/power.status/referenz.md) · werte · power.status
+- [Energiestatus geändert](/doku/werte/power.status.changed/referenz.md) · werte · power.status.changed
+- [Standby gestartet](/doku/werte/power.suspended/referenz.md) · werte · power.suspended
+- [Drucker hinzugefügt](/doku/werte/printer.added/referenz.md) · werte · printer.added
+- [Druckerverbindung fehlgeschlagen](/doku/werte/printer.connection_failed/referenz.md) · werte · printer.connection_failed
+- [printer.default](/doku/werte/printer.default/referenz.md) · werte · printer.default
+- [Druckauftrag hinzugefügt](/doku/werte/printer.job.added/referenz.md) · werte · printer.job.added
+- [Druckauftrag geändert](/doku/werte/printer.job.changed/referenz.md) · werte · printer.job.changed
+- [Druckauftrag entfernt](/doku/werte/printer.job.deleted/referenz.md) · werte · printer.job.deleted
+- [Druckerwarteschlange geändert](/doku/werte/printer.queue.changed/referenz.md) · werte · printer.queue.changed
+- [Drucker entfernt](/doku/werte/printer.removed/referenz.md) · werte · printer.removed
+- [Druckerstatus oder Einstellungen geändert](/doku/werte/printer.settings_changed/referenz.md) · werte · printer.settings_changed
+- [Weiteres Druckerereignis](/doku/werte/printer.state.changed/referenz.md) · werte · printer.state.changed
+- [Druckerstatus](/doku/werte/printer.status/referenz.md) · werte · printer.status
+- [Prozess beendet](/doku/werte/process.exited/referenz.md) · werte · process.exited
+- [Läuft ein Prozess?](/doku/werte/process.running/referenz.md) · werte · process.running
+- [Prozess gestartet](/doku/werte/process.started/referenz.md) · werte · process.started
+- [Sicherheitseinstellung geändert](/doku/werte/security.settings.changed/referenz.md) · werte · security.settings.changed
+- [Windows-Sicherheit geändert](/doku/werte/security.state.changed/referenz.md) · werte · security.state.changed
+- [Windows-Sicherheitsstatus](/doku/werte/security.status/referenz.md) · werte · security.status
+- [Sicherheitsmaßnahme ausgeführt](/doku/werte/security.threat.action_taken/referenz.md) · werte · security.threat.action_taken
+- [Bedrohung erkannt](/doku/werte/security.threat.detected/referenz.md) · werte · security.threat.detected
+- [Konsolensitzung verbunden](/doku/werte/session.console_connected/referenz.md) · werte · session.console_connected
+- [Konsolensitzung getrennt](/doku/werte/session.console_disconnected/referenz.md) · werte · session.console_disconnected
+- [Sitzung gesperrt](/doku/werte/session.locked/referenz.md) · werte · session.locked
+- [Benutzer abgemeldet](/doku/werte/session.logged_off/referenz.md) · werte · session.logged_off
+- [Benutzer angemeldet](/doku/werte/session.logged_on/referenz.md) · werte · session.logged_on
+- [Remotesitzung verbunden](/doku/werte/session.remote_connected/referenz.md) · werte · session.remote_connected
+- [Remotesitzung getrennt](/doku/werte/session.remote_disconnected/referenz.md) · werte · session.remote_disconnected
+- [Aktuelle Windows-Sitzung](/doku/werte/session.state/referenz.md) · werte · session.state
+- [Windows-Sitzung geändert](/doku/werte/session.state.changed/referenz.md) · werte · session.state.changed
+- [Sitzung entsperrt](/doku/werte/session.unlocked/referenz.md) · werte · session.unlocked
+- [Laufwerk geändert](/doku/werte/storage.drive.changed/referenz.md) · werte · storage.drive.changed
+- [Laufwerk eingebunden](/doku/werte/storage.drive.mounted/referenz.md) · werte · storage.drive.mounted
+- [Laufwerk entfernt](/doku/werte/storage.drive.unmounted/referenz.md) · werte · storage.drive.unmounted
+- [Laufwerke und freier Speicher](/doku/werte/storage.drives/referenz.md) · werte · storage.drives
+- [Wechselmedium eingelegt](/doku/werte/storage.media.inserted/referenz.md) · werte · storage.media.inserted
+- [Wechselmedium entfernt](/doku/werte/storage.media.removed/referenz.md) · werte · storage.media.removed
+- [Systemlaufzeit](/doku/werte/system.lifecycle/referenz.md) · werte · system.lifecycle
+- [Abmelden oder Herunterfahren](/doku/werte/system.lifecycle.changed/referenz.md) · werte · system.lifecycle.changed
+- [Benutzer wird abgemeldet](/doku/werte/system.lifecycle.logoff/referenz.md) · werte · system.lifecycle.logoff
+- [Windows wird heruntergefahren](/doku/werte/system.lifecycle.shutdown/referenz.md) · werte · system.lifecycle.shutdown
+- [Zeit, Sprache und Darstellung](/doku/werte/system.settings/referenz.md) · werte · system.settings
+- [Systemeinstellung geändert](/doku/werte/system.settings.changed/referenz.md) · werte · system.settings.changed
+- [Farben geändert](/doku/werte/system.settings.colors_changed/referenz.md) · werte · system.settings.colors_changed
+- [Desktop-Einstellung geändert](/doku/werte/system.settings.desktop_changed/referenz.md) · werte · system.settings.desktop_changed
+- [Allgemeine Systemeinstellung geändert](/doku/werte/system.settings.general_changed/referenz.md) · werte · system.settings.general_changed
+- [Symbole geändert](/doku/werte/system.settings.icons_changed/referenz.md) · werte · system.settings.icons_changed
+- [Tastatureinstellung geändert](/doku/werte/system.settings.keyboard_changed/referenz.md) · werte · system.settings.keyboard_changed
+- [Region oder Sprache geändert](/doku/werte/system.settings.locale_changed/referenz.md) · werte · system.settings.locale_changed
+- [Menüeinstellung geändert](/doku/werte/system.settings.menu_changed/referenz.md) · werte · system.settings.menu_changed
+- [Mauseinstellung geändert](/doku/werte/system.settings.mouse_changed/referenz.md) · werte · system.settings.mouse_changed
+- [Energieeinstellung geändert](/doku/werte/system.settings.power_changed/referenz.md) · werte · system.settings.power_changed
+- [Bildschirmschoner geändert](/doku/werte/system.settings.screensaver_changed/referenz.md) · werte · system.settings.screensaver_changed
+- [Fenstereinstellung geändert](/doku/werte/system.settings.window_changed/referenz.md) · werte · system.settings.window_changed
+- [Systemzeit geändert](/doku/werte/system.time.changed/referenz.md) · werte · system.time.changed
+- [Systemuhr angepasst](/doku/werte/system.time.clock_adjusted/referenz.md) · werte · system.time.clock_adjusted
+- [Zeitzone geändert](/doku/werte/system.time.timezone_changed/referenz.md) · werte · system.time.timezone_changed
+- [Fenster geändert](/doku/werte/window.changed/referenz.md) · werte · window.changed
+- [Fenster geschlossen](/doku/werte/window.closed/referenz.md) · werte · window.closed
+- [Fenster in den Vordergrund gewechselt](/doku/werte/window.focused/referenz.md) · werte · window.focused
+- [Aktives Fenster](/doku/werte/window.foreground/referenz.md) · werte · window.foreground
+- [Fenster ausgeblendet](/doku/werte/window.hidden/referenz.md) · werte · window.hidden
+- [Fenster minimiert](/doku/werte/window.minimized/referenz.md) · werte · window.minimized
+- [Fenster verschoben oder skaliert](/doku/werte/window.moved_or_resized/referenz.md) · werte · window.moved_or_resized
+- [Fenster geöffnet](/doku/werte/window.opened/referenz.md) · werte · window.opened
+- [Fenster wiederhergestellt](/doku/werte/window.restored/referenz.md) · werte · window.restored
+- [Fenster angezeigt](/doku/werte/window.shown/referenz.md) · werte · window.shown
+- [Windows Update geändert](/doku/werte/windows_update.changed/referenz.md) · werte · windows_update.changed
+- [Update-Download gestartet](/doku/werte/windows_update.download_started/referenz.md) · werte · windows_update.download_started
+- [Update heruntergeladen](/doku/werte/windows_update.downloaded/referenz.md) · werte · windows_update.downloaded
+- [Update fehlgeschlagen](/doku/werte/windows_update.failed/referenz.md) · werte · windows_update.failed
+- [Update installiert](/doku/werte/windows_update.installed/referenz.md) · werte · windows_update.installed
+- [Update erfordert Neustart](/doku/werte/windows_update.restart_required/referenz.md) · werte · windows_update.restart_required
+- [Windows-Update-Status](/doku/werte/windows_update.status/referenz.md) · werte · windows_update.status

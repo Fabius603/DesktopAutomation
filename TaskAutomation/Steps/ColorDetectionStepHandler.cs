@@ -79,7 +79,7 @@ namespace TaskAutomation.Steps
                             r.BoundingBox.Value.Width,
                             r.BoundingBox.Value.Height)
                         : null;
-                    return new DetectionItem { Center = center, BoundingBox = box, Confidence = rawResult.Confidence };
+                    return new DetectionItem { Center = center, BoundingBox = box, Confidence = r.Confidence };
                 })
                 .ToList();
 

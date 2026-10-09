@@ -1,0 +1,22 @@
+{
+  "type": "video_creation",
+  "settings": {
+    "save_path": "",
+    "file_name": "output.mp4",
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "detections_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "overlay": {
+      "detection_results": [],
+      "text_results": []
+    }
+  },
+  "id": "2d39ad30-66ba-a116-67f8-f7ef96c0f247",
+  "inputs": {},
+  "is_enabled": true
+}

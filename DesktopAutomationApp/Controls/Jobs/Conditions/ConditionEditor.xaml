@@ -149,21 +149,22 @@
                                                  Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}"
                                                    Style="{StaticResource ConditionFieldLabel}"/>
-                                        <generated:GeneratedValueSourceInput DataContext="{Binding ComparisonField}"/>
-                                         <TextBlock Text="{Binding ComparisonValueValidationError}"
-                                                    FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsComparisonValueValid}" Value="False">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                        <Grid>
+                                            <generated:GeneratedValueSourceInput DataContext="{Binding ComparisonField}"/>
+                                            <Border BorderBrush="{DynamicResource App.Brush.Danger}" BorderThickness="1" CornerRadius="6" IsHitTestVisible="False"
+                                                    AutomationProperties.HelpText="{Binding ComparisonValueValidationError}"
+                                                    Visibility="{Binding IsComparisonValueValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ComparisonField.ShowsInputSourceSelector}" Value="True">
+                                                                <Setter Property="Margin" Value="0,0,32,0"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                        </Grid>
                                     </StackPanel>
                                 </controls:ResponsiveColumnsPanel>
                             </StackPanel>

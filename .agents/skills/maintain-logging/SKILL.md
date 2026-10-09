@@ -112,8 +112,9 @@ equal timestamps, stable pagination with live arrivals, final quality counts, br
 timeline states, privacy across disk/live/export, corrupted or inaccessible files, writer loss,
 retention, cancellation, and restart interruption when the respective behavior changes.
 Contract changes require round-trip and compatibility checks. Keep historical-log exclusion covered.
-Run the skill validator when editing this file and finish with the mandatory full repository gate:
+Run the skill validator when editing this file. Select final checks according to
+`../../instructions/testing.md` and use `../validate-repository/SKILL.md` for commands.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\eng\verify.ps1 -Mode Full
-```
+Also follow [website documentation maintenance](../../instructions/website-documentation.md):
+update affected explanations and examples in the same task, regenerate the reference, and run
+the `website-docs` verification check. Existing deferred explanations are not a waiver for new ones.

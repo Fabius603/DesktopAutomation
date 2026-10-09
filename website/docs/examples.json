@@ -1,0 +1,134 @@
+[
+  {
+    "id": "unterlagen",
+    "title": "Arbeitsunterlagen vorbereiten",
+    "description": "Wähle Rechnungen oder Notizen. Ein bedingter Ablauf kopiert die passenden Unterlagen, öffnet den Editor und verwendet deine Auswahl für die Rückmeldung.",
+    "trigger": "Tastenkombination",
+    "flow": [
+      {
+        "title": "Arbeitsart auswählen",
+        "description": "Die Benutzerauswahl liefert einen Textwert für den nächsten Step."
+      },
+      {
+        "title": "Passenden Zweig ausführen",
+        "description": "Bei „Rechnungen“ werden Rechnungen kopiert; sonst werden Notizen kopiert. Jeder Zweig öffnet den Editor."
+      },
+      {
+        "title": "Optionales Makro",
+        "description": "Das enthaltene Text-Makro ist im Job deaktiviert. Es kann nach bewusstem Fokussieren eines leeren Editorfensters separat ausprobiert werden."
+      },
+      {
+        "title": "Auswahl zurückmelden",
+        "description": "Die Textanzeige übernimmt das Label der gewählten Antwort aus dem ersten Step."
+      }
+    ],
+    "setup": [
+      "Beende die App und entpacke das ZIP. Kopiere Testdaten/Rechnungen und Testdaten/Notizen nach C:\\DesktopAutomation-Beispiele. Verwende für Ziele eigene neue Unterordner.",
+      "Kopiere jobs/*.json nach %APPDATA%\\DesktopAutomation\\Configs\\Job und automations/*.json nach %APPDATA%\\DesktopAutomation\\Configs\\Automation. Bei einem eigenen Datenprofil verwende dessen Configs-Ordner.",
+      "Starte die App neu und prüfe alle Pfade und den Monitor für Textanzeigen. Die Automation ist zunächst inaktiv. Probiere den Job manuell aus, bevor du die Automation aktivierst. Wiederholtes Kopieren kann gleichnamige Zieldateien ersetzen.",
+      "Kopiere zusätzlich makros/notiz.json nach %APPDATA%\\DesktopAutomation\\Configs\\Makro. Das Makro schreibt Text in das aktive Fenster: führe es nur mit einem leeren Editor im Vordergrund aus. Lass den Makro-Step im Job für den ersten Versuch deaktiviert.",
+      "Der beigefügte Hotkey ist Strg+Alt+U. Prüfe auf Konflikte, bevor du die Automation aktivierst."
+    ],
+    "bindings": [
+      [
+        "Benutzerauswahl",
+        "selected_value",
+        "Bedingung vergleicht mit „rechnung“"
+      ],
+      [
+        "Benutzerauswahl",
+        "selected_label",
+        "Textanzeige nach dem bedingten Block"
+      ]
+    ],
+    "result": "Ein Ordner mit den ausgewählten Testdateien, ein geöffnetes Editorfenster und die gewählte Antwort als Text auf dem Desktop. Bei abgebrochener Benutzerauswahl gelten die Einstellungen des Auswahl-Steps; prüfe den Verlauf."
+  },
+  {
+    "id": "sicherung",
+    "title": "Eingang mit Bestätigung sichern",
+    "description": "Eine Ordner-Automation startet eine Rückfrage. Nur bei Bestätigung kopiert der Job Rechnungen und Notizen in getrennte Sicherungsordner.",
+    "trigger": "Ordner-Ereignis",
+    "flow": [
+      {
+        "title": "Ordner überwachen",
+        "description": "Die inaktive Automation ist für neue TXT-Dateien im Rechnungsordner vorbereitet."
+      },
+      {
+        "title": "Sicherung bestätigen",
+        "description": "Die Auswahl „Sichern“ aktiviert den Kopierzweig."
+      },
+      {
+        "title": "Zwei Ordner kopieren",
+        "description": "Rechnungen und Notizen werden in getrennte Ziele kopiert; bei gesperrten Dateien sind Wiederholungsversuche konfiguriert."
+      },
+      {
+        "title": "Ergebnis prüfen",
+        "description": "Ohne Bestätigung erscheint nur eine Rückmeldung. Der Verlauf zeigt Ausführung und eventuelle Probleme."
+      }
+    ],
+    "setup": [
+      "Beende die App und entpacke das ZIP. Kopiere Testdaten/Rechnungen und Testdaten/Notizen nach C:\\DesktopAutomation-Beispiele. Verwende für Ziele eigene neue Unterordner.",
+      "Kopiere jobs/*.json nach %APPDATA%\\DesktopAutomation\\Configs\\Job und automations/*.json nach %APPDATA%\\DesktopAutomation\\Configs\\Automation. Bei einem eigenen Datenprofil verwende dessen Configs-Ordner.",
+      "Starte die App neu und prüfe alle Pfade und den Monitor für Textanzeigen. Die Automation ist zunächst inaktiv. Probiere den Job manuell aus, bevor du die Automation aktivierst. Wiederholtes Kopieren kann gleichnamige Zieldateien ersetzen.",
+      "Der überwachte Rechnungsordner muss existieren. Nach erfolgreichem manuellem Test kannst du die Automation aktivieren und eine neue TXT-Testdatei im Rechnungsordner anlegen.",
+      "Der Job verarbeitet die beiden fest konfigurierten Ordner. Er verwendet keinen Dateipfad aus dem Triggerereignis."
+    ],
+    "bindings": [
+      [
+        "Benutzerauswahl",
+        "selected_value",
+        "Bedingung vergleicht mit „ja“"
+      ],
+      [
+        "Datei-Steps",
+        "feste Quelle und festes Ziel",
+        "Beide Kopieraktionen im bestätigten Zweig"
+      ]
+    ],
+    "result": "Bei „Sichern“ enthalten Sicherung/Rechnungen und Sicherung/Notizen die Testdateien. Bei „Überspringen“ werden keine Dateien kopiert."
+  },
+  {
+    "id": "arbeitsplatz",
+    "title": "Arbeitsplatz nach Zeitplan",
+    "description": "Prüfe zunächst, ob der Editor schon läuft. Starte ihn bei Bedarf und bereite anschließend den Rechner vor – manuell oder an Werktagen nach Zeitplan.",
+    "trigger": "Zeitplan",
+    "flow": [
+      {
+        "title": "Prozessstatus abfragen",
+        "description": "Der erste Step prüft den Prozessnamen notepad."
+      },
+      {
+        "title": "Nur bei Bedarf starten",
+        "description": "Ist der Prozess nicht aktiv, wird der Editor gestartet. Im anderen Zweig wird der vorhandene Prozess gemeldet."
+      },
+      {
+        "title": "Rechner öffnen",
+        "description": "Ein weiterer Programm-Step startet calc.exe. Diese Aktion prüft keinen bestehenden Rechnerprozess."
+      },
+      {
+        "title": "Abschluss anzeigen",
+        "description": "Eine Textanzeige bestätigt das Ende des Ablaufs."
+      }
+    ],
+    "setup": [
+      "Beende die App und entpacke das ZIP. Kopiere Testdaten/Rechnungen und Testdaten/Notizen nach C:\\DesktopAutomation-Beispiele. Verwende für Ziele eigene neue Unterordner.",
+      "Kopiere jobs/*.json nach %APPDATA%\\DesktopAutomation\\Configs\\Job und automations/*.json nach %APPDATA%\\DesktopAutomation\\Configs\\Automation. Bei einem eigenen Datenprofil verwende dessen Configs-Ordner.",
+      "Starte die App neu und prüfe alle Pfade und den Monitor für Textanzeigen. Die Automation ist zunächst inaktiv. Probiere den Job manuell aus, bevor du die Automation aktivierst. Wiederholtes Kopieren kann gleichnamige Zieldateien ersetzen.",
+      "Der Zeitplan ist auf Montag bis Freitag um 08:30 Uhr vorbereitet. Passe ihn an deine Arbeitszeit an und aktiviere ihn erst nach dem manuellen Test.",
+      "Das Beispiel fokussiert keine vorhandenen Fenster und gibt keine Texte ein. Die Logik prüft den Editor, nicht das Rechnerprogramm."
+    ],
+    "bindings": [
+      [
+        "Prozessstatus",
+        "is_running",
+        "Bedingung vergleicht mit False"
+      ],
+      [
+        "Zeitplan-Automation",
+        "Job-ID",
+        "Startet genau den mitgelieferten Arbeitsplatz-Job"
+      ]
+    ],
+    "result": "Der Editor läuft und der Rechner wird gestartet. Im Job-Verlauf erkennst du, welcher Editor-Zweig ausgeführt wurde."
+  }
+]

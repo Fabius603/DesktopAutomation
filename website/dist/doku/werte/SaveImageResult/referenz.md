@@ -1,0 +1,292 @@
+## Werte und Ergebnisse: SaveImageResult
+
+ID: SaveImageResult
+Website: /doku/werte/SaveImageResult/
+
+### errors
+
+Ein konfigurierte Quelle hat noch nicht zwingend einen Wert geliefert. Prüfe den fachlichen Erfolgswert, fehlende optionale Eigenschaften und den Ausführungszustand des Produzenten. Nur DynamicRoi besitzt die dokumentierte Ausnahme für späteres Feedback; andere Verbraucher dürfen keine beliebigen Vorwärtsreferenzen verwenden.
+
+### example
+
+Eine Ergebnisreferenz verwendet provider_id=step_result und source_id=v1/<kodierte-Step-ID>/<kodierte-Ergebnis-ID>. Die Anleitung „Werte verbinden“ zeigt eine vollständige Verbindung. Prüfe Typ und Kardinalität vor der Verwendung in einer Bedingung oder Folgeaktion.
+
+### purpose
+
+Typisierter Ergebnisvertrag SaveImageResult. Wird von Bild speichern geliefert. Die stabilen Ergebnis-IDs unten sind unabhängig von CLR-Namen und UI-Übersetzungen. Wähle im Ergebnis-Auswahldialog eine kompatible Eigenschaft statt das ganze Objekt ungeprüft als Text zu verwenden.
+
+### result.file_name
+
+Name der erzeugten Datei ohne zwingend den ganzen Verzeichnispfad. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.file_path
+
+Pfad der erzeugten Bild-/Videodatei auf dem ausführenden Rechner. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.file_size_bytes
+
+Größe der gespeicherten Datei in Bytes. Einzelwert dieses Ergebnisses.
+
+### result.format
+
+Ausgabeformat der Bild-/Videodatei. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+
+### result.saved_at_utc
+
+UTC-Zeitpunkt der Speicherung/Finalisierung. Einzelwert dieses Ergebnisses.
+
+### result.width
+
+Breite des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "SaveImageResult",
+  "name": "SaveImageResult",
+  "result": {
+    "TypeName": "SaveImageResult",
+    "DisplayName": "SaveImageResult",
+    "Properties": [
+      {
+        "Name": "FilePath",
+        "DisplayName": "File Path",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "file_path",
+        "EnumDisplayNames": null,
+        "StableId": "file_path"
+      },
+      {
+        "Name": "FileName",
+        "DisplayName": "File Name",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "file_name",
+        "EnumDisplayNames": null,
+        "StableId": "file_name"
+      },
+      {
+        "Name": "Format",
+        "DisplayName": "Format",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "format",
+        "EnumDisplayNames": null,
+        "StableId": "format"
+      },
+      {
+        "Name": "Width",
+        "DisplayName": "Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "width",
+        "EnumDisplayNames": null,
+        "StableId": "width"
+      },
+      {
+        "Name": "Height",
+        "DisplayName": "Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "height",
+        "EnumDisplayNames": null,
+        "StableId": "height"
+      },
+      {
+        "Name": "FileSizeBytes",
+        "DisplayName": "File Size Bytes",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "file_size_bytes",
+        "EnumDisplayNames": null,
+        "StableId": "file_size_bytes"
+      },
+      {
+        "Name": "SavedAtUtc",
+        "DisplayName": "Saved At Utc",
+        "DataType": "DateTime",
+        "Description": "DateTime",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "saved_at_utc",
+        "EnumDisplayNames": null,
+        "StableId": "saved_at_utc"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "FilePath",
+        "DisplayName": "File Path",
+        "Property": {
+          "Name": "FilePath",
+          "DisplayName": "File Path",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "file_path",
+          "EnumDisplayNames": null,
+          "StableId": "file_path"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "FileName",
+        "DisplayName": "File Name",
+        "Property": {
+          "Name": "FileName",
+          "DisplayName": "File Name",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "file_name",
+          "EnumDisplayNames": null,
+          "StableId": "file_name"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Format",
+        "DisplayName": "Format",
+        "Property": {
+          "Name": "Format",
+          "DisplayName": "Format",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "format",
+          "EnumDisplayNames": null,
+          "StableId": "format"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Width",
+        "DisplayName": "Width",
+        "Property": {
+          "Name": "Width",
+          "DisplayName": "Width",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "width",
+          "EnumDisplayNames": null,
+          "StableId": "width"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Height",
+        "DisplayName": "Height",
+        "Property": {
+          "Name": "Height",
+          "DisplayName": "Height",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "height",
+          "EnumDisplayNames": null,
+          "StableId": "height"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "FileSizeBytes",
+        "DisplayName": "File Size Bytes",
+        "Property": {
+          "Name": "FileSizeBytes",
+          "DisplayName": "File Size Bytes",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "file_size_bytes",
+          "EnumDisplayNames": null,
+          "StableId": "file_size_bytes"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SavedAtUtc",
+        "DisplayName": "Saved At Utc",
+        "Property": {
+          "Name": "SavedAtUtc",
+          "DisplayName": "Saved At Utc",
+          "DataType": "DateTime",
+          "Description": "DateTime",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "saved_at_utc",
+          "EnumDisplayNames": null,
+          "StableId": "saved_at_utc"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+

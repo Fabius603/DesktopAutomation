@@ -1,0 +1,10 @@
+{
+  "$type": "webhook",
+  "Kind": "Webhook",
+  "hook_id": "d4fa91c4-b683-2c23-b89c-7ab50f8b606c",
+  "network_mode": "Offline",
+  "port": 17843,
+  "secret": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+  "online_base_url": "",
+  "kind": "Webhook"
+}

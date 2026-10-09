@@ -1,0 +1,9 @@
+{
+  "type": "block_input",
+  "settings": {
+    "safety_timeout_seconds": 30
+  },
+  "id": "c79b421d-88ca-12f3-f47f-cb78a41eab44",
+  "inputs": {},
+  "is_enabled": true
+}

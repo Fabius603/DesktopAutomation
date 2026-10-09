@@ -1,0 +1,42 @@
+{
+  "type": "point_comparison",
+  "settings": {
+    "mode": "Offset",
+    "match_requirement": "All",
+    "points": [
+      {
+        "source": "Manual",
+        "manual_x": 0,
+        "manual_y": 0,
+        "points_source": {
+          "provider_id": "",
+          "source_id": ""
+        }
+      }
+    ],
+    "offset_settings": {
+      "reference_source": "Manual",
+      "reference_x": 0,
+      "reference_y": 0,
+      "reference_points_source": {
+        "provider_id": "",
+        "source_id": ""
+      },
+      "offset_x": 10,
+      "offset_y": 10
+    },
+    "expression_settings": {
+      "expressions": [
+        {
+          "axis": "X",
+          "operator": "LessThan",
+          "value": 0
+        }
+      ],
+      "combine_mode": "And"
+    }
+  },
+  "id": "e82b1d75-e0de-5ff6-a44a-a5c26f839b7f",
+  "inputs": {},
+  "is_enabled": true
+}

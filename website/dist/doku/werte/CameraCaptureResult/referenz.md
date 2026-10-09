@@ -1,0 +1,962 @@
+## Werte und Ergebnisse: CameraCaptureResult
+
+ID: CameraCaptureResult
+Website: /doku/werte/CameraCaptureResult/
+
+### errors
+
+Ein konfigurierte Quelle hat noch nicht zwingend einen Wert geliefert. Prüfe den fachlichen Erfolgswert, fehlende optionale Eigenschaften und den Ausführungszustand des Produzenten. Nur DynamicRoi besitzt die dokumentierte Ausnahme für späteres Feedback; andere Verbraucher dürfen keine beliebigen Vorwärtsreferenzen verwenden.
+
+### example
+
+Eine Ergebnisreferenz verwendet provider_id=step_result und source_id=v1/<kodierte-Step-ID>/<kodierte-Ergebnis-ID>. Die Anleitung „Werte verbinden“ zeigt eine vollständige Verbindung. Prüfe Typ und Kardinalität vor der Verwendung in einer Bedingung oder Folgeaktion.
+
+### purpose
+
+Typisierter Ergebnisvertrag CameraCaptureResult. Wird von Kamerabild aufnehmen geliefert. Die stabilen Ergebnis-IDs unten sind unabhängig von CLR-Namen und UI-Übersetzungen. Wähle im Ergebnis-Auswahldialog eine kompatible Eigenschaft statt das ganze Objekt ungeprüft als Text zu verwenden.
+
+### result.bounds
+
+Ermitteltes Rechteck im Koordinatenraum des entsprechenden Ergebnisobjekts. Einzelwert dieses Ergebnisses.
+
+### result.bounds.bottom
+
+Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Einzelwert dieses Ergebnisses.
+
+### result.bounds.center
+
+Mittelpunkt einer einzelnen Erkennung in Pixeln. Einzelwert dieses Ergebnisses.
+
+### result.bounds.center.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+
+### result.bounds.center.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+
+### result.bounds.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+
+### result.bounds.is_empty
+
+Ob die Zwischenablage im abgefragten Kontext leer ist. Einzelwert dieses Ergebnisses.
+
+### result.bounds.left
+
+Linke Rechteckkante in Pixeln. Einzelwert dieses Ergebnisses.
+
+### result.bounds.location
+
+Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Einzelwert dieses Ergebnisses.
+
+### result.bounds.location.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+
+### result.bounds.location.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+
+### result.bounds.right
+
+Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Einzelwert dieses Ergebnisses.
+
+### result.bounds.top
+
+Obere Rechteckkante in Pixeln. Einzelwert dieses Ergebnisses.
+
+### result.bounds.width
+
+Breite des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+
+### result.bounds.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+
+### result.bounds.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+
+### result.capture_timestamp_utc
+
+UTC-Zeitpunkt des erfassten Bildes; bei wiederverwendeten Frames bleibt der ursprüngliche Zeitpunkt erhalten. Einzelwert dieses Ergebnisses.
+
+### result.frame_timestamp
+
+Monotoner Stopwatch/QPC-Zeitstempel des Frames. 0 bedeutet unbekannt; dies ist kein Datum in Millisekunden seit 1970. Einzelwert dieses Ergebnisses.
+
+### result.frame_version
+
+Laufzeit-Identität des Frames innerhalb seines Aufnahmeproduzenten. Cache-/Zeigeraktualisierungen sind keine neuen Desktop-Bildversionen; nicht zwischen unabhängigen Kameras/Monitorquellen vergleichen. Einzelwert dieses Ergebnisses.
+
+### result.has_image
+
+Ob die Zwischenablage ein Bild enthält. Daraus folgt nicht automatisch, dass ein Bild als persistierbares JSON-Literal vorliegt. Einzelwert dieses Ergebnisses.
+
+### result.image
+
+Laufzeit-Bildobjekt für Bildverbraucher. Es wird nicht als Bitmap-Payload in der Jobdatei gespeichert. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.is_fresh
+
+Ob die Aufnahme einen frischen Frame statt einer zwischengespeicherten Aufnahme geliefert hat. Einzelwert dieses Ergebnisses.
+
+### result.offset
+
+Pixelversatz der Bildquelle gegenüber dem globalen Desktop. Bei bildlokalen Punkten addieren, bevor sie global verwendet werden. Einzelwert dieses Ergebnisses.
+
+### result.offset.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+
+### result.offset.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "CameraCaptureResult",
+  "name": "CameraCaptureResult",
+  "result": {
+    "TypeName": "CameraCaptureResult",
+    "DisplayName": "CameraCaptureResult",
+    "Properties": [
+      {
+        "Name": "Image",
+        "DisplayName": "Image",
+        "DataType": "Image",
+        "Description": "Image, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "image",
+        "EnumDisplayNames": null,
+        "StableId": "image"
+      },
+      {
+        "Name": "Bounds",
+        "DisplayName": "Bounds",
+        "DataType": "Rectangle",
+        "Description": "Rectangle",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds",
+        "EnumDisplayNames": null,
+        "StableId": "bounds"
+      },
+      {
+        "Name": "Bounds.X",
+        "DisplayName": "Bounds / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.x",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.x"
+      },
+      {
+        "Name": "Bounds.Y",
+        "DisplayName": "Bounds / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.y",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.y"
+      },
+      {
+        "Name": "Bounds.Width",
+        "DisplayName": "Bounds / Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.width",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.width"
+      },
+      {
+        "Name": "Bounds.Height",
+        "DisplayName": "Bounds / Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.height",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.height"
+      },
+      {
+        "Name": "Bounds.Left",
+        "DisplayName": "Bounds / Left",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.left",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.left"
+      },
+      {
+        "Name": "Bounds.Top",
+        "DisplayName": "Bounds / Top",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.top",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.top"
+      },
+      {
+        "Name": "Bounds.Right",
+        "DisplayName": "Bounds / Right",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.right",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.right"
+      },
+      {
+        "Name": "Bounds.Bottom",
+        "DisplayName": "Bounds / Bottom",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.bottom",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.bottom"
+      },
+      {
+        "Name": "Bounds.IsEmpty",
+        "DisplayName": "Bounds / Is Empty",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.is_empty",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.is_empty"
+      },
+      {
+        "Name": "Bounds.Location",
+        "DisplayName": "Bounds / Location",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.location",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.location"
+      },
+      {
+        "Name": "Bounds.Location.X",
+        "DisplayName": "Bounds / Location / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.location.x",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.location.x"
+      },
+      {
+        "Name": "Bounds.Location.Y",
+        "DisplayName": "Bounds / Location / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.location.y",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.location.y"
+      },
+      {
+        "Name": "Bounds.Center",
+        "DisplayName": "Bounds / Center",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.center",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.center"
+      },
+      {
+        "Name": "Bounds.Center.X",
+        "DisplayName": "Bounds / Center / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.center.x",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.center.x"
+      },
+      {
+        "Name": "Bounds.Center.Y",
+        "DisplayName": "Bounds / Center / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounds.center.y",
+        "EnumDisplayNames": null,
+        "StableId": "bounds.center.y"
+      },
+      {
+        "Name": "Offset",
+        "DisplayName": "Offset",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "offset",
+        "EnumDisplayNames": null,
+        "StableId": "offset"
+      },
+      {
+        "Name": "Offset.X",
+        "DisplayName": "Offset / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "offset.x",
+        "EnumDisplayNames": null,
+        "StableId": "offset.x"
+      },
+      {
+        "Name": "Offset.Y",
+        "DisplayName": "Offset / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "offset.y",
+        "EnumDisplayNames": null,
+        "StableId": "offset.y"
+      },
+      {
+        "Name": "IsFresh",
+        "DisplayName": "Is Fresh",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "is_fresh",
+        "EnumDisplayNames": null,
+        "StableId": "is_fresh"
+      },
+      {
+        "Name": "CaptureTimestampUtc",
+        "DisplayName": "Capture Timestamp Utc",
+        "DataType": "DateTime",
+        "Description": "DateTime",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "capture_timestamp_utc",
+        "EnumDisplayNames": null,
+        "StableId": "capture_timestamp_utc"
+      },
+      {
+        "Name": "FrameVersion",
+        "DisplayName": "Frame Version",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "frame_version",
+        "EnumDisplayNames": null,
+        "StableId": "frame_version"
+      },
+      {
+        "Name": "FrameTimestamp",
+        "DisplayName": "Frame Timestamp",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "frame_timestamp",
+        "EnumDisplayNames": null,
+        "StableId": "frame_timestamp"
+      },
+      {
+        "Name": "HasImage",
+        "DisplayName": "Has Image",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "has_image",
+        "EnumDisplayNames": null,
+        "StableId": "has_image"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "Image",
+        "DisplayName": "Image",
+        "Property": {
+          "Name": "Image",
+          "DisplayName": "Image",
+          "DataType": "Image",
+          "Description": "Image, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "image",
+          "EnumDisplayNames": null,
+          "StableId": "image"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Bounds",
+        "DisplayName": "Bounds",
+        "Property": {
+          "Name": "Bounds",
+          "DisplayName": "Bounds",
+          "DataType": "Rectangle",
+          "Description": "Rectangle",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "bounds",
+          "EnumDisplayNames": null,
+          "StableId": "bounds"
+        },
+        "Children": [
+          {
+            "Segment": "X",
+            "DisplayName": "X",
+            "Property": {
+              "Name": "Bounds.X",
+              "DisplayName": "Bounds / X",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.x",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.x"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Y",
+            "DisplayName": "Y",
+            "Property": {
+              "Name": "Bounds.Y",
+              "DisplayName": "Bounds / Y",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.y",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.y"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Width",
+            "DisplayName": "Width",
+            "Property": {
+              "Name": "Bounds.Width",
+              "DisplayName": "Bounds / Width",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.width",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.width"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Height",
+            "DisplayName": "Height",
+            "Property": {
+              "Name": "Bounds.Height",
+              "DisplayName": "Bounds / Height",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.height",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.height"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Left",
+            "DisplayName": "Left",
+            "Property": {
+              "Name": "Bounds.Left",
+              "DisplayName": "Bounds / Left",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.left",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.left"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Top",
+            "DisplayName": "Top",
+            "Property": {
+              "Name": "Bounds.Top",
+              "DisplayName": "Bounds / Top",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.top",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.top"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Right",
+            "DisplayName": "Right",
+            "Property": {
+              "Name": "Bounds.Right",
+              "DisplayName": "Bounds / Right",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.right",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.right"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Bottom",
+            "DisplayName": "Bottom",
+            "Property": {
+              "Name": "Bounds.Bottom",
+              "DisplayName": "Bounds / Bottom",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.bottom",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.bottom"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "IsEmpty",
+            "DisplayName": "Is Empty",
+            "Property": {
+              "Name": "Bounds.IsEmpty",
+              "DisplayName": "Bounds / Is Empty",
+              "DataType": "Boolean",
+              "Description": "Boolean",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.is_empty",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.is_empty"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Location",
+            "DisplayName": "Location",
+            "Property": {
+              "Name": "Bounds.Location",
+              "DisplayName": "Bounds / Location",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.location",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.location"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "Bounds.Location.X",
+                  "DisplayName": "Bounds / Location / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Single",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounds.location.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounds.location.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "Bounds.Location.Y",
+                  "DisplayName": "Bounds / Location / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Single",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounds.location.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounds.location.y"
+                },
+                "Children": []
+              }
+            ]
+          },
+          {
+            "Segment": "Center",
+            "DisplayName": "Center",
+            "Property": {
+              "Name": "Bounds.Center",
+              "DisplayName": "Bounds / Center",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounds.center",
+              "EnumDisplayNames": null,
+              "StableId": "bounds.center"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "Bounds.Center.X",
+                  "DisplayName": "Bounds / Center / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Single",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounds.center.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounds.center.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "Bounds.Center.Y",
+                  "DisplayName": "Bounds / Center / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Single",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounds.center.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounds.center.y"
+                },
+                "Children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Segment": "Offset",
+        "DisplayName": "Offset",
+        "Property": {
+          "Name": "Offset",
+          "DisplayName": "Offset",
+          "DataType": "Point",
+          "Description": "Point",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "offset",
+          "EnumDisplayNames": null,
+          "StableId": "offset"
+        },
+        "Children": [
+          {
+            "Segment": "X",
+            "DisplayName": "X",
+            "Property": {
+              "Name": "Offset.X",
+              "DisplayName": "Offset / X",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "offset.x",
+              "EnumDisplayNames": null,
+              "StableId": "offset.x"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Y",
+            "DisplayName": "Y",
+            "Property": {
+              "Name": "Offset.Y",
+              "DisplayName": "Offset / Y",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "offset.y",
+              "EnumDisplayNames": null,
+              "StableId": "offset.y"
+            },
+            "Children": []
+          }
+        ]
+      },
+      {
+        "Segment": "IsFresh",
+        "DisplayName": "Is Fresh",
+        "Property": {
+          "Name": "IsFresh",
+          "DisplayName": "Is Fresh",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "is_fresh",
+          "EnumDisplayNames": null,
+          "StableId": "is_fresh"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "CaptureTimestampUtc",
+        "DisplayName": "Capture Timestamp Utc",
+        "Property": {
+          "Name": "CaptureTimestampUtc",
+          "DisplayName": "Capture Timestamp Utc",
+          "DataType": "DateTime",
+          "Description": "DateTime",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "capture_timestamp_utc",
+          "EnumDisplayNames": null,
+          "StableId": "capture_timestamp_utc"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "FrameVersion",
+        "DisplayName": "Frame Version",
+        "Property": {
+          "Name": "FrameVersion",
+          "DisplayName": "Frame Version",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "frame_version",
+          "EnumDisplayNames": null,
+          "StableId": "frame_version"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "FrameTimestamp",
+        "DisplayName": "Frame Timestamp",
+        "Property": {
+          "Name": "FrameTimestamp",
+          "DisplayName": "Frame Timestamp",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "frame_timestamp",
+          "EnumDisplayNames": null,
+          "StableId": "frame_timestamp"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "HasImage",
+        "DisplayName": "Has Image",
+        "Property": {
+          "Name": "HasImage",
+          "DisplayName": "Has Image",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "has_image",
+          "EnumDisplayNames": null,
+          "StableId": "has_image"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+

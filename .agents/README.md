@@ -13,6 +13,9 @@ the root `AGENTS.md` before using them.
 ## Skill routing
 
 Context-menu, overflow-menu, and selection changes also require `instructions/context-menus.md`.
+Visual changes also require `instructions/visual-design.md`.
+Changes affecting steps, values, automations, macros or logs also require
+`instructions/website-documentation.md`.
 
 - WPF UI or MVVM work: `skills/wpf-development/SKILL.md`
 - Windows Forms interop or WinForms work: `skills/winforms-development/SKILL.md`
@@ -25,3 +28,4 @@ Context-menu, overflow-menu, and selection changes also require `instructions/co
 - Localization changes: `skills/maintain-localization/SKILL.md`
 - Sustainable design decisions: `skills/record-decision/SKILL.md`
 - Final repository verification: `skills/validate-repository/SKILL.md`
+- Website and documentation screenshots: `skills/maintain-website-screenshots/SKILL.md`

@@ -119,12 +119,12 @@ public static class StepInputContractRegistry
         [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points) with
         {
             AllowedProviderIds = ReusableValueProviders,
-            AllowsDirectValue = true
+            LegacyAllowedProviderIds = new HashSet<string> { ValueProviderIds.LocalValue }
         }],
         [typeof(KlickOnPoint3DStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points) with
         {
             AllowedProviderIds = ReusableValueProviders,
-            AllowsDirectValue = true
+            LegacyAllowedProviderIds = new HashSet<string> { ValueProviderIds.LocalValue }
         }, OptionalReusable("origin", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(DynamicRoiStep)] = [
             Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles),

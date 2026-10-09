@@ -9,6 +9,40 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class KlickOnPoint3DStepHandlerTests
 {
+
+    [Fact]
+    public async Task SharedPointVariable_ExecutesWithoutDetectionMetadata()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Point,
+            Value = System.Text.Json.JsonSerializer.SerializeToNode(new PixelPoint(30, 20))
+        };
+        var macroExecutor = new RecordingMakroExecutor();
+        var context = new PipelineContextStub([variable]) { MakroExecutor = macroExecutor };
+        var step = new KlickOnPoint3DStep
+        {
+            Settings = new()
+            {
+                PointsSource = new()
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = variable.Id.ToString("D")
+                },
+                OriginX = 10,
+                OriginY = 10,
+                ClickType = "none",
+                MovementFactorX = 1,
+                MovementFactorY = 1
+            }
+        };
+        var result = Assert.IsType<KlickOnPoint3DResult>(await new KlickOnPoint3DStepHandler().ExecuteAsync(step, context, default));
+        Assert.True(result.Success);
+        Assert.Equal((20, 10), (result.AppliedDeltaX, result.AppliedDeltaY));
+        Assert.Single(macroExecutor.Macros);
+    }
+
     [Fact]
     public void ResolveGlobalOrigin_MonitorLocalCoordinatesIncludeNegativeMonitorOffset()
     {

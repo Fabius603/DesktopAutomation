@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using ImageHelperMethods;
 
 namespace ImageDetection.Algorithms.TemplateMatching
@@ -23,27 +24,28 @@ namespace ImageDetection.Algorithms.TemplateMatching
         private Rect _roi;
         private bool _useROI = false;
 
-        private readonly List<TemplateMatchModes> _allowedMatchModes = new List<TemplateMatchModes>
+        public static IReadOnlyList<TemplateMatchModes> SupportedModes { get; } = Array.AsReadOnly(new[]
         {
             TemplateMatchModes.CCoeffNormed,
             TemplateMatchModes.CCorrNormed,
             TemplateMatchModes.SqDiffNormed
-        };
+        });
 
         public TemplateMatching(TemplateMatchModes templateMatchMode)
         {
-            if (_allowedMatchModes.Contains(templateMatchMode))
+            if (SupportedModes.Contains(templateMatchMode))
             {
                 _templateMatchMode = templateMatchMode;
             }
             else
             {
-                throw new ArgumentException("Invalid template match mode. Allowed modes are: " + string.Join(", ", _allowedMatchModes), nameof(templateMatchMode));
+                throw new ArgumentException("Invalid template match mode. Allowed modes are: " + string.Join(", ", SupportedModes), nameof(templateMatchMode));
             }
         }
 
-        public IDetectionResult Detect(Mat rawSource)
+        public IDetectionResult Detect(Mat rawSource, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (_template == null)
                 throw new InvalidOperationException("Template not set or is empty. Call SetTemplate first.");
             if (rawSource == null)
@@ -59,7 +61,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
             {
                 bool useValidatedROI = _useROI && _roi.Width > 0 && _roi.Height > 0 &&
                                        _roi.X >= 0 && _roi.Y >= 0 &&
-                                       _roi.X + _roi.Width  <= sourceMat.Cols &&
+                                       _roi.X + _roi.Width <= sourceMat.Cols &&
                                        _roi.Y + _roi.Height <= sourceMat.Rows;
 
                 if (useValidatedROI)
@@ -82,7 +84,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
                 Cv2.MatchTemplate(imageForMatching, _template, resultMat, _templateMatchMode);
 
-                var all = DetectAllPoints(resultMat, currentRoiOffset);
+                var all = DetectAllPoints(resultMat, currentRoiOffset, cancellationToken);
 
                 if (all.Count == 0)
                     return new DetectionResult { Success = false };
@@ -99,7 +101,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
         }
 
-        private List<IDetectionResult> DetectAllPoints(Mat resultMat, OpenCvSharp.Point roiOffset)
+        private List<IDetectionResult> DetectAllPoints(Mat resultMat, OpenCvSharp.Point roiOffset, CancellationToken cancellationToken)
         {
             if (resultMat == null) return [];
 
@@ -122,10 +124,10 @@ namespace ImageDetection.Algorithms.TemplateMatching
                 if (!passes) return [];
 
                 double confidencePct = isSqDiff
-                    ? Math.Clamp((1.0 - score) * 100.0, 0, 100)
-                    : Math.Clamp(score * 100.0, 0, 100);
+                    ? Math.Clamp(1.0 - score, 0, 1)
+                    : Math.Clamp(score, 0, 1);
 
-                int cx = loc.X + _template.Width  / 2 + roiOffset.X;
+                int cx = loc.X + _template.Width / 2 + roiOffset.X;
                 int cy = loc.Y + _template.Height / 2 + roiOffset.Y;
                 var center = new System.Drawing.Point(cx, cy);
                 return [new DetectionResult
@@ -145,10 +147,11 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 Cv2.MinMaxLoc(work, out double minVal, out double maxVal,
                               out OpenCvSharp.Point minLoc, out OpenCvSharp.Point maxLoc);
 
-                double score   = isSqDiff ? minVal : maxVal;
+                double score = isSqDiff ? minVal : maxVal;
                 OpenCvSharp.Point loc = isSqDiff ? minLoc : maxLoc;
 
                 bool passes = isSqDiff
@@ -158,24 +161,24 @@ namespace ImageDetection.Algorithms.TemplateMatching
                 if (!passes) break;
 
                 double confidencePct = isSqDiff
-                    ? Math.Clamp((1.0 - score) * 100.0, 0, 100)
-                    : Math.Clamp(score * 100.0, 0, 100);
+                    ? Math.Clamp(1.0 - score, 0, 1)
+                    : Math.Clamp(score, 0, 1);
 
-                int cx = loc.X + _template.Width  / 2 + roiOffset.X;
+                int cx = loc.X + _template.Width / 2 + roiOffset.X;
                 int cy = loc.Y + _template.Height / 2 + roiOffset.Y;
-                var center  = new System.Drawing.Point(cx, cy);
-                var bbox    = ToRect(center, ClassConverter.ToDrawing(_templateSize));
+                var center = new System.Drawing.Point(cx, cy);
+                var bbox = ToRect(center, ClassConverter.ToDrawing(_templateSize));
 
                 results.Add(new DetectionResult
                 {
-                    Success     = true,
+                    Success = true,
                     CenterPoint = center,
                     BoundingBox = bbox,
-                    Confidence  = (float)confidencePct,
+                    Confidence = (float)confidencePct,
                 });
 
                 // Region um den Match auf neutralen Wert setzen (Suppression)
-                int r  = _suppressionRadius;
+                int r = _suppressionRadius;
                 int x0 = Math.Max(0, loc.X - r);
                 int y0 = Math.Max(0, loc.Y - r);
                 int x1 = Math.Min(work.Cols - 1, loc.X + r);
@@ -183,7 +186,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
                 var suppressRect = new Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
 
                 using var roi = new Mat(work, suppressRect);
-                roi.SetTo(isSqDiff ? Scalar.All(1.0) : Scalar.All(0.0));
+                roi.SetTo(isSqDiff ? Scalar.All(double.PositiveInfinity) : Scalar.All(double.NegativeInfinity));
             }
 
             return results;
@@ -209,7 +212,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
         /// <summary>
         /// Effizienter Bitmap-Overload für Template Matching - vermeidet unnötige Konvertierungen
         /// </summary>
-        public IDetectionResult Detect(Bitmap bitmap)
+        public IDetectionResult Detect(Bitmap bitmap, CancellationToken cancellationToken = default)
         {
             if (bitmap == null)
             {
@@ -229,7 +232,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
                 _useROI = false;
                 try
                 {
-                    var result = Detect(croppedMat);
+                    var result = Detect(croppedMat, cancellationToken);
                     OffsetResult(result, _roi.X, _roi.Y);
                     return result;
                 }
@@ -237,7 +240,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
 
             using var mat = bitmap.ToMat();
-            return Detect(mat);
+            return Detect(mat, cancellationToken);
         }
 
         private static void OffsetResult(IDetectionResult result, int offsetX, int offsetY)
@@ -261,19 +264,19 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
         public void SetTemplateMatchMode(TemplateMatchModes templateMatchMode)
         {
-            if (_allowedMatchModes.Contains(templateMatchMode))
+            if (SupportedModes.Contains(templateMatchMode))
             {
                 _templateMatchMode = templateMatchMode;
             }
             else
             {
-                throw new ArgumentException("Invalid template match mode. Allowed modes are: " + string.Join(", ", _allowedMatchModes), nameof(templateMatchMode));
+                throw new ArgumentException("Invalid template match mode. Allowed modes are: " + string.Join(", ", SupportedModes), nameof(templateMatchMode));
             }
         }
 
         public void SetThreshold(double threshold)
         {
-            if (threshold < 0 || threshold > 1)
+            if (!double.IsFinite(threshold) || threshold < 0 || threshold > 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
             }
@@ -301,7 +304,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
         public void SetTemplate(string templatePath)
         {
-            if(templatePath == _templatePath)
+            if (templatePath == _templatePath)
             {
                 return; // No need to set the same template again.
             }
@@ -368,7 +371,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
         protected virtual void Dispose(bool disposing)
         {
-             _template?.Dispose();
+            _template?.Dispose();
         }
 
         ~TemplateMatching()

@@ -1,0 +1,24 @@
+{
+  "type": "user_choice",
+  "settings": {
+    "title": "",
+    "question": "",
+    "description": "",
+    "desktopIndex": 0,
+    "options": [
+      {
+        "id": "c4de30c6-f016-2700-00a7-c656a7abcf11",
+        "label": "",
+        "value": ""
+      },
+      {
+        "id": "5c562fe4-9360-401a-e540-39a24df5f2aa",
+        "label": "",
+        "value": ""
+      }
+    ]
+  },
+  "id": "50a7ffc1-3f4c-06a1-4d31-b5461fe898cb",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -44,6 +44,15 @@ public sealed class ValueReferenceSourceCatalog
         Reset(variables, providerSources);
     }
 
+    private ValueReferenceSourceCatalog(ValueReferenceSourceCatalog owner, IEnumerable<SourceStepItem> additionalSources)
+    {
+        Sources = owner.Sources.Concat(additionalSources).DistinctBy(source => source.StepId).ToArray();
+        JobVariables = owner.JobVariables;
+        ProviderSources = owner.ProviderSources;
+    }
+
+    internal ValueReferenceSourceCatalog WithAdditionalSources(IEnumerable<SourceStepItem> sources) => new(this, sources);
+
     public void Reset(
         IReadOnlyList<JobVariable>? variables,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)

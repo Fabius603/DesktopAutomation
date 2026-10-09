@@ -15,8 +15,7 @@ internal static class StepInputMaterializer
         var draft = definition.CreateDraft(source);
         var overlay = StepInputValueResolver.Apply(source, definition, draft, reference =>
         {
-            var read = ValueReferenceResolver.Resolve(results, reference);
-            if (!read.IsSuccess) throw new InvalidOperationException(read.Error);
+            var read = ReadConfiguredReference(source, definition, results, reference);
             return (true, ValueReferenceResolver.ToJsonNode(read.Value));
         }, fields, requireResolved: true);
         if (overlay.Error is not null) throw new InvalidOperationException(overlay.Error);
@@ -33,8 +32,7 @@ internal static class StepInputMaterializer
         var draft = original.Clone();
         var overlay = StepInputValueResolver.Apply(source, definition, draft, reference =>
         {
-            var read = ValueReferenceResolver.Resolve(results, reference);
-            if (!read.IsSuccess) throw new InvalidOperationException(read.Error);
+            var read = ReadConfiguredReference(source, definition, results, reference);
             return (true, ValueReferenceResolver.ToJsonNode(read.Value));
         }, requireResolved: true);
         if (overlay.Error is not null) throw new InvalidOperationException(overlay.Error);
@@ -66,7 +64,21 @@ internal static class StepInputMaterializer
                 ?? throw new InvalidOperationException($"Für die Eingabe '{input.ContractId}' fehlt der Backend-Vertrag.");
             var resolved = ValueReferenceResolver.Resolve(results, input.Binding);
             if (!resolved.IsSuccess)
+            {
+                if (resolved.Status == RuntimeValueReadStatus.SourceUnavailable
+                    && input.Binding.TryGetStepResult(out var reference)
+                    && results.GetResultContract(reference.StepId) is { } sourceContract
+                    && StepResultMetadata.TryGetProperty(sourceContract, input.Binding, out var sourceProperty)
+                    && contract.Accepts(sourceProperty))
+                {
+                    // ROI feedback has a defined first-iteration fallback. Only its own
+                    // persistent geometry state may be reused across iterations.
+                    if (input.ContractId == "dynamicRoi" && sourceContract.TypeName == nameof(DynamicRoiResult)) continue;
+                    if (contract.MissingValuePolicy == MissingValuePolicy.SkipStep)
+                        throw new StepInputUnavailableException(input.ContractId);
+                }
                 throw new InvalidOperationException(resolved.Error ?? $"Die Eingabe '{input.ContractId}' konnte nicht aufgelöst werden.");
+            }
             if (resolved.Descriptor is not { } descriptor || !contract.AcceptsSource(Provider(input.Binding), descriptor.ToResultProperty(), IsLegacyDirect(input.Binding, results)))
                 throw new InvalidOperationException($"Die aufgelöste Eingabe '{input.ContractId}' besitzt nicht den erwarteten Typ.");
         }
@@ -93,7 +105,7 @@ internal static class StepInputMaterializer
 
         ResultPropertyDescriptor Read(ResultBinding binding)
         {
-            var read = ValueReferenceResolver.Resolve(results, binding);
+            var read = ReadConfiguredReference(step, definition, results, binding);
             if (!read.IsSuccess || read.Descriptor is null)
                 throw new InvalidOperationException(read.Error ?? "StepValidation.Invalid");
             return read.Descriptor.ToResultProperty();
@@ -127,6 +139,26 @@ internal static class StepInputMaterializer
                 ValidateChildren(child, schema.ItemSchemaId, $"{path}.{index}");
             }
         }
+    }
+
+    private static ResolvedValueReference ReadConfiguredReference(JobStep step, IStepDefinition definition,
+        IJobResultStore results, ResultBinding binding)
+    {
+        var read = ValueReferenceResolver.Resolve(results, binding);
+        if (read.IsSuccess) return read;
+        var field = definition.Descriptor.Fields.FirstOrDefault(candidate =>
+            ReferenceEquals(ValueBindingTree.Find(step.Inputs, candidate.Id), binding));
+        if (field is not null && read.Status == RuntimeValueReadStatus.SourceUnavailable
+            && binding.TryGetStepResult(out var reference)
+            && results.GetResultContract(reference.StepId) is { } sourceContract
+            && StepResultMetadata.TryGetProperty(sourceContract, binding, out var property))
+        {
+            var contract = StepInputContractRegistry.Resolve(step.GetType(), field);
+            if (contract.MissingValuePolicy == MissingValuePolicy.SkipStep
+                && contract.AcceptsSource(ValueProviderIds.StepResult, property))
+                throw new StepInputUnavailableException(field.Id);
+        }
+        throw new InvalidOperationException(read.Error);
     }
 
     private static string Provider(ResultBinding binding) => binding.HasProviderReference

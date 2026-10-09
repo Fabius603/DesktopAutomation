@@ -11,6 +11,12 @@ namespace TaskAutomation.Tests.TestDoubles;
 internal sealed class JobExecutorTestBuilder
 {
     private readonly List<Job> _jobs = [];
+    private readonly List<Makro> _makros = [];
+    private IMakroExecutor _makroExecutor = new NoOpMakroExecutor();
+    public JobExecutorTestBuilder WithMakros(IMakroExecutor executor, params Makro[] makros)
+    { _makroExecutor = executor; _makros.AddRange(makros); return this; }
+    private Lazy<TaskAutomation.Orchestration.IJobLauncher>? _launcher;
+    public JobExecutorTestBuilder WithLauncher(Lazy<TaskAutomation.Orchestration.IJobLauncher> launcher) { _launcher = launcher; return this; }
     private IExecutionLogService? _logOverride;
     private Microsoft.Extensions.Logging.ILogger<JobExecutor> _logger = NullLogger<JobExecutor>.Instance;
     public JobExecutorTestBuilder WithLogger(Microsoft.Extensions.Logging.ILogger<JobExecutor> logger) { _logger = logger; return this; }
@@ -24,6 +30,9 @@ internal sealed class JobExecutorTestBuilder
     public StubUserChoiceService UserChoices { get; } = new();
     public StubSecretStore Secrets { get; } = new();
     public RecordingYoloManager Yolo { get; } = new();
+    public IDesktopCaptureService DesktopCapture { get; set; } = new NoOpDesktopCaptureService();
+    public IOcrService Ocr { get; set; } = new NoOpOcrService();
+    public Func<int, int, int, ImageCapture.Video.IVideoRecorder>? VideoRecorderFactory { get; set; }
     public NoOpRecordingIndicator RecordingIndicator { get; } = new();
 
     public JobExecutorTestBuilder WithJobs(params Job[] jobs) { _jobs.AddRange(jobs); return this; }
@@ -37,22 +46,23 @@ internal sealed class JobExecutorTestBuilder
         var executor = new JobExecutor(
             _logger,
             new InMemoryRepository<Job>(_jobs),
-            new InMemoryRepository<Makro>(),
-            new NoOpMakroExecutor(),
+            new InMemoryRepository<Makro>(_makros),
+            _makroExecutor,
             Scripts,
             RecordingIndicator,
             Yolo,
             new NoOpImageDisplayService(),
             Overlay,
-            new NoOpDesktopCaptureService(),
+            DesktopCapture,
             new NoOpCameraCaptureService(),
-            new NoOpOcrService(),
+            Ocr,
             _logOverride ?? Logs,
             Delay,
             WindowsStates,
             UserChoices,
+            lazyLauncher: _launcher,
             windowsSettingService: WindowsSettings,
-            secretStore: Secrets);
+            secretStore: Secrets, videoRecorderFactory: VideoRecorderFactory);
         await executor.ReloadJobsAsync();
         await executor.ReloadMakrosAsync();
         return executor;

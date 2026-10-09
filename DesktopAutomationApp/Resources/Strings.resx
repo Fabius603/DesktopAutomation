@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     Microsoft ResX Schema
@@ -724,7 +724,7 @@
     <value>Keine Konfiguration erforderlich. Beendet den vorherigen Wenn-/Sonst-wenn-/Sonst-Block.</value>
   </data>
   <data name="Ui.Step.Settings.EndJobDescription" xml:space="preserve">
-    <value>Beendet den Job sofort – nachfolgende Steps und weitere Wiederholungen werden nicht mehr ausgeführt.</value>
+    <value>Beendet die Hauptphase. Bereits gestartete Skripte und Unterjobs werden vor den optionalen Steps im Bereich „Beim Beenden“ abgewartet.</value>
   </data>
   <data name="Ui.Step.Settings.SkipEndSteps" xml:space="preserve">
     <value>Steps im Bereich „Bei Job-Ende“ überspringen</value>
@@ -1723,7 +1723,7 @@ Fehlercode: {3}</value>
     <value>Zeigt konfigurierbaren Text auf dem Desktop an.</value>
   </data>
   <data name="Step.Description.EndJob" xml:space="preserve">
-    <value>Beendet den aktuellen Job sofort.</value>
+    <value>Beendet die Hauptphase des aktuellen Jobs und führt anschließend die optionalen Steps im Bereich „Beim Beenden“ aus.</value>
   </data>
   <data name="Step.Description.ContinueJob" xml:space="preserve"><value>Beendet den aktuellen Durchlauf und fährt beim ersten Haupt-Step fort.</value></data>
   <data name="Step.Description.BlockInput" xml:space="preserve"><value>Blockiert physische Maus- und Tastatureingaben vorübergehend.</value></data>
@@ -3782,4 +3782,5 @@ Step: {8} / {9}</value></data>
   <data name="Ui.Navigation.Expand" xml:space="preserve"><value>Navigation ausklappen</value></data>
   <data name="Ui.Job.Steps.Inspector.Collapse" xml:space="preserve"><value>Step-Inspektor einklappen</value></data>
   <data name="Ui.Job.Steps.Inspector.Expand" xml:space="preserve"><value>Step-Inspektor ausklappen</value></data>
+  <data name="Enum.JobExecutionState.WaitingForChildren" xml:space="preserve"><value>Wartet auf gestartete Ausführungen</value></data>
 </root>

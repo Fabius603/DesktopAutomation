@@ -1,0 +1,7 @@
+{
+  "$type": "interval",
+  "Kind": "Interval",
+  "interval": "00:15:00",
+  "start_immediately": true,
+  "kind": "Interval"
+}

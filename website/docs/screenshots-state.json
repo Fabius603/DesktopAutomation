@@ -1,0 +1,337 @@
+{
+  "startseite": {
+    "source": "1f8fecca7af2870635c383acd38c7cf2181e94fe7ea530a53796f377a09550aa",
+    "image": "5348cff05f6c3513a0b0ce82edce90e6187d44ef1138f8197501e1504a6f57fa",
+    "reviewed": true
+  },
+  "unterlagen": {
+    "source": "a26f799fb3763a0c5bd08673c1b0e1a68d78f66e409168bc56030126175bfae3",
+    "image": "3c1aba83b471aec9ee12e12dd0532eb7b50fe5574df20c2c3b4323723e39ba4b",
+    "reviewed": true
+  },
+  "sicherung": {
+    "source": "f754dd03074de2ad336cb34e60c296b6175e17a496cb6a4b4be91eea477bca66",
+    "image": "e8d747d2cf1e00fcb180b6c2bc42f591f9773dfacebcd8b9adbc12628ddae9e7",
+    "reviewed": true
+  },
+  "arbeitsplatz": {
+    "source": "7d9be275bb5114b476b57390fc61a0f6baa8b49eb4e4d15e791078d09d5ba14c",
+    "image": "4c609e1ec87ef0d69d8538f2129b5615f933f2ff7f9ad847b9e6405a647929cd",
+    "reviewed": true
+  },
+  "automationen": {
+    "source": "73b1401962a8403bbc0239628e0acc3f259e56e10acdfad51185ce3c55542c33",
+    "image": "a661db2344a2cd5868dfe1edf8f063185c5d725b7970deb0145b8403f45fb195",
+    "reviewed": true
+  },
+  "verlauf": {
+    "source": "add6d4f02c9578b9edebbadbb35fb85bb91fa9be434794f196aec36af46764c2",
+    "image": "6c8b14ed6f6d41447f3e2bc8d0ddb8731c55552f99366df9a098d166aafb9722",
+    "reviewed": true
+  },
+  "makro-editor": {
+    "source": "d6f6acecc5d92daeaf376a29d7ac8b633920fcd04ede9494ee2e1119ba614042",
+    "image": "b74aaa48b4401debc7afd3c4493f1ebb7df1a03be2c6f37019092995497f1faf",
+    "reviewed": true
+  },
+  "step-auswahl": {
+    "source": "53192fba3bbdf30418d4a0f1a9e79d960ea84ad5d7a97827b85d830edd93116d",
+    "image": "512d34131079cd2b8dfb6288a5547b832dcfe88f30208788d92039bfc063b5a3",
+    "reviewed": true
+  },
+  "step-bedingung": {
+    "source": "74de1e4c819c372bdbdce0c1a2872467f5308f8a6e573332a346538fdb7cd87f",
+    "image": "3080e249db7e906a5d434f1a4da202280f2fc207f47cfdf227797dfccf923682",
+    "reviewed": true
+  },
+  "step-dateien": {
+    "source": "349dca2eedcf51691ac7201c6d06123e541231ebadd81997883083a07a535ec2",
+    "image": "c4eda8b9d2d5779174ced069fb00c4c3eb1d5f65a23b65016b624955decb7ef4",
+    "reviewed": true
+  },
+  "step-programmstart": {
+    "source": "afa7411571e00453f5199cdab9497d5ce0b918d371aeb904f2ff06071bd28606",
+    "image": "4e2e297040715f61b8a8d6f267d1e1a6128b335215b12bfbbd0c5a0bd1606d3e",
+    "reviewed": true
+  },
+  "step-makro": {
+    "source": "08af0ca577902b5c6a639e2e81f7ebd0d76ce4ae9bfe7e09abd4dfdb604ec0f6",
+    "image": "c3d6c9e0133e1cb6aef30c4c2ff4b91823441e4b3b0f1625488eb03062009b4e",
+    "reviewed": true
+  },
+  "step-werte": {
+    "source": "7b19c64c209efd5a102727ea6103af53eaac2a0bc1382f0219826b46b2a2c0a6",
+    "image": "683cf0e2391b2ae1ac9fa7475777bab681032cc27e33c3cbad5d6946ba1a8234",
+    "reviewed": true
+  },
+  "step-prozessstatus": {
+    "source": "42d3f21f2094709a99183ab1cb4f21ca2c166cac23a46596f868c0e54b5e16f8",
+    "image": "c8a35635c0958f46b82342ed89db039c3808c1dbc5221918a8e2993b6eba7267",
+    "reviewed": true
+  },
+  "automation-hotkey": {
+    "source": "62f1a9ae35f50b91a5c34624479423bea8f92fb0e658aa711c930d842a0b57e2",
+    "image": "a78fb1f728cd1fd0c503dade03b1c6c3820962c74af3c2c14d54284133c153e6",
+    "reviewed": true
+  },
+  "automation-ordner": {
+    "source": "d0053738a23ee9180f9fde926346989e48e9ac0cbb496a0a4a29e931c418e5c3",
+    "image": "9f216948d114d93bf76f1911b443b25146536a83643df44abb99df494d03a1bd",
+    "reviewed": true
+  },
+  "makro-text": {
+    "source": "d2684bd381d28e39994c3ef6555bbb4cc0e9c0532bd6e83485df51f009a6a702",
+    "image": "fe65153b84e985490ca9b34f3510229cfec27173c14f3305125b6d8e7c28fef2",
+    "reviewed": true
+  },
+  "makro-wartezeit": {
+    "source": "97240ad7f6f73e4ae3e33c418da80c046532717ab41bf87fcdeac19d95591c54",
+    "image": "5d146c4edea344e0e5ccad5baa1afc481f7710e731c73b76c2a95d1a1d72cbbb",
+    "reviewed": true
+  },
+  "ref-step-active-window": {
+    "source": "faf0869798f34915e6091b44eb097ab43e5f0808c8c9bf0590b210db455276c1",
+    "image": "555aac53e89baea70ace267bccd87db4dc7bbbad18cc54535ea1202a69b7f617",
+    "reviewed": true
+  },
+  "ref-step-block-input": {
+    "source": "bd16d42dfcb0b4a5a0c22f91f32cbfad7c456e8f7630860aa561555a7173d88b",
+    "image": "e70f8390edbb86405d37d4f9de265f14dd005ea90d9c066ed552c2be45a088ed",
+    "reviewed": true
+  },
+  "ref-step-camera-capture": {
+    "source": "d5cf3a9394236f2cdfbeb029f28367bcfeb4ebbdbc535d462a816d3e5d422448",
+    "image": "532cfaa752f46baca71f58f1d1a9180b27569a78e07c6b97e205955b37d9b3bf",
+    "reviewed": true
+  },
+  "ref-step-color-detection": {
+    "source": "73e58635eb79928b21c6c072165bdab2977bea83c06372738e67ad902e1694ae",
+    "image": "3a8d89d1e3da00712fc804a3bc515aa608bf2e2b3b806c8d55b92dd71ed5011d",
+    "reviewed": true
+  },
+  "ref-step-continue-job": {
+    "source": "e52d4e16fc8b9c20d0aada363d285c66bd7d9fc41f946467f4bbdbf3eff13f0e",
+    "image": "9552084ae6c44be4bd301fc4503ac04d7b9cf9c4f011b02ebec8c76a4d7e0625",
+    "reviewed": true
+  },
+  "ref-step-desktop-duplication": {
+    "source": "8408b4f2a53da9d77c6370e83b10426ece70fabade7acb0ba9f3d51793ce2c51",
+    "image": "d461deafe262ccd2d357a219c8119372467502359c8e73dbe3e03627004bd72b",
+    "reviewed": true
+  },
+  "ref-step-dynamic-roi": {
+    "source": "78e3883cea8462ee819326db61b2294fba2e43660d5edd4a044e2505766b8540",
+    "image": "382843ab18f350cc969f4eef7f6a4068ccad614b1a5390e330b6457df443b380",
+    "reviewed": true
+  },
+  "ref-step-else": {
+    "source": "2964ee42eae7e78fcc76ddd248e7210a51d11cebffc377878bc1cf6d059731b2",
+    "image": "bfe34057d6cf48e8a0f094e9bf13744ac44071ffa5cfb0fcf3799bbabe223865",
+    "reviewed": true
+  },
+  "ref-step-else-if": {
+    "source": "a148926bdd0f0174a4f631d51621037e75ff697f473358049fd91e3b53e5f1f8",
+    "image": "8e9bb0e40c5f4deb5053ff44bc041823ca30839b76ad091f60743030b952eb41",
+    "reviewed": true
+  },
+  "ref-step-end-if": {
+    "source": "457f7180064aa23447c8b368494800f81e35d8658395e8c3ff419bd8072f60ce",
+    "image": "17f0ea3a6dc4e1be555f7fcda85059b515b1cc456c76694cb60bcb9b8625393f",
+    "reviewed": true
+  },
+  "ref-step-end-job": {
+    "source": "fb5a10f98d89a3e59f7e3e7d4908b4f6eb2894e0c335eb39968bf6e5aab555e8",
+    "image": "9971fb10f00286c4863e9315fd8c224a1a4d4fa75940801a7bb8687d63d61458",
+    "reviewed": true
+  },
+  "ref-step-focus-process": {
+    "source": "b6d73ae59bb8460e02799a5e9362fb0d2f1a8c057b41dc753201e41d21831581",
+    "image": "e5adeefbe5ecd964061927d143dab0ebacd20f3f79da081d52eca3232f91e975",
+    "reviewed": true
+  },
+  "ref-step-get-process": {
+    "source": "ec906a25fd70e24dca188e787e404c49912f92b73767eab7e4d0de3562d0690c",
+    "image": "468a2fe4db383dd90ac6e0a726ae8877a908795803c2f3881c0794aefd95c38a",
+    "reviewed": true
+  },
+  "ref-step-job-execution": {
+    "source": "7d8f044051e9af4dd44cf51c9d9545678734772511b026233fea1248d0304581",
+    "image": "7005fc0d769b8335fe9128e3290b43e0b3f6c21c846594d5b4227866d4cc22a0",
+    "reviewed": true
+  },
+  "ref-step-keypoint-matching": {
+    "source": "fdc85a8f0d3158b439fa9301db2c349b7733528a793805bc33b5bb5237bb0e53",
+    "image": "2360c8eb7143afb70cc8e50ff6afdcba26f68e6648a1d238b29b2f4cccedb3e5",
+    "reviewed": true
+  },
+  "ref-step-klick-on-point": {
+    "source": "bc29eb3c49f812b0f93391ec9c0cc475a96b3fe06d948c07183ca051787429ba",
+    "image": "d7d4860963a1e7112fec8bd0d1b57255f38c02468b0c17b89e2c7027437a2b76",
+    "reviewed": true
+  },
+  "ref-step-klick-on-point-3d": {
+    "source": "5fd29c07ade178ed0f5d4db249f66141aac8da537a1706f73f4d7c97614e4ef1",
+    "image": "0017d32a20301015341dad1efc7845f014dfbe12e2e12e4287ab78019ef5a444",
+    "reviewed": true
+  },
+  "ref-step-ocr": {
+    "source": "34d82fc5990a3c6a323090d3555de1e18e3f0d4565426f2c09d542f64d78a9e3",
+    "image": "9c2f92baa65a0ac71b72381c7debcc62cdd344802ad6ec31aa00117f3df052dd",
+    "reviewed": true
+  },
+  "ref-step-point-comparison": {
+    "source": "ac725b58ae661281a6c0b587b169c06cb18e0f417aa120331cd34201be254552",
+    "image": "4f135ffb08d6d151ef7e4a461aeb967fc362abfed72dc9b80006e82e3fe08953",
+    "reviewed": true
+  },
+  "ref-step-predict-movement": {
+    "source": "c9dab9f124903cd2b4bc1db89ffab373b4be21fd3734a9f3b3b6faa8e7886b0e",
+    "image": "19dc3df0df5599525527e9b0c7f48cabfab5d3abc1e5e8c05d2e47377eaeb4df",
+    "reviewed": true
+  },
+  "ref-step-save-image": {
+    "source": "f27b7c20a52a2b19b9b5585fe9bc3e8cd0dafc176917299778b1d057c131c3c5",
+    "image": "99f160a354ba3c34f29219d91b827be088ec3bfa0ed6d42cf7c06f633884c8b4",
+    "reviewed": true
+  },
+  "ref-step-script-execution": {
+    "source": "1c2e9e05ef0697dc98ae96388a80245f0e6eb6e1fd40d8c771311b57881a6a29",
+    "image": "6afe40b486b2189c6f29a27880c1ed08691d3df2aa45e590315c492d1e305973",
+    "reviewed": true
+  },
+  "ref-step-show-image": {
+    "source": "fd313d9421892d2af6dd9f66d8c84f67529b73350365c8f205f3820d1997a22b",
+    "image": "415d77a5d97ec02c3efb5d33793f1a7d748d73a5dd119e57b43e4b4bca073121",
+    "reviewed": true
+  },
+  "ref-step-show-on-desktop": {
+    "source": "687cc925e80b94786e88713018d9dd4d537d1ffe96cf68bf061e6ed738130527",
+    "image": "15424bf894d181071106430e5cfba15998d395285af36d3b12ce6f17c5e2b444",
+    "reviewed": true
+  },
+  "ref-step-template-matching": {
+    "source": "0f10ffb37b8d15bf1120bb065687f11ed0dffb5dfe2aea9544184c89862e653c",
+    "image": "2a1c60a92a9d9eb12418472242acc8ed371fdd280fb85c2c670e7d2245e4a3ff",
+    "reviewed": true
+  },
+  "ref-step-terminate-process": {
+    "source": "cb24bb188ff17bec12a86f3f464b8b3bbb76766dcc86be71579a20317d208e3a",
+    "image": "aaef5cd2a6bb834d097527621102f856e3d38e8d403d826ae4143c7951da166e",
+    "reviewed": true
+  },
+  "ref-step-timeout": {
+    "source": "ffe91aa31d9445b6df05ca2c78f1580225b06b33f0d8657a9b4c03af314fcda9",
+    "image": "0f426cc7955263b5a5cfee10b9916037b2c49348801391d9b0fdf2ca1602f65b",
+    "reviewed": true
+  },
+  "ref-step-unblock-input": {
+    "source": "86133a2a26a8995c6899181514a0bbeef96cb8e4e6a94dad89944e73137378d2",
+    "image": "c9fefa6188eae013a39bc850be7cad7bd0e52fac20f46803974c1282d2e233c8",
+    "reviewed": true
+  },
+  "ref-step-video-creation": {
+    "source": "d74dd5e76685dbcbf4d093b137529df5b4c561403c73fc57055aeb233d73226b",
+    "image": "ac965a001154deba446f111edcfdda6e775ca400907475e98c57d1cf23763e0a",
+    "reviewed": true
+  },
+  "ref-step-windows-setting-change": {
+    "source": "c4c93d6e98d9cfb7a3a1f09d46dc4a7e7ed044af389d0e3db8fad3fc49204c24",
+    "image": "cc1aea5f5e84bcf5cc6490b25ba6a19e623f4f53b85d5c77af46044ade8ae910",
+    "reviewed": true
+  },
+  "ref-step-windows-state-query": {
+    "source": "0eb6a62f082cd7f8bb44c8a2ae3d4d41ae02a2a7fab08dc71d072c09ee24d6ba",
+    "image": "3e551e807e1c89025adc88ecf44dbfc03cc1e7234e8c43cc376af4736d36718c",
+    "reviewed": true
+  },
+  "ref-step-yolo-detection": {
+    "source": "acbd01b641e13691d2bf8f1c948d5264d46e30acd2904d90347543e762f767da",
+    "image": "4e75f98f7d9be3bed89596d3857e32d327a341d41847e7cb568c98763cd7a1d2",
+    "reviewed": true
+  },
+  "ref-macro-key-down": {
+    "source": "4971d4fb20b5d850f44c6e663f0ac551b6cd3ab0cd2f1930a2793533fcc5b8b2",
+    "image": "6480a80ed86568547eb63db85613991a5cb796ce19b40846e934e5da3f8db6f9",
+    "reviewed": true
+  },
+  "ref-macro-key-up": {
+    "source": "f7cae2f659bd0e80025ad7cc23629c49de7a429cf71c9a521d76df0b4acbb87e",
+    "image": "645e9e249da294c34262201ea03d09bf4c68e1e0a513568bd48b17575a3ab582",
+    "reviewed": true
+  },
+  "ref-macro-mouse-down": {
+    "source": "aabbeca470dd4bf291beff38153fbb6803b0c6272261af8fca518bd94e9256c3",
+    "image": "14ae2ce16085026458cc4680b42ae2fe4e96fcb2add4a11aa4f59872191179c1",
+    "reviewed": true
+  },
+  "ref-macro-mouse-move-absolute": {
+    "source": "32794589b3163c0e4f82beeab2a051caa4046d6ebb64f040ec1bab094901ffa0",
+    "image": "4f7298a36273296aa62780f77f18dbf5fb1e47214b9b5e114a41fb2de61e0f45",
+    "reviewed": true
+  },
+  "ref-macro-mouse-move-relative": {
+    "source": "f87ff1f7aa4493128769540f35046af81740e089b9c2112fb58699a8ebe4a342",
+    "image": "8f939c0070ed89d79e5a341401f64d16e3ff0b43453329a4c4c62c9658df77a7",
+    "reviewed": true
+  },
+  "ref-macro-mouse-up": {
+    "source": "155b08231721df26328cabef80df89d9ddc95c6ad87ea548d8819389ed695b9d",
+    "image": "4ce1ac2963524b0a366f2c4714f38c1344f2441ad4587f14aeab31f00c782504",
+    "reviewed": true
+  },
+  "ref-macro-mouse-wheel": {
+    "source": "3d1e5f3f093dbb512fc5241bb69e50aeea58133d6e5e9bec4e34e6857678558a",
+    "image": "a7d2cf5318dc6ef22140d23c31c1205757c4932d41ad61c432b9ace0b4c68104",
+    "reviewed": true
+  },
+  "ref-auto-interval": {
+    "source": "ee1006d98139f76df98fe89d2db97996f70d2cb867dcd5cef89238e9db5cfe0e",
+    "image": "80ee4d372e0820fef1360bc80ecdea52e74c7870a17a34fa3c3b597dcb39446a",
+    "reviewed": true
+  },
+  "ref-auto-once-at": {
+    "source": "7fe8a068ae41f9fe625a94d10dcad5e98cb057d8b5178c54135fd79454b7cdf3",
+    "image": "8a40a0be6114835c988d96d728c73898a7aac2d7c2a3e349a6c7a280d3bd2234",
+    "reviewed": true
+  },
+  "ref-auto-process-exited": {
+    "source": "d4487e10e71ccbecf6a6680910c687384f606b4675808ec6795200413cea127e",
+    "image": "42dd600beb615d91e39deb2ac4ebc1487b398b14100681f63c6c56d40b28af9f",
+    "reviewed": true
+  },
+  "ref-auto-process-started": {
+    "source": "71ebccec56686b1421572a7e1f8eb3e8ceaa8ff937b38ab1d00bc89176695664",
+    "image": "5d58d5738c12e34ca05f0e0573080c8e0e0c7c210a6cc409da8204d01af98b8f",
+    "reviewed": true
+  },
+  "ref-auto-system-event": {
+    "source": "b95c85c47a0baaab24d6fe674b4c9049a4ebfd3c1a390b6a834715e4ff336436",
+    "image": "d380a5c166457331cd35be7c28cc05799c56bcaf8b75419d1e6e23ed289b5557",
+    "reviewed": true
+  },
+  "ref-auto-webhook": {
+    "source": "29814a38b8e6633a15ce7bebef43842a1b280583f73acd835b740b61ade8ea71",
+    "image": "4d84792150189f14c0aae14de224e3a7a8365f7744055cecb0cda5f470ee7666",
+    "reviewed": true
+  },
+  "ref-auto-window-event": {
+    "source": "9f5b658d833ce9e86c668caa92641e00ee12d960364a9ec9301b48097261b26b",
+    "image": "27cf162aad73f9478806bc66fe883ca918937df239eefba35f7a21c97af515e2",
+    "reviewed": true
+  },
+  "ref-auto-windows-event": {
+    "source": "419684f5f469aee4aff1d9a5e2babcb99fcfe9baa081054612a966a7b2946cdd",
+    "image": "687a1348893db96333dd644a2b80a95c19b10a4b8c2f71e54e7f4eb5693a204e",
+    "reviewed": true
+  },
+  "ref-step-file-system-operation-rename": {
+    "source": "3145f1196dc0b36a255dfd8108a9e73deceb7904d4190560594b7233066bd26d",
+    "image": "99e545c88de7a041008e5d4b16417afaabcb7ccd819710d27e4162cc8fdf2324",
+    "reviewed": true
+  },
+  "ref-step-file-system-operation-delete": {
+    "source": "56bd67de2f3be984f5d4ae214f041dc7ff44117a1884a4dbca50e2671d842f10",
+    "image": "e9100a99c94299a82554548e397f816ae845bd58e596909b23a4e8138c0d4620",
+    "reviewed": true
+  }
+}

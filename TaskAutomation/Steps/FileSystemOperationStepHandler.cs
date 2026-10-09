@@ -8,6 +8,20 @@ namespace TaskAutomation.Steps;
 public sealed class FileSystemOperationStepHandler
     : JobStepHandler<FileSystemOperationStep, FileSystemOperationResult>
 {
+    private readonly Func<string, string, bool> _sameVolume;
+    private readonly Action<string>? _beforePublish;
+    private readonly Action<string>? _deleteSource;
+
+    public FileSystemOperationStepHandler() : this(null, null, null) { }
+    internal FileSystemOperationStepHandler(Func<string, string, bool>? sameVolume,
+        Action<string>? beforePublish, Action<string>? deleteSource)
+    {
+        _sameVolume = sameVolume ?? ((source, target) => string.Equals(
+            Path.GetPathRoot(source), Path.GetPathRoot(target), StringComparison.OrdinalIgnoreCase));
+        _beforePublish = beforePublish;
+        _deleteSource = deleteSource;
+    }
+
     protected override Task<FileSystemOperationResult> ExecuteCoreAsync(
         FileSystemOperationStep step,
         IStepPipelineContext context,
@@ -16,7 +30,7 @@ public sealed class FileSystemOperationStepHandler
         return Task.Run(() => ExecuteCore(step, context, cancellationToken), cancellationToken);
     }
 
-    private static FileSystemOperationResult ExecuteCore(
+    private FileSystemOperationResult ExecuteCore(
         FileSystemOperationStep step,
         IStepPipelineContext context,
         CancellationToken cancellationToken)
@@ -90,34 +104,42 @@ public sealed class FileSystemOperationStepHandler
         return Path.GetFullPath(Environment.ExpandEnvironmentVariables(raw.Trim()));
     }
 
-    private static OperationSummary Copy(
+    private OperationSummary Copy(
         string source, string target, FileSystemOperationSettings settings, CancellationToken cancellationToken)
     {
         target = ResolveTargetPath(source, target);
         ValidateDistinctPaths(source, target);
         EnsureTargetMissing(target);
         EnsureParent(target, settings.CreateParentDirectories);
+        var staging = target + ".copy-" + Guid.NewGuid().ToString("N");
         try
         {
             if (File.Exists(source))
             {
-                ExecuteWithRetry(() => File.Copy(source, target, false), settings, cancellationToken);
+                ExecuteWithRetry(() => File.Copy(source, staging, false), settings, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                _beforePublish?.Invoke(target);
+                File.Move(staging, target, overwrite: false);
                 return OperationSummary.ForFile(target, new FileInfo(target).Length);
             }
 
             EnsureNotInsideSource(source, target);
             var summary = new MutableSummary();
-            CopyDirectory(source, target, settings, summary, cancellationToken);
-            return summary.ToResult(target, FileSystemItemType.Directory);
+            CopyDirectory(source, staging, settings, summary, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            _beforePublish?.Invoke(target);
+            Directory.Move(staging, target);
+            var copied = summary.ToResult(target, FileSystemItemType.Directory);
+            return copied with { Paths = copied.Paths.Select(path => ReplaceRoot(path, staging, target)).ToArray() };
         }
         catch
         {
-            TryDeleteCreatedTarget(target);
+            TryDeleteCreatedTarget(staging);
             throw;
         }
     }
 
-    private static OperationSummary Move(
+    private OperationSummary Move(
         string source, string target, FileSystemOperationSettings settings, CancellationToken cancellationToken)
     {
         target = ResolveTargetPath(source, target);
@@ -126,8 +148,7 @@ public sealed class FileSystemOperationStepHandler
         EnsureParent(target, settings.CreateParentDirectories);
         if (Directory.Exists(source)) EnsureNotInsideSource(source, target);
 
-        var sameRoot = string.Equals(
-            Path.GetPathRoot(source), Path.GetPathRoot(target), StringComparison.OrdinalIgnoreCase);
+        var sameRoot = _sameVolume(source, target);
         if (sameRoot)
         {
             var before = Inspect(source);
@@ -146,16 +167,11 @@ public sealed class FileSystemOperationStepHandler
         }
 
         var copied = Copy(source, target, settings, cancellationToken);
-        try
-        {
-            DeleteExact(source, settings, cancellationToken);
-            return copied;
-        }
-        catch
-        {
-            TryDeleteCreatedTarget(target);
-            throw;
-        }
+        // Source deletion may fail after deleting some entries. The complete copy is then
+        // the only recoverable version and must be retained.
+        if (_deleteSource is null) DeleteExact(source, settings, cancellationToken);
+        else _deleteSource(source);
+        return copied;
     }
 
     private static OperationSummary Rename(

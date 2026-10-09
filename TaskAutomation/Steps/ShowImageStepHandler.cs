@@ -39,8 +39,9 @@ namespace TaskAutomation.Steps
             var image = drawnImage ?? rawImage;
             var displayType = overlay.HasContent ? ImageDisplayType.Processed : ImageDisplayType.Raw;
 
-            ctx.OpenedWindowNames.Add(step.Settings.WindowName);
-            ctx.ImageDisplayService.DisplayImage(step.Settings.WindowName, image, displayType);
+            var windowKey = ctx.ResourceKey(step.Settings.WindowName);
+            ctx.OpenedWindowNames.Add(windowKey);
+            ctx.ImageDisplayService.DisplayImage(windowKey, image, displayType);
 
             logger.LogInformation(
                 "ShowImageStepHandler: Bild in '{Window}' angezeigt ({DetectionGroups} Erkennungsgruppen, {Texts} Texte).",

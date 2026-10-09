@@ -8,6 +8,8 @@ namespace TaskAutomation.Orchestration
     {
         Guid StartJob(Guid id, TaskAutomation.Logging.JobStartContext? startContext = null);
         Task StartJobAsync(Guid id, CancellationToken ct, TaskAutomation.Logging.JobStartContext? startContext = null);
+        Task StartOwnedJobAsync(Guid id, CancellationToken stopToken, CancellationToken forceToken,
+            TaskAutomation.Logging.JobStartContext context) => StartJobAsync(id, stopToken, context);
         void CancelJob(Guid instanceId);
     }
 }

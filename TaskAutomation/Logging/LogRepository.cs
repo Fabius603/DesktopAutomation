@@ -17,6 +17,7 @@ public interface ILogRepository
     LogRun SaveRun(LogRun run);
     long NextExecutionNumber(Guid sourceId);
     IReadOnlyList<LogRun> ReadRuns();
+    LogRun? GetRun(Guid id) => ReadRuns().FirstOrDefault(run => run.Id == id);
     LogPage Query(LogQuery query, CancellationToken cancellationToken = default);
     long SnapshotSequence => Query(new(PageSize: 1)).SnapshotSequence;
     LogPage QueryAll(LogQuery query, CancellationToken cancellationToken = default)
@@ -206,6 +207,8 @@ public sealed class LogRepository : ILogRepository, IDisposable
         if (run.EndedAt.HasValue) QueueRetention(onlyIfDeferred: true);
         return run;
     }
+
+    public LogRun? GetRun(Guid id) { lock (_gate) return _runs.GetValueOrDefault(id); }
 
     public IReadOnlyList<LogRun> ReadRuns()
     {

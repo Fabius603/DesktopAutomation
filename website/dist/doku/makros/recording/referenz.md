@@ -1,0 +1,423 @@
+## Makros: Aufnahme und Gruppen
+
+ID: recording
+Website: /doku/makros/recording/
+
+### errors
+
+Ungültige Tasten-/Maustastenkennungen, doppelte IDs, fehlerhafte Gruppenreferenzen und negative/ungültige Zeitwerte vor Ausführung korrigieren. Eingaben wirken auf das aktive Fenster. Bei absoluten Bewegungen die Aufnahmeumgebung prüfen; ein Abbruch gibt die vom Executor gehaltenen Tasten/Maustasten frei, rekonstruiert aber keine bereits eingegebenen Texte.
+
+### example
+
+Das Makrobeispiel kombiniert text_input mit „Notiz aus dem Beispielmakro“ und anschließend timeout mit duration=200. Vor Ausführung einen leeren Editor fokussieren.
+
+### field.commands
+
+Geordnete Makrobefehle mit type und eindeutiger id. Die Reihenfolge ist die Ausführungsreihenfolge; UI-Gruppierung ersetzt diese Liste nicht.
+
+### field.commands.delayBeforeUs
+
+Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms. null kennzeichnet ältere oder manuell angelegte Befehle ohne aufgezeichnete Vorverzögerung.
+
+### field.commands.groupId
+
+Optionale Referenz auf groups[].id. Gruppen ordnen zusammengehörige aufgezeichnete Befehle, ändern aber nicht ihre Reihenfolge in commands. Jede Gruppe muss Befehle enthalten; Befehle derselben Gruppe müssen einen zusammenhängenden Block bilden.
+
+### field.commands.id
+
+Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.
+
+### field.formatVersion
+
+Versionsnummer des gespeicherten Formats. Aktuell Job=4, Makro=3, Automation=1. Eine Änderung ist keine Methode, eine inkompatible Datei zu reparieren.
+
+### field.groups
+
+Gruppenmetadaten eines Makros. Jeder referenzierte groupId muss auf eine gültige Gruppe zeigen. Jede Gruppe muss Befehle enthalten; Befehle derselben Gruppe müssen einen zusammenhängenden Block bilden.
+
+### field.groups.automatic
+
+Markiert eine automatisch bei der Aufnahme erzeugte Gruppe; Titel und Befehlszuordnung bleiben Metadaten des Makros.
+
+### field.groups.id
+
+Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.
+
+### field.groups.title
+
+Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine technische Identität.
+
+### field.id
+
+Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.
+
+### field.name
+
+Anzeigename für Auswahl und Verlauf. Beziehungen verwenden die stabile ID, nicht diesen frei änderbaren Namen.
+
+### field.recordedEnvironment
+
+Optionaler Snapshot der Aufnahmeumgebung. Er hilft, Abweichungen der Bildschirmgeometrie bei absoluten Makros zu erkennen.
+
+### field.recordedEnvironment.recordedAtUtc
+
+UTC-Zeitpunkt der Aufnahme. Er ist Metadatum und keine Befehlsverzögerung.
+
+### field.recordedEnvironment.startCursorX
+
+Optionale horizontale Startposition des Mauszeigers bei der Aufnahme in Desktop-Pixeln.
+
+### field.recordedEnvironment.startCursorY
+
+Optionale vertikale Startposition des Mauszeigers bei der Aufnahme in Desktop-Pixeln.
+
+### field.recordedEnvironment.virtualDesktopHeight
+
+Gesamthöhe der aufgezeichneten Desktop-Anordnung in Pixeln.
+
+### field.recordedEnvironment.virtualDesktopWidth
+
+Gesamtbreite der aufgezeichneten Desktop-Anordnung in Pixeln. Abweichende Anordnungen können absolute Mauspositionen verändern.
+
+### field.recordedEnvironment.virtualDesktopX
+
+Linke Kante des gesamten virtuellen Desktops bei Aufnahme; sie kann bei Monitoren links vom Hauptmonitor negativ sein.
+
+### field.recordedEnvironment.virtualDesktopY
+
+Obere Kante des virtuellen Desktops bei Aufnahme; sie kann bei Monitoren oberhalb des Hauptmonitors negativ sein.
+
+### field.recordingSettings
+
+Optionen für neue Makroaufnahmen. Änderungen an diesen Optionen wandeln vorhandene commands nicht automatisch in andere Bewegungstypen um.
+
+### field.recordingSettings.automaticMovementGroups
+
+Erzeugt bei der Aufnahme Gruppen für zusammengehörige Bewegungen. Befehlszeiten und Reihenfolge bleiben ausdrücklich gespeichert.
+
+### field.recordingSettings.combineKeyboardInputs
+
+Fasst geeignete aufgezeichnete Tastatureingaben zusammen, etwa zu Text-/Kombinationsbefehlen.
+
+### field.recordingSettings.minimumDistancePixels
+
+Kleinste räumliche Distanz zwischen aufgezeichneten Bewegungsproben in Pixeln.
+
+### field.recordingSettings.minimumIntervalUs
+
+Kleinster zeitlicher Abstand aufgezeichneter Bewegungsproben in Mikrosekunden. Er beeinflusst Datenmenge und zeitliche Genauigkeit.
+
+### field.recordingSettings.mode
+
+Aufnahmemodus: 0=ClicksOnly, 1=ScreenAccurateAbsolute, 2=MotionFaithfulRelative. Im Makro-JSON wird dieser Enum als Zahl gespeichert; die Optionen ändern nur zukünftige Aufnahmen.
+
+### field.recordingSettings.mode.option.ClicksOnly
+
+Aufnahmemodus 0: Klick-/Tastenaktionen statt einer vollständigen Bewegungsspur aufzeichnen.
+
+### field.recordingSettings.mode.option.MotionFaithfulRelative
+
+Aufnahmemodus 2: relative Mausbewegungen aufzeichnen.
+
+### field.recordingSettings.mode.option.ScreenAccurateAbsolute
+
+Aufnahmemodus 1: Bildschirmpositionen als absolute Pixelkoordinaten aufzeichnen.
+
+### field.recordingSettings.recordKeyboard
+
+Zeichnet Tastatureingaben für neue Makroaufnahmen auf. Vorhandene Tastenbefehle werden dadurch nicht entfernt.
+
+### field.recordingSettings.recordMouseButtons
+
+Zeichnet Maustasten für neue Aufnahmen auf; reine Bewegungsaufzeichnung ist davon getrennt.
+
+### field.recordingSettings.recordingHotkeyModifiers
+
+Bitmaske der Aufnahme-Hotkey-Modifikatoren: Alt=1, Control=2, Shift=4, Windows=8, None=0.
+
+### field.recordingSettings.recordingHotkeyModifiers.option.Alt
+
+Alt-Modifikator; numerische Bitmaske 1.
+
+### field.recordingSettings.recordingHotkeyModifiers.option.Control
+
+Strg-Modifikator; numerische Bitmaske 2.
+
+### field.recordingSettings.recordingHotkeyModifiers.option.None
+
+Keine Modifikatortaste; numerische Bitmaske 0.
+
+### field.recordingSettings.recordingHotkeyModifiers.option.Shift
+
+Umschalt-Modifikator; numerische Bitmaske 4.
+
+### field.recordingSettings.recordingHotkeyModifiers.option.Windows
+
+Windows-Taste als Modifikator (Bitmaske 8) beziehungsweise Windows-Fachbereich, wenn diese Option zu einem Log-Bereich gehört.
+
+### field.recordingSettings.recordingHotkeyVirtualKey
+
+Virtual-Key-Code der Aufnahme-Taste; Standard 120 entspricht F9. Prüfe Konflikte mit anderen Hotkeys.
+
+### field.recordingSettings.removeStopGesture
+
+Entfernt die konfigurierte Stop-Geste aus der Aufnahme, damit sie später nicht als gewünschte Eingabe wiederholt wird.
+
+### purpose
+
+Ein Makro speichert geordnete Befehle, optionale Gruppen, Aufnahmeoptionen und gegebenenfalls die Aufnahmeumgebung. Gruppen sind Bearbeitungsmetadaten; die Ausführung folgt commands. Der Executor führt Makros exklusiv über seinen Ausführungsgate aus und gibt selbst gehaltene Eingaben auch bei Abbruch frei.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "recording",
+  "name": "Aufnahme und Gruppen",
+  "fields": [
+    {
+      "id": "commands",
+      "name": "commands",
+      "type": "ObservableCollection`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "commands.delayBeforeUs",
+      "name": "delayBeforeUs",
+      "type": "Int64",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "commands.groupId",
+      "name": "groupId",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "commands.id",
+      "name": "id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "formatVersion",
+      "name": "formatVersion",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 3
+    },
+    {
+      "id": "groups",
+      "name": "groups",
+      "type": "ObservableCollection`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "groups.id",
+      "name": "id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "groups.automatic",
+      "name": "automatic",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "groups.title",
+      "name": "title",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "id",
+      "name": "id",
+      "type": "Guid",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "name",
+      "name": "name",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "recordedEnvironment",
+      "name": "recordedEnvironment",
+      "type": "MakroRecordedEnvironment",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.recordedAtUtc",
+      "name": "recordedAtUtc",
+      "type": "DateTime",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.startCursorX",
+      "name": "startCursorX",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.startCursorY",
+      "name": "startCursorY",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.virtualDesktopHeight",
+      "name": "virtualDesktopHeight",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.virtualDesktopWidth",
+      "name": "virtualDesktopWidth",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.virtualDesktopX",
+      "name": "virtualDesktopX",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordedEnvironment.virtualDesktopY",
+      "name": "virtualDesktopY",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordingSettings",
+      "name": "recordingSettings",
+      "type": "MakroRecordingSettings",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "recordingSettings.automaticMovementGroups",
+      "name": "automaticMovementGroups",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    },
+    {
+      "id": "recordingSettings.combineKeyboardInputs",
+      "name": "combineKeyboardInputs",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": false
+    },
+    {
+      "id": "recordingSettings.minimumDistancePixels",
+      "name": "minimumDistancePixels",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 0
+    },
+    {
+      "id": "recordingSettings.minimumIntervalUs",
+      "name": "minimumIntervalUs",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 1000
+    },
+    {
+      "id": "recordingSettings.mode",
+      "name": "mode",
+      "type": "MakroRecordingMode",
+      "options": [
+        "ClicksOnly",
+        "ScreenAccurateAbsolute",
+        "MotionFaithfulRelative"
+      ],
+      "defaultValue": "ScreenAccurateAbsolute"
+    },
+    {
+      "id": "recordingSettings.recordingHotkeyModifiers",
+      "name": "recordingHotkeyModifiers",
+      "type": "KeyModifiers",
+      "options": [
+        "None",
+        "Alt",
+        "Control",
+        "Shift",
+        "Windows"
+      ],
+      "defaultValue": "None"
+    },
+    {
+      "id": "recordingSettings.recordingHotkeyVirtualKey",
+      "name": "recordingHotkeyVirtualKey",
+      "type": "UInt32",
+      "options": [],
+      "defaultValue": 120
+    },
+    {
+      "id": "recordingSettings.recordKeyboard",
+      "name": "recordKeyboard",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    },
+    {
+      "id": "recordingSettings.recordMouseButtons",
+      "name": "recordMouseButtons",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    },
+    {
+      "id": "recordingSettings.removeStopGesture",
+      "name": "removeStopGesture",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    }
+  ]
+}
+```
+
+### Strukturelle Serializer-Vorlage
+```json
+{
+  "formatVersion": 3,
+  "id": "95725efa-50bf-07cb-abf1-4f87f86b2103",
+  "name": "Mein Makro",
+  "commands": [],
+  "groups": [],
+  "recordingSettings": {
+    "mode": 1,
+    "minimumIntervalUs": 1000,
+    "minimumDistancePixels": 0,
+    "recordKeyboard": true,
+    "combineKeyboardInputs": false,
+    "recordMouseButtons": true,
+    "removeStopGesture": true,
+    "automaticMovementGroups": true,
+    "recordingHotkeyModifiers": 0,
+    "recordingHotkeyVirtualKey": 120
+  },
+  "recordedEnvironment": null
+}
+```
+

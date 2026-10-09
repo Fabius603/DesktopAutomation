@@ -26,9 +26,7 @@ public sealed class KlickOnPointStepDefinition : StepDefinition<KlickOnPointStep
         [
             new StepFieldDescriptor(PointsSourceFieldId, "Ui.Step.Settings.PointSource", StepValueKind.ResultBinding,
                 Required: true,
-                DefaultValue: new JsonObject { ["x"] = 0, ["y"] = 0 },
-                EditorHint: StepEditorHints.ValueReferencePicker, Order: 0, InputContractId: "points",
-                AllowsDirectValue: true),
+                EditorHint: StepEditorHints.ValueReferencePicker, Order: 0, InputContractId: "points"),
             new StepFieldDescriptor(ClickTypeFieldId, "Ui.Step.Settings.ClickType", StepValueKind.Enum,
                 Required: true, DefaultValue: JsonValue.Create("left"),
                 Constraints: new StepFieldConstraints(AllowedValues: ClickTypes), Order: 1,

@@ -179,6 +179,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     public GeneratedStepFieldViewModel? OffsetYField { get; }
     public GeneratedStepFieldViewModel? DurationField { get; }
     public GeneratedStepFieldViewModel? ClearOnJobEndField { get; }
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => NestedFields;
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { TextSourceField, FontSizeField, FontColorField, OpacityField, DesktopIndexField,
             OffsetXField, OffsetYField, DurationField, ClearOnJobEndField }

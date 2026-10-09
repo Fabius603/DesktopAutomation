@@ -31,6 +31,7 @@ namespace DesktopAutomationApp.Views
     {
         private JobStepsViewModel? _vm;
         private bool _syncingSelection;
+        private string? _lastSelectedStepId;
         private GridLength _expandedInspectorWidth = new(1, GridUnitType.Star);
         private bool _inspectorCollapsed;
 
@@ -180,6 +181,7 @@ namespace DesktopAutomationApp.Views
                 _vm.InspectorPane.PropertyChanged -= OnInspectorStateChanged;
             }
             _vm = e.NewValue as JobStepsViewModel;
+            _lastSelectedStepId = _vm?.SelectedStep?.Id;
             if (_vm != null)
             {
                 _vm.PropertyChanged += OnVmPropertyChanged;
@@ -208,11 +210,14 @@ namespace DesktopAutomationApp.Views
         {
             if (e.PropertyName != nameof(JobStepsViewModel.SelectedStep)) return;
 
+            var selectionChanged = _lastSelectedStepId != _vm?.SelectedStep?.Id;
+            _lastSelectedStepId = _vm?.SelectedStep?.Id;
+
             // If the item is already among the selected ones, leave multi-selection intact.
             if (_vm!.SelectedStep != null && AllStepLists().FirstOrDefault(list => list.SelectedItems.Contains(_vm.SelectedStep)) is { } selectedList)
             {
                 var selected = _vm.SelectedStep;
-                selectedList.Dispatcher.BeginInvoke(() => selectedList.ScrollIntoView(selected));
+                if (selectionChanged) selectedList.Dispatcher.BeginInvoke(() => selectedList.ScrollIntoView(selected));
                 return;
             }
 
@@ -231,7 +236,7 @@ namespace DesktopAutomationApp.Views
                     if (target != null)
                     {
                         target.SelectedItem = _vm.SelectedStep;
-                        target.Dispatcher.BeginInvoke(() => target.ScrollIntoView(_vm.SelectedStep));
+                        if (selectionChanged) target.Dispatcher.BeginInvoke(() => target.ScrollIntoView(_vm.SelectedStep));
                     }
                 }
             }
@@ -252,8 +257,8 @@ namespace DesktopAutomationApp.Views
             finally { _syncingSelection = false; }
 
             // Scroll last selected item into view.
-            if (lb.SelectedItem != null)
-                lb.Dispatcher.BeginInvoke(() => lb.ScrollIntoView(lb.SelectedItem));
+            if (lb.SelectedItem is JobStep selected && selected.Id != _lastSelectedStepId)
+                lb.Dispatcher.BeginInvoke(() => lb.ScrollIntoView(selected));
 
             _vm?.SetSelectedSteps(lb.SelectedItems.Cast<object>(), lb.ItemsSource as System.Collections.IList);
         }

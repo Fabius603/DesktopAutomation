@@ -20,7 +20,9 @@ public class StreamVideoRecorder : IVideoRecorder
     }
 
     private readonly int width, height, fps;
-    private readonly Task ffmpegInitTask;
+    private static readonly Lazy<Task> SharedInitialization = new(() => FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official));
+    private readonly Task? ffmpegInitTask;
+    private readonly Func<ProcessStartInfo, Process?> _startProcess;
 
     private TimedFrame? _latestFrame = null;
     private readonly object _frameLock = new();
@@ -63,7 +65,8 @@ public class StreamVideoRecorder : IVideoRecorder
         }
     }
 
-    public StreamVideoRecorder(int width, int height, int fps, string ffmpegPath = "ffmpeg")
+    public StreamVideoRecorder(int width, int height, int fps, string ffmpegPath = "ffmpeg", Task? initialization = null,
+        Func<ProcessStartInfo, Process?>? startProcess = null)
     {
         if (width <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Width must be greater than zero.");
@@ -76,7 +79,8 @@ public class StreamVideoRecorder : IVideoRecorder
         this.height = height;
         this.fps = fps;
         this.ffmpegPath = ffmpegPath;
-        ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
+        ffmpegInitTask = initialization ?? (File.Exists(ffmpegPath) ? Task.CompletedTask : null);
+        _startProcess = startProcess ?? Process.Start;
         string bilderPfad = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
         this.OutputDirectory = bilderPfad + "\\ImageCapture";
         this.FileName = "output.mp4";
@@ -88,7 +92,10 @@ public class StreamVideoRecorder : IVideoRecorder
     public async Task StartAsync(CancellationToken token)
     {
         // Warte auf ffmpeg-Pfad
-        await ffmpegInitTask.ConfigureAwait(false);
+        token.ThrowIfCancellationRequested();
+        await (ffmpegInitTask ?? SharedInitialization.Value).WaitAsync(token).ConfigureAwait(false);
+        token.ThrowIfCancellationRequested();
+        if (isStarted) throw new InvalidOperationException("Recording has already started.");
 
         string outputFile = VideoHelper.GetUniqueFilePath(Path.Combine(OutputDirectory, FileName));
         OutputFilePath = outputFile;
@@ -101,7 +108,8 @@ public class StreamVideoRecorder : IVideoRecorder
             RedirectStandardInput = true,
             CreateNoWindow = true
         };
-        ffmpegProcess = Process.Start(psi)
+        token.ThrowIfCancellationRequested();
+        ffmpegProcess = _startProcess(psi)
             ?? throw new InvalidOperationException("ffmpeg process could not be started.");
         ffmpegInput = ffmpegProcess.StandardInput.BaseStream;
 
@@ -117,14 +125,13 @@ public class StreamVideoRecorder : IVideoRecorder
     /// </summary>
     public void AddFrame(Bitmap bmp)
     {
-        if (bmp == null || bmp.Width == 0 || bmp.Height == 0)
-            return;
-
-        try
+        ArgumentNullException.ThrowIfNull(bmp);
+        if (!isStarted || isStopped) throw new InvalidOperationException("Recording is not active.");
+        if (writerTask.IsFaulted) writerTask.GetAwaiter().GetResult();
         {
             using var mat = BitmapConverter.ToMat(bmp);
             if (mat.Empty() || mat.Data == IntPtr.Zero)
-                return;
+                throw new InvalidOperationException("Frame could not be converted.");
 
             // Ensure BGR format for FFmpeg
             using var bgrMat = new Mat();
@@ -155,15 +162,10 @@ public class StreamVideoRecorder : IVideoRecorder
 
             int length = (int)(bgrMat.Total() * bgrMat.ElemSize());
             if (length <= 0)
-                return;
+                throw new InvalidOperationException("Frame contains no pixels.");
 
             byte[] raw = new byte[length];
             Marshal.Copy(bgrMat.Data, raw, 0, length);
-
-            if (stopwatch == null || raw == null)
-            {
-                return;
-            }
 
             var frame = new TimedFrame
             {
@@ -177,95 +179,80 @@ public class StreamVideoRecorder : IVideoRecorder
             }
             Interlocked.Increment(ref submittedFrameCount);
         }
-        catch
-        {
-            // bei Fehlern einfach überspringen
-        }
     }
 
     private async Task WriterLoopAsync(CancellationToken token)
     {
-        long frameDuration = 1000L / fps;
-        long nextTargetTime = stopwatch.ElapsedMilliseconds;
-        byte[] lastFrame = null;
-
+        var frameDuration = Math.Max(1, 1000L / fps);
+        var nextTargetTime = stopwatch.ElapsedMilliseconds;
+        byte[]? lastFrame = null;
+        Exception? failure = null;
         try
         {
             while (!token.IsCancellationRequested)
             {
-                long now = stopwatch.ElapsedMilliseconds;
-                long wait = nextTargetTime - now;
-                if (wait > 2)
-                    await Task.Delay((int)(wait - 2), token);
-                while (stopwatch.ElapsedMilliseconds < nextTargetTime) { }
-
-                TimedFrame? slotFrame;
-                lock (_frameLock)
+                var wait = nextTargetTime - stopwatch.ElapsedMilliseconds;
+                if (wait > 0) await Task.Delay((int)wait, token).ConfigureAwait(false);
+                TimedFrame? frame;
+                lock (_frameLock) { frame = _latestFrame; _latestFrame = null; }
+                var data = frame?.RawFrame ?? lastFrame;
+                if (data is not null)
                 {
-                    slotFrame = _latestFrame;
-                    _latestFrame = null;
+                    await ffmpegInput.WriteAsync(data, token).ConfigureAwait(false);
+                    lastFrame = data;
                 }
-
-                var toWrite = slotFrame?.RawFrame ?? lastFrame;
-                if (toWrite != null)
-                {
-                    ffmpegInput.Write(toWrite, 0, toWrite.Length);
-                    lastFrame = toWrite;
-                }
-
                 nextTargetTime += frameDuration;
             }
         }
-        catch (OperationCanceledException)
-        {
-            // normaler Stopp
-        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (Exception error) { failure = error; }
         finally
         {
             try
             {
-                TimedFrame? pendingFrame;
-                lock (_frameLock)
-                {
-                    pendingFrame = _latestFrame;
-                    _latestFrame = null;
-                }
-
-                var finalFrame = pendingFrame?.RawFrame ?? lastFrame;
-                if (finalFrame != null)
-                {
-                    await ffmpegInput.WriteAsync(finalFrame, 0, finalFrame.Length, CancellationToken.None)
-                                     .ConfigureAwait(false);
-                }
-
-                ffmpegInput.Flush();
-                ffmpegInput.Close();
-                await ffmpegProcess.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+                TimedFrame? pending;
+                lock (_frameLock) { pending = _latestFrame; _latestFrame = null; }
+                var final = pending?.RawFrame ?? lastFrame;
+                if (failure is null && final is not null)
+                    await ffmpegInput.WriteAsync(final, CancellationToken.None).ConfigureAwait(false);
+                await ffmpegInput.FlushAsync().ConfigureAwait(false);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Recorder] Fehler beim Beenden von ffmpeg: {ex.Message}");
-            }
+            catch (Exception error) { failure ??= error; }
+            finally { ffmpegInput.Dispose(); }
+            await ffmpegProcess.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            if (ffmpegProcess.ExitCode != 0)
+                failure = new InvalidOperationException($"FFmpeg exited with code {ffmpegProcess.ExitCode}.", failure);
         }
+        if (failure is not null) throw new IOException("Video recording could not be saved.", failure);
+        if (submittedFrameCount > 0 && (OutputFilePath is null || !File.Exists(OutputFilePath) || new FileInfo(OutputFilePath).Length == 0))
+            throw new IOException("FFmpeg did not create the output file.");
     }
 
     /// <summary>
     /// Stoppt Capture und speichert Video (non-blocking).
     /// </summary>
-    public async Task StopAndSave()
+    public Task StopAndSave() => StopAndSave(CancellationToken.None);
+    public async Task StopAndSave(CancellationToken token)
     {
         if (!isStarted || writerTask == null || cts == null)
             return;
 
+        using var stopRegistration = token.Register(() =>
+        {
+            try { if (ffmpegProcess is { HasExited: false }) ffmpegProcess.Kill(entireProcessTree: true); }
+            catch (InvalidOperationException) { }
+            catch (System.ComponentModel.Win32Exception) { }
+        });
         await stopLock.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (isStopped)
-                return;
-
-            isStopped = true;
-            cts.Cancel();
+            if (!isStopped)
+            {
+                isStopped = true;
+                cts.Cancel();
+            }
             await writerTask.ConfigureAwait(false);
+            token.ThrowIfCancellationRequested();
         }
         finally
         {

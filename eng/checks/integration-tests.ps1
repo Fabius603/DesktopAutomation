@@ -1,3 +1,4 @@
-param([Parameter(Mandatory)][string]$RepositoryRoot, [Parameter(Mandatory)][string]$ArtifactsRoot)
-& (Join-Path $PSScriptRoot 'run-test-project.ps1') -RepositoryRoot $RepositoryRoot -ArtifactsRoot $ArtifactsRoot -Project 'tests\DesktopAutomation.IntegrationTests\DesktopAutomation.IntegrationTests.csproj' -ResultName 'integration'
+param([Parameter(Mandatory)][string]$RepositoryRoot, [Parameter(Mandatory)][string]$ArtifactsRoot, [string]$TestFilter = '')
+$ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'run-test-project.ps1') -RepositoryRoot $RepositoryRoot -ArtifactsRoot $ArtifactsRoot -Project 'tests\DesktopAutomation.IntegrationTests\DesktopAutomation.IntegrationTests.csproj' -ResultName 'integration' -TestFilter $TestFilter
 exit $LASTEXITCODE

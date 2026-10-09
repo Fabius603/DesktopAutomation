@@ -1,0 +1,20 @@
+{
+  "type": "dynamic_roi",
+  "settings": {
+    "bounds_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "padding": -1,
+    "padding_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "minimum_confidence": 0,
+    "full_search_interval": 10,
+    "reset_after_misses": 3
+  },
+  "id": "5daa1a25-95e8-a1e7-7645-817670fbad9a",
+  "inputs": {},
+  "is_enabled": true
+}

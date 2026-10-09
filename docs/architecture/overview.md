@@ -1,4 +1,4 @@
-# Architecture overview
+﻿# Architecture overview
 
 DesktopAutomation is a Windows .NET 8 solution with a WPF application shell.
 
@@ -45,3 +45,10 @@ Detailed contracts:
 - [Step result contracts](result-contracts.md)
 - [Windows integration](windows-integration.md)
 - [Testing strategy](testing-strategy.md)
+
+## Job execution lifetime
+
+`JobExecutor` owns a shared phase sequence runner. `OwnedExecutionScope` joins parallel scripts
+and sub-jobs before cleanup and final completion. `JobDispatcher` atomically reserves admission
+and executes captured definitions. Runtime results are described by `JobExecutionOutcome`.
+See [the ownership decision](../decisions/2026-10-07-own-job-child-executions.md).

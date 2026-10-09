@@ -480,7 +480,7 @@ public sealed class JobExecutorControlFlowTests
         Assert.Equal(ConditionDebugState.Met, condition.State);
         Assert.Equal("true", condition.ActualValue);
         Assert.Equal("Festwert true", condition.ExpectedValue);
-        Assert.Same(ifStep.Settings.Conditions[0], condition.Definition);
+        Assert.Equivalent(ifStep.Settings.Conditions[0], condition.Definition);
     }
 
     [Fact]

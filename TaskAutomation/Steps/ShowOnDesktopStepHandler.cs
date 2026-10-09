@@ -22,13 +22,13 @@ namespace TaskAutomation.Steps
                 ctx.Results, step.Settings.Overlay, step.Settings.DetectionsSource, ctx.Logger);
             if (!overlay.HasContent)
             {
-                ctx.DesktopResultOverlay.ClearOverlay(step.Id);
+                ctx.DesktopResultOverlay.ClearOverlay(ctx.ResourceKey(step.Id));
                 ctx.Logger.LogInformation(
                     "ShowOnDesktopStepHandler: Keine anzeigbaren Ergebnisse; Overlay dieses Steps wurde geleert.");
                 return Task.FromResult(new ShowOnDesktopResult { WasExecuted = true, Success = true });
             }
 
-            ctx.DesktopResultOverlay.ShowOverlay(step.Id, overlay);
+            ctx.DesktopResultOverlay.ShowOverlay(ctx.ResourceKey(step.Id), overlay);
             ctx.Logger.LogInformation(
                 "ShowOnDesktopStepHandler: {DetectionGroups} Erkennungsgruppen und {Texts} Texte auf dem Desktop angezeigt.",
                 overlay.DetectionGroups.Count, overlay.Texts.Count);

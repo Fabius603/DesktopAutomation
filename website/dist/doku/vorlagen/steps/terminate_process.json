@@ -1,0 +1,17 @@
+{
+  "type": "terminate_process",
+  "settings": {
+    "target": {
+      "process_source": {
+        "provider_id": "",
+        "source_id": ""
+      },
+      "process_name": "",
+      "executable_path": "",
+      "window_title_contains": ""
+    }
+  },
+  "id": "1a0a37d7-cbd4-4080-4162-27be3efcf1d4",
+  "inputs": {},
+  "is_enabled": true
+}

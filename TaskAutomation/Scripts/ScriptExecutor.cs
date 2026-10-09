@@ -102,6 +102,8 @@ namespace TaskAutomation.Scripts
             }
             catch (OperationCanceledException)
             {
+                // A stop request is not proof that the process has exited.
+                await proc.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
                 _logger.LogInformation("Ausführung von {Script} abgebrochen.", scriptPath);
                 throw;
             }

@@ -1,0 +1,375 @@
+## Werte und Ergebnisse: Datei- oder Ordnerzustand
+
+ID: filesystem.path
+Website: /doku/werte/filesystem.path/
+
+### errors
+
+Verfügbarkeit und Ereignisevidenz hängen von Windows-Version, installiertem Gerät/Dienst und Rechten ab. Die Abfrage ist ein zeitlicher Snapshot. Nur die im Katalog gesetzten Unterstützungsmerkmale verwenden: eine reine Änderungsfunktion liefert keinen eigenen Abfragevertrag, eine reine Abfrage ist kein Ereignistrigger. Bei Windows-Einstellungen den Erfolg und Fehlercode im Step-Ergebnis prüfen.
+
+### example
+
+Wähle filesystem.path im Step „Windows-Zustand abfragen“ und verbinde einen unten beschriebenen Ergebniswert mit einer Bedingung.
+
+### field.path
+
+Lokaler Datei-/Ordnerpfad beziehungsweise vorhandene Hintergrundbilddatei, entsprechend der Funktion.
+
+### purpose
+
+Zustandsabfrage: Datei- oder Ordnerzustand. Liest den aktuellen vom System angebotenen Zustand und stellt die hier aufgeführten typisierten Werte bereit. Wähle die Funktion im Windows-Auswahldialog; die verfügbaren Parameter stehen unten. Der Katalog verlangt keine erhöhte Ausführung; einzelne Systemzugriffe können dennoch Rechte voraussetzen.
+
+### result.captured_at
+
+Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+
+### result.count
+
+Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+
+### result.error_code
+
+Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.error_message
+
+Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.exists
+
+Ob der abgefragte Datei-/Ordnerpfad zum Beobachtungszeitpunkt existiert. Einzelwert dieses Ergebnisses.
+
+### result.path
+
+Pfad des abgefragten Dateisystemobjekts. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.status
+
+Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+
+### result.status.option.AccessDenied
+
+Windows verweigert den Zugriff; kein negativer fachlicher Zustand, sondern fehlende Berechtigung.
+
+### result.status.option.Failed
+
+Lauf wegen Fehler fehlgeschlagen.
+
+### result.status.option.Success
+
+Windows-Aufruf erfolgreich. Erst anschließend den fachlichen Ergebniswert auswerten.
+
+### result.status.option.Timeout
+
+Windows-Aufruf überschritt seine Zeitgrenze; daraus keinen Systemzustand ableiten.
+
+### result.status.option.Unsupported
+
+Funktion auf diesem Zielsystem nicht unterstützt.
+
+### result.value
+
+Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinalitätsspalten beschreiben seine Darstellung. Einzelwert dieses Ergebnisses.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "filesystem.path",
+  "name": "Datei- oder Ordnerzustand",
+  "fields": [
+    {
+      "id": "path",
+      "name": "Datei oder Ordner",
+      "type": "FilePath",
+      "Required": true,
+      "defaultValue": null,
+      "options": []
+    }
+  ],
+  "result": {
+    "TypeName": "FileSystemPathQueryResult",
+    "DisplayName": "FileSystemPathQueryResult",
+    "Properties": [
+      {
+        "Name": "Exists",
+        "DisplayName": "Exists",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "exists",
+        "EnumDisplayNames": null,
+        "StableId": "exists"
+      },
+      {
+        "Name": "Path",
+        "DisplayName": "Path",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "path",
+        "EnumDisplayNames": null,
+        "StableId": "path"
+      },
+      {
+        "Name": "Count",
+        "DisplayName": "Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "count",
+        "EnumDisplayNames": null,
+        "StableId": "count"
+      },
+      {
+        "Name": "Value",
+        "DisplayName": "Value",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "value",
+        "EnumDisplayNames": null,
+        "StableId": "value"
+      },
+      {
+        "Name": "Status",
+        "DisplayName": "Status",
+        "DataType": "Enum",
+        "Description": "Enum",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": "TaskAutomation.WindowsIntegration.WindowsCapabilityStatus",
+        "EnumValues": [
+          "Success",
+          "Unsupported",
+          "AccessDenied",
+          "Timeout",
+          "Failed"
+        ],
+        "Id": "status",
+        "EnumDisplayNames": null,
+        "StableId": "status"
+      },
+      {
+        "Name": "CapturedAt",
+        "DisplayName": "Captured At",
+        "DataType": "DateTime",
+        "Description": "DateTime",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "captured_at",
+        "EnumDisplayNames": null,
+        "StableId": "captured_at"
+      },
+      {
+        "Name": "ErrorCode",
+        "DisplayName": "Error Code",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "error_code",
+        "EnumDisplayNames": null,
+        "StableId": "error_code"
+      },
+      {
+        "Name": "ErrorMessage",
+        "DisplayName": "Error Message",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": "No detection point available",
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "error_message",
+        "EnumDisplayNames": null,
+        "StableId": "error_message"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "Exists",
+        "DisplayName": "Exists",
+        "Property": {
+          "Name": "Exists",
+          "DisplayName": "Exists",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "exists",
+          "EnumDisplayNames": null,
+          "StableId": "exists"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Path",
+        "DisplayName": "Path",
+        "Property": {
+          "Name": "Path",
+          "DisplayName": "Path",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "path",
+          "EnumDisplayNames": null,
+          "StableId": "path"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Count",
+        "DisplayName": "Count",
+        "Property": {
+          "Name": "Count",
+          "DisplayName": "Count",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "count",
+          "EnumDisplayNames": null,
+          "StableId": "count"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Value",
+        "DisplayName": "Value",
+        "Property": {
+          "Name": "Value",
+          "DisplayName": "Value",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "value",
+          "EnumDisplayNames": null,
+          "StableId": "value"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Status",
+        "DisplayName": "Status",
+        "Property": {
+          "Name": "Status",
+          "DisplayName": "Status",
+          "DataType": "Enum",
+          "Description": "Enum",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": "TaskAutomation.WindowsIntegration.WindowsCapabilityStatus",
+          "EnumValues": [
+            "Success",
+            "Unsupported",
+            "AccessDenied",
+            "Timeout",
+            "Failed"
+          ],
+          "Id": "status",
+          "EnumDisplayNames": null,
+          "StableId": "status"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "CapturedAt",
+        "DisplayName": "Captured At",
+        "Property": {
+          "Name": "CapturedAt",
+          "DisplayName": "Captured At",
+          "DataType": "DateTime",
+          "Description": "DateTime",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "captured_at",
+          "EnumDisplayNames": null,
+          "StableId": "captured_at"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "ErrorCode",
+        "DisplayName": "Error Code",
+        "Property": {
+          "Name": "ErrorCode",
+          "DisplayName": "Error Code",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "error_code",
+          "EnumDisplayNames": null,
+          "StableId": "error_code"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "ErrorMessage",
+        "DisplayName": "Error Message",
+        "Property": {
+          "Name": "ErrorMessage",
+          "DisplayName": "Error Message",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": "No detection point available",
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "error_message",
+          "EnumDisplayNames": null,
+          "StableId": "error_message"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+

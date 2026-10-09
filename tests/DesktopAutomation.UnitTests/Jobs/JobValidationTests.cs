@@ -574,12 +574,14 @@ public sealed class JobValidationTests
         Assert.False(JobValidation.ValidateStep([step], step).IsValid);
     }
 
-    [Fact]
-    public void ValidateStep_WindowsSettingRequiredParameterMissing_IsInvalid()
+    [Theory]
+    [InlineData("personalization.wallpaper", "path", null)]
+    [InlineData("audio.master_volume", "value", "")]
+    public void ValidateStep_WindowsSettingRequiredParameterWithoutUsableValue_IsInvalid(string settingId, string parameter, string? value)
     {
         var step = new WindowsSettingChangeStep
         {
-            Settings = new() { SettingId = "audio.master_volume" }
+            Settings = new() { SettingId = settingId, Parameters = new() { [parameter] = value } }
         };
 
         Assert.False(JobValidation.ValidateStep([step], step).IsValid);

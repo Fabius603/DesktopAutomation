@@ -31,6 +31,9 @@ public sealed class OcrStepHandler(IOcrService ocrService) : JobStepHandler<OcrS
         var localRoi = dynamicRoi ?? (step.Settings.EnableROI ? step.Settings.ROI : null);
         localRoi = ClipToImage(localRoi, input.Image);
 
+        if (localRoi is { IsEmpty: true })
+            return captureResult with { WasExecuted = true, AppliedRoi = localRoi, UsedDynamicRoi = dynamicRoi.HasValue };
+
         using var source = Crop(input.Image, localRoi);
         var recognition = await ocrService.RecognizeAsync(source,
             new OcrRecognitionOptions(step.Settings.Languages, step.Settings.PageLayout), cancellationToken)
@@ -88,9 +91,9 @@ public sealed class OcrStepHandler(IOcrService ocrService) : JobStepHandler<OcrS
 
     private static PixelRegion? ClipToImage(PixelRegion? region, Bitmap image)
     {
-        if (region is not { } value || value.IsEmpty) return null;
+        if (region is not { } value) return null;
         var clipped = value.Intersect(new PixelRegion(0, 0, image.Width, image.Height));
-        return clipped.IsEmpty ? null : clipped;
+        return clipped;
     }
 
     private static Bitmap Crop(Bitmap source, PixelRegion? region)

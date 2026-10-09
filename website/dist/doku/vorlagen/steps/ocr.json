@@ -1,0 +1,25 @@
+{
+  "type": "ocr",
+  "settings": {
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "languages": "deu+eng",
+    "page_layout": "Automatic",
+    "roi": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "enable_roi": false,
+    "dynamic_roi_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "4bfa512d-7ade-7be2-0978-97fc17f2f70d",
+  "inputs": {},
+  "is_enabled": true
+}

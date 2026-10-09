@@ -1,0 +1,31 @@
+{
+  "formatVersion": 1,
+  "id": "2446289a-9c7d-a8d3-4288-7fd999778ba4",
+  "name": "Arbeitsunterlagen vorbereiten",
+  "description": "",
+  "active": false,
+  "trigger": {
+    "$type": "hotkey",
+    "Kind": "Hotkey",
+    "modifiers": 3,
+    "virtual_key_code": 85,
+    "debounce": "00:00:00",
+    "delay_after_event": "00:00:00",
+    "kind": "Hotkey"
+  },
+  "action": {
+    "name": "Arbeitsunterlagen vorbereiten",
+    "job_id": "efa2dab4-b839-74b6-3ae5-80de24796eac",
+    "makro_id": null,
+    "action_type": "Job"
+  },
+  "run_policy": {
+    "already_running_behavior": "Ignore",
+    "cooldown": "00:00:00",
+    "enabled_from": null,
+    "enabled_until": null
+  },
+  "created_at": "2026-10-08T00:00:00+00:00",
+  "updated_at": "2026-10-08T00:00:00+00:00",
+  "last_run_at": null
+}

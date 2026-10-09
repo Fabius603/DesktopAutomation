@@ -1,0 +1,28 @@
+{
+  "type": "klick_on_point_3d",
+  "settings": {
+    "movement_threshold_px": 10,
+    "double_click": false,
+    "click_type": "left",
+    "timeout_ms": 0,
+    "origin_x": 0,
+    "origin_y": 0,
+    "origin_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "origin_monitor_index": 0,
+    "origin_coordinate_space": "monitor_local",
+    "movement_factor_x": null,
+    "movement_factor_y": null,
+    "offset_x": 0,
+    "offset_y": 0,
+    "points_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "23b322d2-328c-1eab-64b5-9a027aaa036d",
+  "inputs": {},
+  "is_enabled": true
+}

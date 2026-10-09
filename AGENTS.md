@@ -33,18 +33,19 @@ Start at `.agents/README.md`. Load only instructions and repository skills relev
   user explicitly approves a migration.
 - Put all new or changed visible UI text in both localization resource files.
 - Update release notes only for user-visible outcomes; follow `.agents/instructions/release-process.md`.
+- Maintain website/product documentation in the same task whenever steps, values, automations,
+  macros or logs change; follow `.agents/instructions/website-documentation.md`.
 - Do not commit, stage, create branches, or push unless the user explicitly asks.
 
-## Mandatory completion gate
+## Validation
 
-After any repository change, run from the repository root:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\eng\verify.ps1 -Mode Full
-```
-
-Do not report completion unless this command exits with code `0`. A skipped, unavailable, or
-failing required check is a blocker and must be reported. CI must call the same entrypoint.
+Follow `.agents/instructions/testing.md` for risk-based validation. Agent turns and intermediate
+iterations do not automatically require tests or a full repository run. Before completing a code
+change, build affected projects and run checks covering the changed behavior and affected contracts.
+Full verification through `eng/verify.ps1 -Mode Full` remains mandatory in CI and before releases;
+run it locally when explicitly requested or when broad changes make focused validation insufficient.
+Report checks performed, failures, and material validation gaps. Required checks must exit with code
+`0`; an unavailable or failing required check is a blocker for the affected completion claim.
 
 ## Core instructions
 
@@ -52,5 +53,13 @@ failing required check is a blocker and must be reported. CI must call the same 
 - Architecture-boundary or deduplication work: `.agents/skills/maintain-architecture/SKILL.md`
 - Testing: `.agents/instructions/testing.md`
 - WPF and Windows desktop UI: `.agents/instructions/ui-desktop.md`
+- Visual changes and application theme: `.agents/instructions/visual-design.md`
 - Localization: `.agents/instructions/localization.md`
 - Release notes and releases: `.agents/instructions/release-process.md`
+
+- Website and product documentation: `.agents/instructions/website-documentation.md`.
+  Every affected agent change must update both UI guidance and JSON/agent references for steps,
+  values, jobs, macros, automations and logs in the same task; regenerate and pass the strict
+  documentation check. Technical export alone does not replace reviewing behavior explanations.
+
+Website screenshot maintenance: use `.agents/skills/maintain-website-screenshots/SKILL.md` for affected UI captures. Keep `website/docs/screenshots.json` dependencies and page mappings current; selectively render and visually inspect changed images before marking them reviewed. The strict website check verifies source/image hashes, review status and Doku placement.

@@ -52,7 +52,7 @@ namespace TaskAutomation.Steps
                 var scriptExecutor = ctx.ScriptExecutor;
 
                 logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", scriptPath);
-                _ = Task.Run(async () =>
+                async Task ExecuteBackground(CancellationToken token)
                 {
                     var duration = System.Diagnostics.Stopwatch.StartNew();
                     void RecordBackground(string code, Exception? error = null)
@@ -77,11 +77,20 @@ namespace TaskAutomation.Steps
                     {
                         RecordBackground(LogCodes.StepBackgroundStarted);
                         await scriptExecutor.ExecuteScriptFile(
-                            scriptPath, arguments, CancellationToken.None, outputCallback);
+                            scriptPath, arguments, token, outputCallback);
                         RecordBackground(LogCodes.StepBackgroundCompleted);
                     }
-                    catch (Exception ex) { RecordBackground(LogCodes.StepBackgroundFailed, ex); logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script failed"); }
-                });
+                    catch (OperationCanceledException) when (token.IsCancellationRequested)
+                    { RecordBackground(LogCodes.StepBackgroundCancelled); throw; }
+                    catch (Exception ex)
+                    {
+                        RecordBackground(LogCodes.StepBackgroundFailed, ex);
+                        logger.LogError(ex, "ScriptExecutionStepHandler: Parallel script failed");
+                        throw;
+                    }
+                }
+                if (ctx.OwnedExecutions is { } owned) await owned.StartAsync(ExecuteBackground, ct).ConfigureAwait(false);
+                else throw new InvalidOperationException("Parallel execution requires an owning job scope.");
             }
             else
             {

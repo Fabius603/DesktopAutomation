@@ -1,0 +1,27 @@
+{
+  "type": "file_system_operation",
+  "settings": {
+    "operation": "Copy",
+    "source_mode": "ExplicitPath",
+    "source_path": "",
+    "source_result": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "target_mode": "ExplicitPath",
+    "target_path": "",
+    "target_result": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "new_name": "",
+    "filter": "",
+    "create_parent_directories": true,
+    "retry_locked_files": true,
+    "retry_count": 3,
+    "retry_delay_ms": 100
+  },
+  "id": "fd4d948b-8366-d9ec-c236-0eb9d97b2607",
+  "inputs": {},
+  "is_enabled": true
+}

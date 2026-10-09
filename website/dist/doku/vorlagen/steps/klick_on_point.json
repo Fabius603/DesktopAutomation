@@ -1,0 +1,17 @@
+{
+  "type": "klick_on_point",
+  "settings": {
+    "double_click": false,
+    "click_type": "left",
+    "timeout_ms": 0,
+    "offset_x": 0,
+    "offset_y": 0,
+    "points_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "12ba351e-b0cc-6cb8-3277-7dcc5cc6353f",
+  "inputs": {},
+  "is_enabled": true
+}

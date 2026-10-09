@@ -1,0 +1,2799 @@
+{
+  "formatVersion": 1,
+  "theme": "Light.Blue",
+  "culture": "de-DE",
+  "commonSources": [
+    "website/tools/Renderer/Program.cs",
+    "website/tools/Renderer/ScreenshotCapture.cs",
+    "DesktopAutomationApp/MainWindow.xaml",
+    "DesktopAutomationApp/Styles/**/*.xaml",
+    "DesktopAutomationApp/Resources/Strings*.resx",
+    "tests/DesktopAutomation.UiTests/DesktopAutomationApp/StepListRenderHost.cs",
+    "DesktopAutomationApp/App.xaml",
+    "DesktopAutomationApp/Resources/Makros/*.xaml",
+    "website/Build.ps1",
+    "website/tools/Renderer/ReferenceViews.cs",
+    "website/tools/Renderer/ExtraViews.cs"
+  ],
+  "entries": [
+    {
+      "id": "startseite",
+      "file": "startseite.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Startübersicht",
+      "caption": "Jobs, Makros und geplante Ausführungen in der Startübersicht.",
+      "pages": [
+        "/doku/erste-schritte/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/StartView.xaml*",
+        "DesktopAutomationApp/ViewModels/StartViewModel.cs"
+      ],
+      "crop": [
+        293,
+        107,
+        1280,
+        520
+      ],
+      "markLabels": [
+        "Aktive Automationen",
+        "Laufende Jobs & Makros",
+        "Jobs",
+        "Makros"
+      ],
+      "markNotes": {
+        "Aktive Automationen": "Zeigt eingeschaltete Automationen mit Auslöser, Aktion und nächstem Lauf.",
+        "Laufende Jobs & Makros": "Hier erscheinen gerade ausgeführte Abläufe; Sofort stoppen beendet laufende Ausführungen.",
+        "Jobs": "Anzahl der gespeicherten Jobs; ein Job besteht aus geordneten Steps.",
+        "Makros": "Anzahl der gespeicherten Makros für Maus- und Tastatureingaben."
+      }
+    },
+    {
+      "id": "unterlagen",
+      "file": "unterlagen.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Verzweigter Job",
+      "caption": "Job mit Benutzerauswahl, Bedingungen und Werteverbindungen.",
+      "pages": [
+        "/doku/jobs/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        293,
+        288,
+        835,
+        675
+      ],
+      "markLabels": [
+        "Bei jedem Durchlauf",
+        "Benutzerauswahl abfragen",
+        "Wenn",
+        "Sonst",
+        "Prozessstatus prüfen"
+      ],
+      "markNotes": {
+        "Bei jedem Durchlauf": "Diese Steps werden in jedem Durchlauf der Hauptphase ausgeführt.",
+        "Benutzerauswahl abfragen": "Fragt eine Antwort ab; deren Rückgabewert steuert die folgenden Bedingungen.",
+        "Wenn": "Beginnt einen Zweig, der bei erfüllter Bedingung ausgeführt wird.",
+        "Sonst": "Dieser Zweig wird ausgeführt, wenn die vorherigen Bedingungen nicht zutreffen."
+      }
+    },
+    {
+      "id": "sicherung",
+      "file": "sicherung.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Dateisicherung",
+      "caption": "Zwei Kopieraktionen mit Rückfrage und alternativem Zweig.",
+      "pages": [
+        "/doku/fehlerbehebung/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/sicherung/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        293,
+        288,
+        835,
+        675
+      ],
+      "markLabels": [
+        "Bei jedem Durchlauf",
+        "Benutzerauswahl abfragen",
+        "Wenn",
+        "Sonst",
+        "Prozessstatus prüfen"
+      ],
+      "markNotes": {
+        "Bei jedem Durchlauf": "Diese Steps werden in jedem Durchlauf der Hauptphase ausgeführt.",
+        "Benutzerauswahl abfragen": "Fragt eine Antwort ab; deren Rückgabewert steuert die folgenden Bedingungen.",
+        "Wenn": "Beginnt einen Zweig, der bei erfüllter Bedingung ausgeführt wird.",
+        "Sonst": "Dieser Zweig wird ausgeführt, wenn die vorherigen Bedingungen nicht zutreffen."
+      }
+    },
+    {
+      "id": "arbeitsplatz",
+      "file": "arbeitsplatz.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Prozessabfrage",
+      "caption": "Prozessstatus und bedingter Programmstart im Job-Editor.",
+      "pages": [
+        "/doku/windows-funktionen/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/arbeitsplatz/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        293,
+        288,
+        835,
+        675
+      ],
+      "markLabels": [
+        "Bei jedem Durchlauf",
+        "Benutzerauswahl abfragen",
+        "Wenn",
+        "Sonst",
+        "Prozessstatus prüfen"
+      ],
+      "markNotes": {
+        "Bei jedem Durchlauf": "Diese Steps werden in jedem Durchlauf der Hauptphase ausgeführt.",
+        "Wenn": "Beginnt einen Zweig, der bei erfüllter Bedingung ausgeführt wird.",
+        "Sonst": "Dieser Zweig wird ausgeführt, wenn die vorherigen Bedingungen nicht zutreffen.",
+        "Prozessstatus prüfen": "Liefert, ob der angegebene Prozess läuft; das Ergebnis kann einen Wenn-Zweig steuern."
+      }
+    },
+    {
+      "id": "automationen",
+      "file": "automationen.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Automation einrichten",
+      "caption": "Zeitplan und Ausführungsregeln einer Automation.",
+      "pages": [
+        "/doku/automationen-einrichten/",
+        "/doku/automationen/schedule/",
+        "/doku/automationen/AutomationRunPolicy/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Uhrzeit und Tage",
+        "Hotkey",
+        "Ereignis",
+        "Dateifilter",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "days": "Menge erlaubter Wochentage.",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "time_of_day": "Uhrzeit des Zeitplans als TimeOnly-Text, zum Beispiel 08:30:00.",
+        "already_running_behavior": "Regel bei bereits laufendem Ziel: parallel starten, stoppen, ignorieren oder neu starten.",
+        "cooldown": "Mindestpause zwischen akzeptierten Starts als TimeSpan.",
+        "enabled_from": "Beginn des aktiven täglichen Uhrzeitfensters.",
+        "enabled_until": "Ende des aktiven täglichen Uhrzeitfensters.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Uhrzeit und Tage": "Legt die Uhrzeit und Wochentage der wiederkehrenden Ausführung fest."
+      }
+    },
+    {
+      "id": "verlauf",
+      "file": "verlauf.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Ausführungsverlauf",
+      "caption": "Erfolgreiche und fehlgeschlagene Beispielausführungen mit Ergebnissen und Warnungen im Verlauf.",
+      "pages": [
+        "/doku/logs-verstehen/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/LogsView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Logs*.cs",
+        "TaskAutomation/Logging/*.cs"
+      ],
+      "crop": [
+        293,
+        225,
+        1280,
+        595
+      ],
+      "markLabels": [
+        "2 Ausführungen mit neuen Problemen",
+        "Letzte Ausführungen",
+        "Ergebnis",
+        "Auslöser",
+        "Dauer"
+      ],
+      "markNotes": {
+        "2 Ausführungen mit neuen Problemen": "Hinweis auf noch nicht angesehene Läufe mit Fehlern oder Warnungen.",
+        "Ergebnis": "Zeigt Erfolg, Warnungen oder Fehler des abgeschlossenen Laufs.",
+        "Auslöser": "Zeigt, ob der Lauf manuell oder durch eine Automation gestartet wurde.",
+        "Dauer": "Zeitspanne der Ausführung; sie hilft, langsame oder ungewöhnliche Läufe zu erkennen."
+      }
+    },
+    {
+      "id": "makro-editor",
+      "file": "makro-editor.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Makro-Editor",
+      "caption": "Gruppierte Maus- und Tastaturbefehle mit ausgewählter Tastenkombination.",
+      "pages": [
+        "/doku/makros-bearbeiten/",
+        "/doku/makros/key_combination/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Key",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "durationUs": "Haltedauer beziehungsweise zusätzliche Dauer dieses Makrobefehls in Mikrosekunden.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "keys": "Geordnete Tastenkennungen einer Tastenkombination.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben."
+      }
+    },
+    {
+      "id": "step-auswahl",
+      "file": "step-auswahl.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Benutzerauswahl",
+      "caption": "Eine Rückfrage mit zwei beschrifteten Optionen und getrennten Rückgabewerten. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/user_choice/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Überschrift (optional)",
+        "Titel (optional)",
+        "Beschreibung (optional)",
+        "Monitor",
+        "Antwortmöglichkeiten (2 bis 18, verpflichtend)"
+      ],
+      "markNotes": {
+        "Überschrift (optional)": "Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel.",
+        "Titel (optional)": "Fragetext der Benutzerauswahl.",
+        "Beschreibung (optional)": "Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl..",
+        "Monitor": "Nullbasierter Zielmonitor der Desktop-Anzeige oder Benutzerauswahl.",
+        "Antwortmöglichkeiten (2 bis 18, verpflichtend)": "Antwortliste mit zwei bis achtzehn Einträgen."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "step-bedingung",
+      "file": "step-bedingung.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bedingung bearbeiten",
+      "caption": "Der Wenn-Block vergleicht das Ergebnis der Benutzerauswahl mit dem Wert rechnung. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/if/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bedingungen"
+      ],
+      "markNotes": {
+        "Bedingungen": "Geordnete Bedingungsliste des Wenn-Zweigs."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "step-dateien",
+      "file": "step-dateien.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Dateien kopieren",
+      "caption": "Kopieraktion mit Quell- und Zielpfad und automatischem Anlegen fehlender übergeordneter Ordner. Weitere Optionen stehen unter Erweitert. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/file_system_operation/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Aktion",
+        "Quelle",
+        "Ziel",
+        "Neuer Name",
+        "Optionaler Filter",
+        "Fehlende übergeordnete Ordner automatisch erstellen",
+        "Bei gesperrten Dateien wiederholen",
+        "Anzahl der Wiederholungen",
+        "Wartezeit zwischen Versuchen (ms)"
+      ],
+      "markNotes": {
+        "Aktion": "Dateiaktion Copy, Move, Rename oder Delete.",
+        "Quelle": "Datei- oder Ordnerpfad, auf den die Dateiaktion angewendet wird.",
+        "Ziel": "Ziel der Kopier- oder Verschiebeaktion.",
+        "Neuer Name": "Neuer Dateiname für Rename.",
+        "Optionaler Filter": "Optionales Dateimuster wie *.txt.",
+        "Fehlende übergeordnete Ordner automatisch erstellen": "Legt fehlende übergeordnete Zielordner bei den unterstützten Kopier-/Verschiebeaktionen an.",
+        "Bei gesperrten Dateien wiederholen": "Wiederholt eine wegen Dateisperre fehlgeschlagene Dateiaktion nach konfigurierter Wartezeit.",
+        "Anzahl der Wiederholungen": "Anzahl zusätzlicher Wiederholungsversuche nach einer Dateisperre; 0 deaktiviert zusätzliche Versuche..",
+        "Wartezeit zwischen Versuchen (ms)": "Pause zwischen Wiederholungsversuchen in Millisekunden."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "step-programmstart",
+      "file": "step-programmstart.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Programm starten",
+      "caption": "Notepad als Beispielprogramm: ausführbare Datei und Startoptionen im Editor. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/start_process/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Aktion",
+        "Prozessreferenz",
+        "Programmpfad",
+        "Auf Beendigung warten",
+        "Argumente",
+        "Arbeitsverzeichnis",
+        "Monitor",
+        "Fenstermodus",
+        "Position",
+        "Versatz X (px)",
+        "Versatz Y (px)"
+      ],
+      "markNotes": {
+        "Aktion": "Gewünschte Aktion.",
+        "Prozessreferenz": "Im Editor eine kompatible Prozessreferenz wählen.",
+        "Programmpfad": "Pfad zur ausführbaren Datei.",
+        "Auf Beendigung warten": "true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts.",
+        "Argumente": "Argumentzeichenfolge für das Programm oder Skript.",
+        "Arbeitsverzeichnis": "Arbeitsverzeichnis des gestarteten Programms.",
+        "Monitor": "Nullbasierter Monitor für Programmfenster oder Anzeige.",
+        "Fenstermodus": "Fensterdarstellung: Voreinstellung des Programms, Normal oder Maximiert, soweit der jeweilige Step diese Option unterstützt..",
+        "Position": "Centered zentriert das Programmfenster auf dem gewählten Monitor; Custom verwendet die konfigurierten Versätze..",
+        "Versatz X (px)": "Zusätzlicher horizontaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Versatz Y (px)": "Zusätzlicher vertikaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "step-makro",
+      "file": "step-makro.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Makro im Job",
+      "caption": "Ein Makro-Step verweist auf das Beispielmakro Notiz eingeben; im Beispieljob ist dieser Step deaktiviert. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/makro_execution/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Makro"
+      ],
+      "markNotes": {
+        "Makro": "Im Editor ein vorhandenes Makro wählen; seine Eingaben wirken auf den aktiven Desktop und das aktive Fenster.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "step-werte",
+      "file": "step-werte.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Ergebnis als Text verwenden",
+      "caption": "Die Desktop-Textausgabe übernimmt die Beschriftung der Benutzerauswahl als Ergebnisquelle. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/show_text/",
+        "/doku/werte-verbinden/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Text",
+        "Monitor",
+        "Schriftgröße (pt)",
+        "Schriftfarbe",
+        "Deckkraft (%)",
+        "Anzeigedauer (ms)",
+        "Bei Job-Ende entfernen",
+        "Versatz X (px)",
+        "Versatz Y (px)"
+      ],
+      "markNotes": {
+        "Text": "Text oder kompatibler Anzeige-Wert aus einer Quelle.",
+        "Monitor": "Nullbasierter Zielmonitor der Desktop-Anzeige oder Benutzerauswahl.",
+        "Schriftgröße (pt)": "Schriftgröße der Textanzeige in Punkten.",
+        "Schriftfarbe": "Hex-Farbwert der Textanzeige.",
+        "Deckkraft (%)": "Deckkraft als Anteil von 0 bis 1, auch im referenzierten localValues-Wert.",
+        "Anzeigedauer (ms)": "Anzeigedauer in Millisekunden.",
+        "Bei Job-Ende entfernen": "Entfernt die durch diesen Job erzeugte Anzeige beim regulären Aufräumen..",
+        "Versatz X (px)": "Zusätzlicher horizontaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Versatz Y (px)": "Zusätzlicher vertikaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "step-prozessstatus",
+      "file": "step-prozessstatus.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Prozessstatus prüfen",
+      "caption": "Die Prozessabfrage prüft notepad und liefert den Status für die anschließende Bedingung. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/active_process/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/arbeitsplatz/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Prozessreferenz"
+      ],
+      "markNotes": {
+        "Prozessreferenz": "Im Editor eine kompatible Prozessreferenz wählen."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "automation-hotkey",
+      "file": "automation-hotkey.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Hotkey-Automation",
+      "caption": "Strg+Alt+U als Auslöser für den Job Arbeitsunterlagen vorbereiten.",
+      "pages": [
+        "/doku/automationen/hotkey/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/unterlagen/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Uhrzeit und Tage",
+        "Hotkey",
+        "Ereignis",
+        "Dateifilter",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "debounce": "Mindestabstand zur Entprellung mehrfacher Trigger-Ereignisse als TimeSpan-Text, zum Beispiel 00:00:01.",
+        "delay_after_event": "Verzögerung zwischen Ereignisbeobachtung und Startentscheidung als TimeSpan-Text, zum Beispiel 00:00:02..",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "modifiers": "Bitmaske der Modifikatortasten: None=0, Alt=1, Control=2, Shift=4, Windows=8; kombinierte Werte addieren, etwa 3 für Strg+Alt..",
+        "virtual_key_code": "Windows-Virtual-Key-Code der Trigger-Taste als Zahl, zum Beispiel 85 für U.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Hotkey": "Die angezeigte Tastenkombination löst die Automation aus."
+      }
+    },
+    {
+      "id": "automation-ordner",
+      "file": "automation-ordner.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Ordner-Automation",
+      "caption": "Ordnerüberwachung mit Beispieldateipfad und Filter für Textdateien. Der Beispielpfad muss vor Verwendung angepasst werden.",
+      "pages": [
+        "/doku/automationen/file_system_event/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/sicherung/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Uhrzeit und Tage",
+        "Hotkey",
+        "Ereignis",
+        "Dateifilter",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "directory_path": "Vorhandener beobachteter Ordner des Datei-Triggers.",
+        "event_kind": "Beobachtetes Fenster-, Datei- oder Systemereignis.",
+        "filter": "Optionales Dateimuster wie *.txt.",
+        "include_subdirectories": "Beobachtet auch Unterordner unterhalb des angegebenen Pfads.",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "wait_until_ready": "Wartet bei unterstützten Datei-Ereignissen auf Verwendbarkeit der Datei, bevor der Zielablauf gestartet wird.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt."
+      }
+    },
+    {
+      "id": "makro-text",
+      "file": "makro-text.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Text im Makro",
+      "caption": "Der Textbefehl trägt die Beispielnummer RE-2026-042 ein; die Verzögerung davor wird separat eingestellt.",
+      "pages": [
+        "/doku/makros/text_input/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Text",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "durationUs": "Haltedauer beziehungsweise zusätzliche Dauer dieses Makrobefehls in Mikrosekunden.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "text": "Direkt angezeigter beziehungsweise eingegebener Text.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben."
+      }
+    },
+    {
+      "id": "makro-wartezeit",
+      "file": "makro-wartezeit.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Wartezeit im Makro",
+      "caption": "Eine Wartezeit von 500 ms innerhalb der Eingabegruppe, zusätzlich zur Verzögerung vor dem Befehl.",
+      "pages": [
+        "/doku/makros/timeout/"
+      ],
+      "sources": [
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Dauer",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "duration": "Dauer des Makro-timeout in Millisekunden.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben."
+      }
+    },
+    {
+      "id": "ref-step-active-window",
+      "file": "ref-step-active-window.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Vordergrundfenster prüfen",
+      "caption": "Detailansicht: Vordergrundfenster prüfen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/active_window/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Prozessreferenz",
+        "Ergebnis zwischenspeichern (ms)"
+      ],
+      "markNotes": {
+        "Prozessreferenz": "Im Editor eine kompatible Prozessreferenz wählen.",
+        "Ergebnis zwischenspeichern (ms)": "Dauer in Millisekunden, für die das Abfrageergebnis wiederverwendet werden kann."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-block-input",
+      "file": "ref-step-block-input.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Eingaben blockieren",
+      "caption": "Detailansicht: Eingaben blockieren. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/block_input/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Automatisch freigeben nach (s)"
+      ],
+      "markNotes": {
+        "Automatisch freigeben nach (s)": "Maximale Sicherheitsdauer der Eingabesperre in Sekunden."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-camera-capture",
+      "file": "ref-step-camera-capture.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Kamerabild aufnehmen",
+      "caption": "Detailansicht: Kamerabild aufnehmen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/camera_capture/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Kamera"
+      ],
+      "markNotes": {
+        "Kamera": "Kameraauswahl im Editor."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-color-detection",
+      "file": "ref-step-color-detection.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Farberkennung",
+      "caption": "Detailansicht: Farberkennung. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/color_detection/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Farbe",
+        "Konfidenz (%)",
+        "Bildbereich (ROI)",
+        "Mindestfläche (px²)",
+        "Maximale Fläche (px²)",
+        "Mindestbreite (px)",
+        "Mindesthöhe (px)",
+        "Verkleinerungsfaktor"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Farbe": "Gesuchte Farbe als Hex-Farbwert, zum Beispiel #FF0000 für Rot.",
+        "Konfidenz (%)": "Mindestkonfidenz als Anteil von 0 bis 1, auch im referenzierten localValues-Wert: 0.9 bedeutet 90 %.",
+        "Bildbereich (ROI)": "Suchrechteck in Pixeln relativ zur Bildquelle.",
+        "Mindestfläche (px²)": "Kleinste Fläche eines Farbtreffers in Quadratpixeln.",
+        "Maximale Fläche (px²)": "Größte erlaubte Fläche eines Farbtreffers in Quadratpixeln.",
+        "Mindestbreite (px)": "Kleinste erlaubte Breite einer erkannten Farbfläche in Pixeln..",
+        "Mindesthöhe (px)": "Kleinste erlaubte Höhe einer erkannten Farbfläche in Pixeln..",
+        "Verkleinerungsfaktor": "Faktor der Bildverkleinerung vor der Farbanalyse."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-continue-job",
+      "file": "ref-step-continue-job.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Nächsten Durchlauf starten",
+      "caption": "Detailansicht: Nächsten Durchlauf starten. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/continue_job/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Nächsten Durchlauf starten"
+      ],
+      "markNotes": {
+        "Nächsten Durchlauf starten": "Überspringt die restlichen Steps dieses Durchlaufs und beginnt die Hauptphase erneut."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-desktop-duplication",
+      "file": "ref-step-desktop-duplication.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bildschirm aufnehmen",
+      "caption": "Detailansicht: Bildschirm aufnehmen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/desktop_duplication/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Monitor",
+        "Mauszeiger aufnehmen",
+        "Auf neues Bild warten",
+        "Zeitlimit (ms)",
+        "Bei Zeitlimit letztes Bild verwenden",
+        "Monitor-Kennung"
+      ],
+      "markNotes": {
+        "Monitor": "Nullbasierter Monitorindex der Bildschirmaufnahme.",
+        "Mauszeiger aufnehmen": "Nimmt den Mauszeiger in die Bildschirmaufnahme auf.",
+        "Auf neues Bild warten": "Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame zu übernehmen..",
+        "Zeitlimit (ms)": "Zeitlimit in Millisekunden für den betreffenden Vorgang.",
+        "Bei Zeitlimit letztes Bild verwenden": "Erlaubt nach Ablauf des Aufnahmezeitlimits den zuletzt verfügbaren Frame.",
+        "Monitor-Kennung": "Optional gespeicherte Monitor-Gerätekennung zur Wiedererkennung des gewünschten Bildschirms."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-dynamic-roi",
+      "file": "ref-step-dynamic-roi.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Dynamischen Bildbereich erstellen",
+      "caption": "Detailansicht: Dynamischen Bildbereich erstellen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/dynamic_roi/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Erkennungsergebnis",
+        "Rand (px)",
+        "Mindestkonfidenz (%)",
+        "Durchläufe bis zur Vollbildsuche (0 = nie)",
+        "Fehlversuche bis zum Zurücksetzen (0 = nie)"
+      ],
+      "markNotes": {
+        "Erkennungsergebnis": "Erkennung mit einem kompatiblen Rechteck als Quelle des dynamischen Suchbereichs..",
+        "Rand (px)": "Ganzzahliger zusätzlicher Rand des dynamischen Suchbereichs in Pixeln; im Editor kann ein direkter Wert gewählt werden..",
+        "Mindestkonfidenz (%)": "Mindestkonfidenz für die Übernahme eines Treffers in ROI/Vorhersage.",
+        "Durchläufe bis zur Vollbildsuche (0 = nie)": "Anzahl Durchläufe bis zur erneuten Vollsuche.",
+        "Fehlversuche bis zum Zurücksetzen (0 = nie)": "Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuchbereich."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-else",
+      "file": "ref-step-else.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Sonst",
+      "caption": "Detailansicht: Sonst. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/steps/else/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Sonst"
+      ],
+      "markNotes": {
+        "Sonst": "Dieser Zweig wird ausgeführt, wenn die vorherigen Bedingungen nicht zutreffen."
+      }
+    },
+    {
+      "id": "ref-step-else-if",
+      "file": "ref-step-else-if.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Sonst wenn",
+      "caption": "Detailansicht: Sonst wenn. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/else_if/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bedingungen"
+      ],
+      "markNotes": {
+        "Bedingungen": "Geordnete Bedingungsliste des Wenn-Zweigs."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-end-if",
+      "file": "ref-step-end-if.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Ende wenn",
+      "caption": "Das Ende eines Wenn-Blocks wird in der Oberfläche durch den Blockrahmen dargestellt. In der Textdatei schließt end_if den Block.",
+      "pages": [
+        "/doku/steps/end_if/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        293,
+        288,
+        835,
+        675
+      ],
+      "markLabels": [
+        "Wenn",
+        "Bei jedem Durchlauf"
+      ],
+      "markNotes": {
+        "Wenn": "Dieser Rahmen umfasst die Zweige bis zum zugehörigen end_if in der Textdatei.",
+        "Bei jedem Durchlauf": "Der bedingte Block gehört hier zur Hauptphase des Jobs."
+      }
+    },
+    {
+      "id": "ref-step-end-job",
+      "file": "ref-step-end-job.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Job beenden",
+      "caption": "Detailansicht: Job beenden. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/end_job/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Steps im Bereich „Bei Job-Ende“ überspringen"
+      ],
+      "markNotes": {
+        "Steps im Bereich „Bei Job-Ende“ überspringen": "true überspringt die Endphase nach diesem EndJob-Step; false führt die konfigurierten Aufräum-Steps aus.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-focus-process",
+      "file": "ref-step-focus-process.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Fenster anzeigen oder minimieren",
+      "caption": "Detailansicht: Fenster anzeigen oder minimieren. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/focus_process/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Prozessreferenz",
+        "Aktion",
+        "Fenstermodus"
+      ],
+      "markNotes": {
+        "Prozessreferenz": "Im Editor eine kompatible Prozessreferenz wählen.",
+        "Aktion": "Gewünschte Aktion.",
+        "Fenstermodus": "Fensterdarstellung: Voreinstellung des Programms, Normal oder Maximiert, soweit der jeweilige Step diese Option unterstützt.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-get-process",
+      "file": "ref-step-get-process.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Laufenden Prozess suchen",
+      "caption": "Detailansicht: Laufenden Prozess suchen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/get_process/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Prozessname",
+        "Programmpfad",
+        "Fenstertitel enthält"
+      ],
+      "markNotes": {
+        "Prozessname": "Name des gesuchten Prozesses, zum Beispiel notepad.",
+        "Programmpfad": "Pfad zur ausführbaren Datei.",
+        "Fenstertitel enthält": "Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-job-execution",
+      "file": "ref-step-job-execution.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Job ausführen",
+      "caption": "Detailansicht: Job ausführen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/job_execution/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Job",
+        "Auf Beendigung warten"
+      ],
+      "markNotes": {
+        "Job": "Im Editor eine vorhandene Jobreferenz wählen.",
+        "Auf Beendigung warten": "true wartet auf den Unterjob, bevor der nächste Step beginnt."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-keypoint-matching",
+      "file": "ref-step-keypoint-matching.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bildmerkmale vergleichen",
+      "caption": "Detailansicht: Bildmerkmale vergleichen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/keypoint_matching/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Bildvorlage",
+        "Bildbereich (ROI)",
+        "Mindestanzahl Treffer",
+        "Lowe-Verhältnis (0–1)"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Bildvorlage": "Pfad zur lokalen Bildvorlage.",
+        "Bildbereich (ROI)": "Suchrechteck in Pixeln relativ zur Bildquelle.",
+        "Mindestanzahl Treffer": "Mindestanzahl zuverlässiger SIFT-Merkmalszuordnungen, bevor der Merkmalsvergleich als Treffer gilt..",
+        "Lowe-Verhältnis (0–1)": "Lowe-Verhältnis von 0 bis 1 zur Filterung mehrdeutiger SIFT-Zuordnungen."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-klick-on-point",
+      "file": "ref-step-klick-on-point.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Punkt anklicken",
+      "caption": "Detailansicht: Punkt anklicken. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/klick_on_point/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Punktquelle",
+        "Maustaste",
+        "Versatz X (px)",
+        "Versatz Y (px)",
+        "Zeitlimit (ms)",
+        "Doppelklick"
+      ],
+      "markNotes": {
+        "Punktquelle": "Kompatible Punkt-/Erkennungsquelle.",
+        "Maustaste": "left, right oder middle sendet die entsprechende Maustaste; none führt nur die Mausbewegung aus..",
+        "Versatz X (px)": "Zusätzlicher horizontaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Versatz Y (px)": "Zusätzlicher vertikaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Zeitlimit (ms)": "Zeitlimit in Millisekunden für den betreffenden Vorgang.",
+        "Doppelklick": "Sendet einen Doppelklick statt eines Einzelklicks, sofern eine Maustaste gewählt ist.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-klick-on-point-3d",
+      "file": "ref-step-klick-on-point-3d.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "3D-Ziel anklicken",
+      "caption": "Detailansicht: 3D-Ziel anklicken. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/klick_on_point_3d/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Punktquelle",
+        "Ursprung",
+        "Maustaste"
+      ],
+      "markNotes": {
+        "Punktquelle": "Kompatible Punkt-/Erkennungsquelle.",
+        "Ursprung": "Referenzursprung für die relative Zielbewegung.",
+        "Maustaste": "left, right oder middle sendet die entsprechende Maustaste; none führt nur die Mausbewegung aus..",
+        "Bewegungsfaktor X": "Skalierung der horizontalen Zielabweichung für die relative Mausbewegung.",
+        "Bewegungsfaktor Y": "Skalierung der vertikalen Zielabweichung für die relative Mausbewegung.",
+        "Versatz X (px)": "Zusätzlicher horizontaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Versatz Y (px)": "Zusätzlicher vertikaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Zeitlimit (ms)": "Zeitlimit in Millisekunden für den betreffenden Vorgang.",
+        "Doppelklick": "Sendet einen Doppelklick statt eines Einzelklicks, sofern eine Maustaste gewählt ist..",
+        "Bewegungstoleranz (px)": "Inklusive Toleranz in Pixeln auf beiden Achsen für wiederholte ganzzahlige Mausbewegungen."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-ocr",
+      "file": "ref-step-ocr.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Text erkennen",
+      "caption": "Detailansicht: Text erkennen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/ocr/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Sprache",
+        "Textanordnung",
+        "Bildbereich (ROI)"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Sprache": "OCR-Sprachdaten: deu für Deutsch, eng für Englisch oder deu+eng für beide.",
+        "Textanordnung": "Erwartete Textstruktur der OCR, zum Beispiel TextBlock oder SingleWord.",
+        "Bildbereich (ROI)": "Suchrechteck in Pixeln relativ zur Bildquelle."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-point-comparison",
+      "file": "ref-step-point-comparison.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Punkte vergleichen",
+      "caption": "Detailansicht: Punkte vergleichen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/point_comparison/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Modus",
+        "Erforderliche Treffer",
+        "ZU PRÜFENDE PUNKTE",
+        "Referenzquelle",
+        "X",
+        "Y",
+        "Punktquelle",
+        "Versatz X (px)",
+        "Versatz Y (px)",
+        "Verknüpfung",
+        "Achsenbedingungen"
+      ],
+      "markNotes": {
+        "Modus": "Offset vergleicht Punkte mit einer Referenz und erlaubten X-/Y-Abweichungen.",
+        "Erforderliche Treffer": "Legt fest, ob alle geprüften Punkte/Bedingungen oder wenigstens einer/eine die Prüfung bestehen müssen..",
+        "ZU PRÜFENDE PUNKTE": "Zu prüfende Punktquellen.",
+        "Referenzquelle": "Manual verwendet die direkt angegebenen Referenzkoordinaten; JobResult verwendet reference_points_source..",
+        "X": "Horizontale Referenzkoordinate für den Offsetvergleich in Pixeln..",
+        "Y": "Vertikale Referenzkoordinate für den Offsetvergleich in Pixeln..",
+        "Punktquelle": "Typisierte Punktquelle als Referenz für den Punktvergleich..",
+        "Versatz X (px)": "Zusätzlicher horizontaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Versatz Y (px)": "Zusätzlicher vertikaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung..",
+        "Verknüpfung": "Verknüpft Achsenbedingungen mit And (UND) oder Or (ODER)..",
+        "Achsenbedingungen": "Liste von Achsenbedingungen."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-predict-movement",
+      "file": "ref-step-predict-movement.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bewegung vorhersagen",
+      "caption": "Detailansicht: Bewegung vorhersagen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/predict_movement/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Punktquelle",
+        "Vorhersagemodell",
+        "Mindestkonfidenz (%)",
+        "Mindestanzahl Messwerte",
+        "Spur zurücksetzen ab (px)",
+        "Maximales Alter der Messwerte (ms)",
+        "Maximale Vorhersagedistanz (px)"
+      ],
+      "markNotes": {
+        "Punktquelle": "Kompatible Punkt-/Erkennungsquelle.",
+        "Vorhersagemodell": "Modell der Zielvorhersage: automatische Auswahl oder das ausdrücklich gewählte lineare, Beschleunigungs- beziehungsweise Kalman-Modell..",
+        "Mindestkonfidenz (%)": "Mindestkonfidenz für die Übernahme eines Treffers in ROI/Vorhersage.",
+        "Mindestanzahl Messwerte": "Mindestzahl verwertbarer Messpunkte, bevor eine Vorhersage möglich ist..",
+        "Spur zurücksetzen ab (px)": "Pixelabstand, ab dem ein Sprung die bisherige Bewegungsspur zurücksetzt..",
+        "Maximales Alter der Messwerte (ms)": "Maximales Alter einer Messung in Millisekunden gegen die aktuelle Uhr.",
+        "Maximale Vorhersagedistanz (px)": "Maximal zulässige Entfernung der Vorhersage vom gemessenen Punkt in Pixeln..",
+        "Maximaler Modellfehler (px)": "Maximal akzeptierter Modellfehler in Pixeln.",
+        "Vorhersage (ms)": "Zeitlicher Vorhersagehorizont in Millisekunden.",
+        "Zeitbasis": "Zeitgrundlage der Bewegungsschätzung."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-save-image",
+      "file": "ref-step-save-image.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bild speichern",
+      "caption": "Detailansicht: Bild speichern. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/save_image/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Speicherpfad",
+        "Dateiname",
+        "Einblendungen"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Speicherpfad": "Ordner für die Bild-/Videoausgabe.",
+        "Dateiname": "Dateiname der Bild-/Videoausgabe.",
+        "Einblendungen": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-script-execution",
+      "file": "ref-step-script-execution.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Skript ausführen",
+      "caption": "Detailansicht: Skript ausführen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/script_execution/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Skriptpfad",
+        "Auf Beendigung warten",
+        "Argumente"
+      ],
+      "markNotes": {
+        "Skriptpfad": "Pfad zur vorhandenen .ps1-, .py- oder Batch-Datei.",
+        "Auf Beendigung warten": "true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts.",
+        "Argumente": "Argumentzeichenfolge für das Programm oder Skript."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-show-image",
+      "file": "ref-step-show-image.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bild anzeigen",
+      "caption": "Detailansicht: Bild anzeigen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/show_image/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Fenstertitel",
+        "Einblendungen"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Fenstertitel": "Name des Bild-Vorschaufensters.",
+        "Einblendungen": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-show-on-desktop",
+      "file": "ref-step-show-on-desktop.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Auf Desktop anzeigen",
+      "caption": "Detailansicht: Auf Desktop anzeigen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/show_on_desktop/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Einblendungen"
+      ],
+      "markNotes": {
+        "Einblendungen": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-template-matching",
+      "file": "ref-step-template-matching.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Bildvorlage erkennen",
+      "caption": "Detailansicht: Bildvorlage erkennen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/template_matching/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Bildvorlage",
+        "Konfidenz (%)",
+        "Bildbereich (ROI)",
+        "Vergleichsmethode",
+        "Mehrere Treffer zurückgeben"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Bildvorlage": "Pfad zur lokalen Bildvorlage.",
+        "Konfidenz (%)": "Mindestkonfidenz als Anteil von 0 bis 1, auch im referenzierten localValues-Wert: 0.9 bedeutet 90 %.",
+        "Bildbereich (ROI)": "Suchrechteck in Pixeln relativ zur Bildquelle.",
+        "Vergleichsmethode": "Vergleichsmethode für die Pixelvorlage.",
+        "Mehrere Treffer zurückgeben": "true liefert mehrere Template-Treffer nach Unterdrückung benachbarter Treffer; false verwendet nur den besten Treffer.."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-terminate-process",
+      "file": "ref-step-terminate-process.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Prozess beenden",
+      "caption": "Detailansicht: Prozess beenden. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/terminate_process/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Prozessreferenz"
+      ],
+      "markNotes": {
+        "Prozessreferenz": "Im Editor eine kompatible Prozessreferenz wählen."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-timeout",
+      "file": "ref-step-timeout.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Warten",
+      "caption": "Detailansicht: Warten. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/timeout/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Wartezeit (ms)"
+      ],
+      "markNotes": {
+        "Wartezeit (ms)": "Wartezeit in Millisekunden."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-unblock-input",
+      "file": "ref-step-unblock-input.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Eingaben freigeben",
+      "caption": "Detailansicht: Eingaben freigeben. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/steps/unblock_input/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Eingaben freigeben"
+      ],
+      "markNotes": {
+        "Eingaben freigeben": "Hebt eine zuvor gesetzte Sperre für physische Maus- und Tastatureingaben auf."
+      }
+    },
+    {
+      "id": "ref-step-video-creation",
+      "file": "ref-step-video-creation.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Video erstellen",
+      "caption": "Detailansicht: Video erstellen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/video_creation/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "Speicherpfad",
+        "Dateiname",
+        "Einblendungen"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "Speicherpfad": "Ordner für die Bild-/Videoausgabe.",
+        "Dateiname": "Dateiname der Bild-/Videoausgabe.",
+        "Einblendungen": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-windows-setting-change",
+      "file": "ref-step-windows-setting-change.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Windows-Einstellung ändern",
+      "caption": "Detailansicht: Windows-Einstellung ändern. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/windows_setting_change/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Windows-Funktion"
+      ],
+      "markNotes": {
+        "Windows-Funktion": "Windows-Funktion und dazugehörige Parameter im Editor."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-windows-state-query",
+      "file": "ref-step-windows-state-query.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Windows-Zustand abfragen",
+      "caption": "Detailansicht: Windows-Zustand abfragen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/windows_state_query/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Windows-Funktion"
+      ],
+      "markNotes": {
+        "Windows-Funktion": "Windows-Funktion und dazugehörige Parameter im Editor."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-yolo-detection",
+      "file": "ref-step-yolo-detection.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Objekte erkennen",
+      "caption": "Detailansicht: Objekte erkennen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.",
+      "pages": [
+        "/doku/steps/yolo_detection/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Bildquelle",
+        "YOLO-Modell",
+        "Bildbereich (ROI)",
+        "Konfidenz (%)"
+      ],
+      "markNotes": {
+        "Bildquelle": "Bildobjekt eines Aufnahme-Steps.",
+        "YOLO-Modell": "YOLO-Modell und zugehörige Modellkonfiguration im Editor.",
+        "Bildbereich (ROI)": "Suchrechteck in Pixeln relativ zur Bildquelle.",
+        "Konfidenz (%)": "Mindestkonfidenz als Anteil von 0 bis 1, auch im referenzierten localValues-Wert: 0.9 bedeutet 90 %."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-macro-key-down",
+      "file": "ref-macro-key-down.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Taste drücken",
+      "caption": "Detailansicht: Taste drücken. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/key_down/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Key",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "key": "Windows-Tastenkennung des Makrobefehls, zum Beispiel A oder CONTROL.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben."
+      }
+    },
+    {
+      "id": "ref-macro-key-up",
+      "file": "ref-macro-key-up.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Taste loslassen",
+      "caption": "Detailansicht: Taste loslassen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/key_up/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Key",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "key": "Windows-Tastenkennung des Makrobefehls, zum Beispiel A oder CONTROL.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben."
+      }
+    },
+    {
+      "id": "ref-macro-mouse-down",
+      "file": "ref-macro-mouse-down.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Maustaste drücken",
+      "caption": "Detailansicht: Maustaste drücken. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/mouse_down/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Button",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "button": "Maustaste als akzeptierter Name, zum Beispiel left, right oder middle.",
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben.",
+        "Button": "Wählt die Maustaste, die gedrückt oder losgelassen wird."
+      }
+    },
+    {
+      "id": "ref-macro-mouse-move-absolute",
+      "file": "ref-macro-mouse-move-absolute.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Maus absolut bewegen",
+      "caption": "Detailansicht: Maus absolut bewegen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/mouse_move_absolute/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "X",
+        "Y",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "x": "Horizontale Pixelkoordinate.",
+        "y": "Vertikale Pixelkoordinate.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben.",
+        "X": "Horizontale Zielposition des Mauszeigers in Pixeln.",
+        "Y": "Vertikale Zielposition des Mauszeigers in Pixeln."
+      }
+    },
+    {
+      "id": "ref-macro-mouse-move-relative",
+      "file": "ref-macro-mouse-move-relative.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Maus relativ bewegen",
+      "caption": "Detailansicht: Maus relativ bewegen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/mouse_move_relative/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "DeltaX",
+        "DeltaY",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "deltaX": "Relative horizontale Mausbewegung beziehungsweise horizontales Mausrad-Delta.",
+        "deltaY": "Relative vertikale Mausbewegung beziehungsweise vertikales Mausrad-Delta.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben.",
+        "DeltaX": "Horizontaler Versatz: Bei Mausbewegungen in Pixeln, beim Mausrad als Scroll-Delta.",
+        "DeltaY": "Vertikaler Versatz: Bei Mausbewegungen in Pixeln, beim Mausrad als Scroll-Delta."
+      }
+    },
+    {
+      "id": "ref-macro-mouse-up",
+      "file": "ref-macro-mouse-up.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Maustaste loslassen",
+      "caption": "Detailansicht: Maustaste loslassen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/mouse_up/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "Button",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "button": "Maustaste als akzeptierter Name, zum Beispiel left, right oder middle.",
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben.",
+        "Button": "Wählt die Maustaste, die gedrückt oder losgelassen wird."
+      }
+    },
+    {
+      "id": "ref-macro-mouse-wheel",
+      "file": "ref-macro-mouse-wheel.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Mausrad bewegen",
+      "caption": "Detailansicht: Mausrad bewegen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/makros/mouse_wheel/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/MakrosView/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Makros/*.cs",
+        "TaskAutomation/Makros/*.cs"
+      ],
+      "crop": [
+        1255,
+        245,
+        320,
+        590
+      ],
+      "markLabels": [
+        "DeltaX",
+        "DeltaY",
+        "Verzögerung davor"
+      ],
+      "markNotes": {
+        "delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms.",
+        "deltaX": "Relative horizontale Mausbewegung beziehungsweise horizontales Mausrad-Delta.",
+        "deltaY": "Relative vertikale Mausbewegung beziehungsweise vertikales Mausrad-Delta.",
+        "groupId": "Optionale Referenz auf groups[].id.",
+        "id": "Stabile Identität dieses Eintrags.",
+        "Verzögerung davor": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen.",
+        "Key": "Taste bzw. Tastenkombination für diesen Befehl.",
+        "Dauer": "Dauer der zusätzlichen Pause. Sie ist unabhängig von der Verzögerung davor.",
+        "Text": "Dieser Text wird in die aktive Anwendung eingegeben.",
+        "DeltaX": "Horizontaler Versatz: Bei Mausbewegungen in Pixeln, beim Mausrad als Scroll-Delta.",
+        "DeltaY": "Vertikaler Versatz: Bei Mausbewegungen in Pixeln, beim Mausrad als Scroll-Delta."
+      }
+    },
+    {
+      "id": "ref-auto-interval",
+      "file": "ref-auto-interval.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Intervall",
+      "caption": "Detailansicht: Intervall. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/interval/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Intervall",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "interval": "Positiver Wiederholungsabstand als TimeSpan-Text, zum Beispiel 00:15:00 für fünfzehn Minuten..",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "start_immediately": "Startet die Intervall-Automation beim Aktivieren unmittelbar, bevor das erste Intervall abgewartet wird..",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Intervall": "Abstand zwischen zwei geplanten Ausführungen; Zahl und Einheit gehören zusammen."
+      }
+    },
+    {
+      "id": "ref-auto-once-at",
+      "file": "ref-auto-once-at.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Einmalig",
+      "caption": "Detailansicht: Einmalig. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/once_at/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Ausführung",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "run_at": "Zeitpunkt der einmaligen Ausführung mit Zeitzonenoffset, etwa 2030-01-01T08:00:00+01:00.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Ausführung": "Datum und Uhrzeit des einmaligen Starts."
+      }
+    },
+    {
+      "id": "ref-auto-process-exited",
+      "file": "ref-auto-process-exited.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Prozess beendet",
+      "caption": "Detailansicht: Prozess beendet. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/process_exited/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Prozessname",
+        "Fenstertitel enthält (optional)",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "delay_after_event": "Verzögerung zwischen Ereignisbeobachtung und Startentscheidung als TimeSpan-Text, zum Beispiel 00:00:02..",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "process_name": "Name des gesuchten Prozesses, zum Beispiel notepad.",
+        "window_title_contains": "Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Prozessname": "Name des Prozesses, dessen Beenden beobachtet wird.",
+        "Fenstertitel enthält (optional)": "Grenzt den beobachteten Prozess auf einen passenden Fenstertitel ein."
+      }
+    },
+    {
+      "id": "ref-auto-process-started",
+      "file": "ref-auto-process-started.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Prozess gestartet",
+      "caption": "Detailansicht: Prozess gestartet. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/process_started/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Prozessname",
+        "Fenstertitel enthält (optional)",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "delay_after_event": "Verzögerung zwischen Ereignisbeobachtung und Startentscheidung als TimeSpan-Text, zum Beispiel 00:00:02..",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "process_name": "Name des gesuchten Prozesses, zum Beispiel notepad.",
+        "window_title_contains": "Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Prozessname": "Name des Prozesses, dessen Start beobachtet wird.",
+        "Fenstertitel enthält (optional)": "Grenzt den beobachteten Prozess auf einen passenden Fenstertitel ein."
+      }
+    },
+    {
+      "id": "ref-auto-system-event",
+      "file": "ref-auto-system-event.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Windows-Systemereignis",
+      "caption": "Detailansicht: Windows-Systemereignis. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/system_event/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Systemereignis",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "event_kind": "Beobachtetes Fenster-, Datei- oder Systemereignis.",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Systemereignis": "Das ausgewählte Windows-Ereignis startet die Automation."
+      }
+    },
+    {
+      "id": "ref-auto-webhook",
+      "file": "ref-auto-webhook.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Webhook",
+      "caption": "Detailansicht: Webhook. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/webhook/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Erreichbarkeit",
+        "Port",
+        "Webhook-URL",
+        "Webhook-Secret",
+        "PowerShell-Aufruf",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "hook_id": "Stabile GUID des Webhook-Endpunkts /api/v1/webhooks/<hook_id>.",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "network_mode": "Offline bindet lokal, Lan erlaubt lokale Netzwerkzugriffe, Online benötigt eine konfigurierte HTTPS-Basisadresse.",
+        "online_base_url": "Öffentliche HTTPS-Basisadresse ohne Query und Fragment für Online-Webhooks.",
+        "port": "Lokaler Listener-Port von 1024 bis 65535; Standard 17843.",
+        "secret": "Webhook-Zugangsschlüssel mit mindestens 24 Zeichen.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Erreichbarkeit": "Bestimmt, ob der HTTP-Auslöser lokal oder im Netzwerk erreichbar ist.",
+        "Port": "Port des lokalen HTTP-Listeners.",
+        "Webhook-URL": "Zieladresse des authentifizierten POST-Aufrufs; hier mit Beispieldaten.",
+        "Webhook-Secret": "Authentifizierung des Aufrufs; der abgebildete Wert ist ein erfundenes Beispiel.",
+        "PowerShell-Aufruf": "Kopierbares Aufrufmuster mit POST, Authentifizierung und JSON-Body."
+      }
+    },
+    {
+      "id": "ref-auto-window-event",
+      "file": "ref-auto-window-event.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Fensterereignis",
+      "caption": "Detailansicht: Fensterereignis. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/window_event/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Ereignis",
+        "Prozessname (optional)",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "delay_after_event": "Verzögerung zwischen Ereignisbeobachtung und Startentscheidung als TimeSpan-Text, zum Beispiel 00:00:02..",
+        "event_kind": "Beobachtetes Fenster-, Datei- oder Systemereignis.",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "process_name": "Name des gesuchten Prozesses, zum Beispiel notepad.",
+        "window_title_contains": "Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die zu beobachtende Fensteränderung.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Prozessname (optional)": "Beschränkt die Beobachtung auf den angegebenen Prozess."
+      }
+    },
+    {
+      "id": "ref-auto-windows-event",
+      "file": "ref-auto-windows-event.png",
+      "width": 1600,
+      "height": 980,
+      "title": "Windows-Ereignis",
+      "caption": "Detailansicht: Windows-Ereignis. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion.",
+      "pages": [
+        "/doku/automationen/windows_event/"
+      ],
+      "sources": [
+        "website/docs/authoring.json",
+        "website/tools/Renderer/ExtraViews.cs",
+        "DesktopAutomationApp/Views/AutomationsView/AutomationDetailView.xaml*",
+        "DesktopAutomationApp/ViewModels/Automations/*.cs",
+        "website/docs/examples/arbeitsplatz/automations/*.json",
+        "website/tools/Exporter/Examples.cs"
+      ],
+      "crop": [
+        293,
+        330,
+        1280,
+        630
+      ],
+      "markLabels": [
+        "Trigger-Typ",
+        "Kategorie",
+        "Windows-Funktion",
+        "Entprellung (Sekunden)",
+        "Verzögerung (Sekunden)",
+        "Job oder Makro",
+        "Wenn bereits aktiv",
+        "Cooldown"
+      ],
+      "markNotes": {
+        "debounce": "Mindestabstand zur Entprellung mehrfacher Trigger-Ereignisse als TimeSpan-Text, zum Beispiel 00:00:01.",
+        "delay_after_event": "Verzögerung zwischen Ereignisbeobachtung und Startentscheidung als TimeSpan-Text, zum Beispiel 00:00:02..",
+        "event_type": "Stabile Kennung eines unterstützten Windows-Ereignisses, zum Beispiel network.availability.changed.",
+        "filters": "Benannte Filterwerte der Windows-Ereignisfunktion.",
+        "kind": "Abgeleitete Triggerart zur Anzeige.",
+        "Trigger-Typ": "Hier wählst du, welches Ereignis die Automation startet.",
+        "Job oder Makro": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird.",
+        "Wenn bereits aktiv": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft.",
+        "Cooldown": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden.",
+        "Ereignis": "Wählt die Art der Änderung aus, auf die der Trigger reagiert.",
+        "Dateifilter": "Schränkt die überwachten Namen ein, beispielsweise auf *.txt.",
+        "Kategorie": "Gruppiert die verfügbaren Windows-Ereignisse.",
+        "Windows-Funktion": "Wählt das konkrete Ereignis aus der Kategorie.",
+        "Entprellung (Sekunden)": "Fasst schnell wiederholte Ereignisse innerhalb der eingestellten Zeit zusammen.",
+        "Verzögerung (Sekunden)": "Wartezeit zwischen dem beobachteten Ereignis und dem Start."
+      }
+    },
+    {
+      "id": "ref-step-file-system-operation-rename",
+      "file": "ref-step-file-system-operation-rename.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Datei umbenennen",
+      "caption": "Vollständige Feld-Ausschnitte der echten Oberfläche mit Beispielwerten zur Aktion Umbenennen. Die Nummer markiert Beschriftung und Eingabe gemeinsam; keine Dateiaktion wird ausgeführt.",
+      "pages": [
+        "/doku/steps/file_system_operation/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Aktion",
+        "Quelle",
+        "Ziel",
+        "Neuer Name",
+        "Optionaler Filter",
+        "Fehlende übergeordnete Ordner automatisch erstellen",
+        "Bei gesperrten Dateien wiederholen",
+        "Anzahl der Wiederholungen",
+        "Wartezeit zwischen Versuchen (ms)"
+      ],
+      "markNotes": {
+        "Aktion": "Dateiaktion Copy, Move, Rename oder Delete.",
+        "Quelle": "Datei- oder Ordnerpfad, auf den die Dateiaktion angewendet wird.",
+        "Ziel": "Ziel der Kopier- oder Verschiebeaktion.",
+        "Neuer Name": "Neuer Dateiname für Rename.",
+        "Optionaler Filter": "Optionales Dateimuster wie *.txt.",
+        "Fehlende übergeordnete Ordner automatisch erstellen": "Legt fehlende übergeordnete Zielordner bei den unterstützten Kopier-/Verschiebeaktionen an.",
+        "Bei gesperrten Dateien wiederholen": "Wiederholt eine wegen Dateisperre fehlgeschlagene Dateiaktion nach konfigurierter Wartezeit.",
+        "Anzahl der Wiederholungen": "Anzahl zusätzlicher Wiederholungsversuche nach einer Dateisperre; 0 deaktiviert zusätzliche Versuche..",
+        "Wartezeit zwischen Versuchen (ms)": "Pause zwischen Wiederholungsversuchen in Millisekunden."
+      },
+      "fieldDetails": true
+    },
+    {
+      "id": "ref-step-file-system-operation-delete",
+      "file": "ref-step-file-system-operation-delete.png",
+      "width": 1600,
+      "height": 1600,
+      "title": "Dateien mit Muster auswählen",
+      "caption": "Vollständige Feld-Ausschnitte der echten Oberfläche mit Beispielwerten zur Aktion Löschen. Die Nummer markiert Beschriftung und Eingabe gemeinsam; keine Dateiaktion wird ausgeführt.",
+      "pages": [
+        "/doku/steps/file_system_operation/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/**/*.xaml*",
+        "DesktopAutomationApp/ViewModels/Jobs/*.cs",
+        "DesktopAutomationApp/Controls/Jobs/**/*.xaml",
+        "website/docs/examples/unterlagen/**/*.json",
+        "TaskAutomation/Steps/Definitions/*.cs",
+        "website/tools/Exporter/Examples.cs",
+        "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        1400
+      ],
+      "markLabels": [
+        "Aktion",
+        "Quelle",
+        "Ziel",
+        "Neuer Name",
+        "Optionaler Filter",
+        "Fehlende übergeordnete Ordner automatisch erstellen",
+        "Bei gesperrten Dateien wiederholen",
+        "Anzahl der Wiederholungen",
+        "Wartezeit zwischen Versuchen (ms)"
+      ],
+      "markNotes": {
+        "Aktion": "Dateiaktion Copy, Move, Rename oder Delete.",
+        "Quelle": "Datei- oder Ordnerpfad, auf den die Dateiaktion angewendet wird.",
+        "Ziel": "Ziel der Kopier- oder Verschiebeaktion.",
+        "Neuer Name": "Neuer Dateiname für Rename.",
+        "Optionaler Filter": "Optionales Dateimuster wie *.txt.",
+        "Fehlende übergeordnete Ordner automatisch erstellen": "Legt fehlende übergeordnete Zielordner bei den unterstützten Kopier-/Verschiebeaktionen an.",
+        "Bei gesperrten Dateien wiederholen": "Wiederholt eine wegen Dateisperre fehlgeschlagene Dateiaktion nach konfigurierter Wartezeit.",
+        "Anzahl der Wiederholungen": "Anzahl zusätzlicher Wiederholungsversuche nach einer Dateisperre; 0 deaktiviert zusätzliche Versuche..",
+        "Wartezeit zwischen Versuchen (ms)": "Pause zwischen Wiederholungsversuchen in Millisekunden."
+      },
+      "fieldDetails": true
+    }
+  ]
+}

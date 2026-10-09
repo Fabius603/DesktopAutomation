@@ -1,0 +1,27 @@
+{
+  "type": "template_matching",
+  "settings": {
+    "template_path": "",
+    "template_match_mode": "CCoeffNormed",
+    "multiple_points": false,
+    "confidence_threshold": 0.9,
+    "roi": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "enable_roi": false,
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "dynamic_roi_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "fecba802-7139-a95a-9712-cc418e4a3527",
+  "inputs": {},
+  "is_enabled": true
+}

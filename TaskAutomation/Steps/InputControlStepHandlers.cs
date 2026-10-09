@@ -9,7 +9,7 @@ public sealed class BlockInputStepHandler : JobStepHandler<BlockInputStep, Input
     protected override Task<InputControlResult> ExecuteCoreAsync(BlockInputStep step, IStepPipelineContext ctx, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        WindowsInputBlockController.Block(TimeSpan.FromSeconds(step.Settings.SafetyTimeoutSeconds));
+        WindowsInputBlockController.Block(ctx.ResourceOwnerId, TimeSpan.FromSeconds(step.Settings.SafetyTimeoutSeconds));
         ctx.Logger.LogInformation("Maus- und Tastatureingaben für maximal {Seconds} Sekunden blockiert.", step.Settings.SafetyTimeoutSeconds);
         return Task.FromResult(new InputControlResult { WasExecuted = true, Success = true });
     }
@@ -21,7 +21,7 @@ public sealed class UnblockInputStepHandler : JobStepHandler<UnblockInputStep, I
 {
     protected override Task<InputControlResult> ExecuteCoreAsync(UnblockInputStep step, IStepPipelineContext ctx, CancellationToken ct)
     {
-        WindowsInputBlockController.Unblock();
+        WindowsInputBlockController.Unblock(ctx.ResourceOwnerId);
         ctx.Logger.LogInformation("Maus- und Tastatureingaben freigegeben.");
         return Task.FromResult(new InputControlResult { WasExecuted = true, Success = true });
     }

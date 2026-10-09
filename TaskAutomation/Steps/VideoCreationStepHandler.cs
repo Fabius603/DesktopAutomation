@@ -25,7 +25,7 @@ namespace TaskAutomation.Steps
                 return new VideoCreationResult { WasExecuted = true, Success = false };
             }
 
-            if (ctx.VideoRecorder is null)
+            if (!ctx.VideoRecorders.TryGetValue(step.Id, out var videoRecorder))
             {
                 var recorder = ctx.CreateVideoRecorder(imageInput.Image.Width, imageInput.Image.Height, 60);
                 try
@@ -38,7 +38,8 @@ namespace TaskAutomation.Steps
                         "Videoaufnahme gestartet.",
                         $"Datei={recorder.OutputFilePath}, Größe={imageInput.Image.Width}x{imageInput.Image.Height}, FPS=60",
                         stepId: step.Id, stepType: step.GetType().Name);
-                    ctx.VideoRecorder = recorder;
+                    ctx.VideoRecorders.Add(step.Id, recorder);
+                    videoRecorder = recorder;
                 }
                 catch { recorder.Dispose(); throw; }
             }
@@ -53,7 +54,7 @@ namespace TaskAutomation.Steps
                     : (Bitmap)imageInput.Image.Clone();
 
                 ct.ThrowIfCancellationRequested();
-                ctx.VideoRecorder.AddFrame(frameToAdd);
+                videoRecorder.AddFrame(frameToAdd);
             }
             finally
             {

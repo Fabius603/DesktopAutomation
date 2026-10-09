@@ -1,0 +1,10 @@
+{
+  "type": "windows_setting_change",
+  "settings": {
+    "setting_id": "audio.master_volume",
+    "parameters": {}
+  },
+  "id": "cdf47e67-4f34-aa28-2720-e262a0db31d5",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -1,0 +1,15 @@
+{
+  "type": "camera_capture",
+  "settings": {
+    "camera_id": "",
+    "camera_name": "",
+    "quality_mode": "Automatic",
+    "width": 0,
+    "height": 0,
+    "frames_per_second": 0,
+    "pixel_format": ""
+  },
+  "id": "f86a035d-110f-72d1-11bd-b0e1f4d55409",
+  "inputs": {},
+  "is_enabled": true
+}

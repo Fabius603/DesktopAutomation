@@ -1,0 +1,2610 @@
+[
+  {
+    "id": "active_process",
+    "group": "steps",
+    "title": "Prozessstatus prüfen",
+    "url": "/doku/steps/active_process/",
+    "markdown": "/doku/steps/active_process/referenz.md",
+    "json": "/doku/steps/active_process/vertrag.json"
+  },
+  {
+    "id": "active_window",
+    "group": "steps",
+    "title": "Vordergrundfenster prüfen",
+    "url": "/doku/steps/active_window/",
+    "markdown": "/doku/steps/active_window/referenz.md",
+    "json": "/doku/steps/active_window/vertrag.json"
+  },
+  {
+    "id": "block_input",
+    "group": "steps",
+    "title": "Eingaben blockieren",
+    "url": "/doku/steps/block_input/",
+    "markdown": "/doku/steps/block_input/referenz.md",
+    "json": "/doku/steps/block_input/vertrag.json"
+  },
+  {
+    "id": "camera_capture",
+    "group": "steps",
+    "title": "Kamerabild aufnehmen",
+    "url": "/doku/steps/camera_capture/",
+    "markdown": "/doku/steps/camera_capture/referenz.md",
+    "json": "/doku/steps/camera_capture/vertrag.json"
+  },
+  {
+    "id": "color_detection",
+    "group": "steps",
+    "title": "Farberkennung",
+    "url": "/doku/steps/color_detection/",
+    "markdown": "/doku/steps/color_detection/referenz.md",
+    "json": "/doku/steps/color_detection/vertrag.json"
+  },
+  {
+    "id": "continue_job",
+    "group": "steps",
+    "title": "Nächsten Durchlauf starten",
+    "url": "/doku/steps/continue_job/",
+    "markdown": "/doku/steps/continue_job/referenz.md",
+    "json": "/doku/steps/continue_job/vertrag.json"
+  },
+  {
+    "id": "desktop_duplication",
+    "group": "steps",
+    "title": "Bildschirm aufnehmen",
+    "url": "/doku/steps/desktop_duplication/",
+    "markdown": "/doku/steps/desktop_duplication/referenz.md",
+    "json": "/doku/steps/desktop_duplication/vertrag.json"
+  },
+  {
+    "id": "dynamic_roi",
+    "group": "steps",
+    "title": "Dynamischen Bildbereich erstellen",
+    "url": "/doku/steps/dynamic_roi/",
+    "markdown": "/doku/steps/dynamic_roi/referenz.md",
+    "json": "/doku/steps/dynamic_roi/vertrag.json"
+  },
+  {
+    "id": "else",
+    "group": "steps",
+    "title": "Sonst",
+    "url": "/doku/steps/else/",
+    "markdown": "/doku/steps/else/referenz.md",
+    "json": "/doku/steps/else/vertrag.json"
+  },
+  {
+    "id": "else_if",
+    "group": "steps",
+    "title": "Sonst wenn",
+    "url": "/doku/steps/else_if/",
+    "markdown": "/doku/steps/else_if/referenz.md",
+    "json": "/doku/steps/else_if/vertrag.json"
+  },
+  {
+    "id": "end_if",
+    "group": "steps",
+    "title": "Ende wenn",
+    "url": "/doku/steps/end_if/",
+    "markdown": "/doku/steps/end_if/referenz.md",
+    "json": "/doku/steps/end_if/vertrag.json"
+  },
+  {
+    "id": "end_job",
+    "group": "steps",
+    "title": "Job beenden",
+    "url": "/doku/steps/end_job/",
+    "markdown": "/doku/steps/end_job/referenz.md",
+    "json": "/doku/steps/end_job/vertrag.json"
+  },
+  {
+    "id": "file_system_operation",
+    "group": "steps",
+    "title": "Datei oder Ordner bearbeiten",
+    "url": "/doku/steps/file_system_operation/",
+    "markdown": "/doku/steps/file_system_operation/referenz.md",
+    "json": "/doku/steps/file_system_operation/vertrag.json"
+  },
+  {
+    "id": "focus_process",
+    "group": "steps",
+    "title": "Fenster anzeigen oder minimieren",
+    "url": "/doku/steps/focus_process/",
+    "markdown": "/doku/steps/focus_process/referenz.md",
+    "json": "/doku/steps/focus_process/vertrag.json"
+  },
+  {
+    "id": "get_process",
+    "group": "steps",
+    "title": "Laufenden Prozess suchen",
+    "url": "/doku/steps/get_process/",
+    "markdown": "/doku/steps/get_process/referenz.md",
+    "json": "/doku/steps/get_process/vertrag.json"
+  },
+  {
+    "id": "if",
+    "group": "steps",
+    "title": "Wenn",
+    "url": "/doku/steps/if/",
+    "markdown": "/doku/steps/if/referenz.md",
+    "json": "/doku/steps/if/vertrag.json"
+  },
+  {
+    "id": "job_execution",
+    "group": "steps",
+    "title": "Job ausführen",
+    "url": "/doku/steps/job_execution/",
+    "markdown": "/doku/steps/job_execution/referenz.md",
+    "json": "/doku/steps/job_execution/vertrag.json"
+  },
+  {
+    "id": "keypoint_matching",
+    "group": "steps",
+    "title": "Bildmerkmale vergleichen",
+    "url": "/doku/steps/keypoint_matching/",
+    "markdown": "/doku/steps/keypoint_matching/referenz.md",
+    "json": "/doku/steps/keypoint_matching/vertrag.json"
+  },
+  {
+    "id": "klick_on_point",
+    "group": "steps",
+    "title": "Punkt anklicken",
+    "url": "/doku/steps/klick_on_point/",
+    "markdown": "/doku/steps/klick_on_point/referenz.md",
+    "json": "/doku/steps/klick_on_point/vertrag.json"
+  },
+  {
+    "id": "klick_on_point_3d",
+    "group": "steps",
+    "title": "3D-Ziel anklicken",
+    "url": "/doku/steps/klick_on_point_3d/",
+    "markdown": "/doku/steps/klick_on_point_3d/referenz.md",
+    "json": "/doku/steps/klick_on_point_3d/vertrag.json"
+  },
+  {
+    "id": "makro_execution",
+    "group": "steps",
+    "title": "Makro ausführen",
+    "url": "/doku/steps/makro_execution/",
+    "markdown": "/doku/steps/makro_execution/referenz.md",
+    "json": "/doku/steps/makro_execution/vertrag.json"
+  },
+  {
+    "id": "ocr",
+    "group": "steps",
+    "title": "Text erkennen",
+    "url": "/doku/steps/ocr/",
+    "markdown": "/doku/steps/ocr/referenz.md",
+    "json": "/doku/steps/ocr/vertrag.json"
+  },
+  {
+    "id": "point_comparison",
+    "group": "steps",
+    "title": "Punkte vergleichen",
+    "url": "/doku/steps/point_comparison/",
+    "markdown": "/doku/steps/point_comparison/referenz.md",
+    "json": "/doku/steps/point_comparison/vertrag.json"
+  },
+  {
+    "id": "predict_movement",
+    "group": "steps",
+    "title": "Bewegung vorhersagen",
+    "url": "/doku/steps/predict_movement/",
+    "markdown": "/doku/steps/predict_movement/referenz.md",
+    "json": "/doku/steps/predict_movement/vertrag.json"
+  },
+  {
+    "id": "save_image",
+    "group": "steps",
+    "title": "Bild speichern",
+    "url": "/doku/steps/save_image/",
+    "markdown": "/doku/steps/save_image/referenz.md",
+    "json": "/doku/steps/save_image/vertrag.json"
+  },
+  {
+    "id": "script_execution",
+    "group": "steps",
+    "title": "Skript ausführen",
+    "url": "/doku/steps/script_execution/",
+    "markdown": "/doku/steps/script_execution/referenz.md",
+    "json": "/doku/steps/script_execution/vertrag.json"
+  },
+  {
+    "id": "show_image",
+    "group": "steps",
+    "title": "Bild anzeigen",
+    "url": "/doku/steps/show_image/",
+    "markdown": "/doku/steps/show_image/referenz.md",
+    "json": "/doku/steps/show_image/vertrag.json"
+  },
+  {
+    "id": "show_on_desktop",
+    "group": "steps",
+    "title": "Auf Desktop anzeigen",
+    "url": "/doku/steps/show_on_desktop/",
+    "markdown": "/doku/steps/show_on_desktop/referenz.md",
+    "json": "/doku/steps/show_on_desktop/vertrag.json"
+  },
+  {
+    "id": "show_text",
+    "group": "steps",
+    "title": "Text auf Desktop anzeigen",
+    "url": "/doku/steps/show_text/",
+    "markdown": "/doku/steps/show_text/referenz.md",
+    "json": "/doku/steps/show_text/vertrag.json"
+  },
+  {
+    "id": "start_process",
+    "group": "steps",
+    "title": "Prozess starten",
+    "url": "/doku/steps/start_process/",
+    "markdown": "/doku/steps/start_process/referenz.md",
+    "json": "/doku/steps/start_process/vertrag.json"
+  },
+  {
+    "id": "template_matching",
+    "group": "steps",
+    "title": "Bildvorlage erkennen",
+    "url": "/doku/steps/template_matching/",
+    "markdown": "/doku/steps/template_matching/referenz.md",
+    "json": "/doku/steps/template_matching/vertrag.json"
+  },
+  {
+    "id": "terminate_process",
+    "group": "steps",
+    "title": "Prozess beenden",
+    "url": "/doku/steps/terminate_process/",
+    "markdown": "/doku/steps/terminate_process/referenz.md",
+    "json": "/doku/steps/terminate_process/vertrag.json"
+  },
+  {
+    "id": "timeout",
+    "group": "steps",
+    "title": "Warten",
+    "url": "/doku/steps/timeout/",
+    "markdown": "/doku/steps/timeout/referenz.md",
+    "json": "/doku/steps/timeout/vertrag.json"
+  },
+  {
+    "id": "unblock_input",
+    "group": "steps",
+    "title": "Eingaben freigeben",
+    "url": "/doku/steps/unblock_input/",
+    "markdown": "/doku/steps/unblock_input/referenz.md",
+    "json": "/doku/steps/unblock_input/vertrag.json"
+  },
+  {
+    "id": "user_choice",
+    "group": "steps",
+    "title": "Benutzerauswahl abfragen",
+    "url": "/doku/steps/user_choice/",
+    "markdown": "/doku/steps/user_choice/referenz.md",
+    "json": "/doku/steps/user_choice/vertrag.json"
+  },
+  {
+    "id": "video_creation",
+    "group": "steps",
+    "title": "Video erstellen",
+    "url": "/doku/steps/video_creation/",
+    "markdown": "/doku/steps/video_creation/referenz.md",
+    "json": "/doku/steps/video_creation/vertrag.json"
+  },
+  {
+    "id": "windows_setting_change",
+    "group": "steps",
+    "title": "Windows-Einstellung ändern",
+    "url": "/doku/steps/windows_setting_change/",
+    "markdown": "/doku/steps/windows_setting_change/referenz.md",
+    "json": "/doku/steps/windows_setting_change/vertrag.json"
+  },
+  {
+    "id": "windows_state_query",
+    "group": "steps",
+    "title": "Windows-Zustand abfragen",
+    "url": "/doku/steps/windows_state_query/",
+    "markdown": "/doku/steps/windows_state_query/referenz.md",
+    "json": "/doku/steps/windows_state_query/vertrag.json"
+  },
+  {
+    "id": "yolo_detection",
+    "group": "steps",
+    "title": "Objekte erkennen",
+    "url": "/doku/steps/yolo_detection/",
+    "markdown": "/doku/steps/yolo_detection/referenz.md",
+    "json": "/doku/steps/yolo_detection/vertrag.json"
+  },
+  {
+    "id": "file_system_event",
+    "group": "automationen",
+    "title": "Datei- oder Ordnerereignis",
+    "url": "/doku/automationen/file_system_event/",
+    "markdown": "/doku/automationen/file_system_event/referenz.md",
+    "json": "/doku/automationen/file_system_event/vertrag.json"
+  },
+  {
+    "id": "hotkey",
+    "group": "automationen",
+    "title": "Hotkey",
+    "url": "/doku/automationen/hotkey/",
+    "markdown": "/doku/automationen/hotkey/referenz.md",
+    "json": "/doku/automationen/hotkey/vertrag.json"
+  },
+  {
+    "id": "interval",
+    "group": "automationen",
+    "title": "Intervall",
+    "url": "/doku/automationen/interval/",
+    "markdown": "/doku/automationen/interval/referenz.md",
+    "json": "/doku/automationen/interval/vertrag.json"
+  },
+  {
+    "id": "once_at",
+    "group": "automationen",
+    "title": "Einmalig",
+    "url": "/doku/automationen/once_at/",
+    "markdown": "/doku/automationen/once_at/referenz.md",
+    "json": "/doku/automationen/once_at/vertrag.json"
+  },
+  {
+    "id": "process_exited",
+    "group": "automationen",
+    "title": "Prozess beendet",
+    "url": "/doku/automationen/process_exited/",
+    "markdown": "/doku/automationen/process_exited/referenz.md",
+    "json": "/doku/automationen/process_exited/vertrag.json"
+  },
+  {
+    "id": "process_started",
+    "group": "automationen",
+    "title": "Prozess gestartet",
+    "url": "/doku/automationen/process_started/",
+    "markdown": "/doku/automationen/process_started/referenz.md",
+    "json": "/doku/automationen/process_started/vertrag.json"
+  },
+  {
+    "id": "schedule",
+    "group": "automationen",
+    "title": "Zeitplan",
+    "url": "/doku/automationen/schedule/",
+    "markdown": "/doku/automationen/schedule/referenz.md",
+    "json": "/doku/automationen/schedule/vertrag.json"
+  },
+  {
+    "id": "system_event",
+    "group": "automationen",
+    "title": "Windows-Systemereignis",
+    "url": "/doku/automationen/system_event/",
+    "markdown": "/doku/automationen/system_event/referenz.md",
+    "json": "/doku/automationen/system_event/vertrag.json"
+  },
+  {
+    "id": "webhook",
+    "group": "automationen",
+    "title": "Webhook",
+    "url": "/doku/automationen/webhook/",
+    "markdown": "/doku/automationen/webhook/referenz.md",
+    "json": "/doku/automationen/webhook/vertrag.json"
+  },
+  {
+    "id": "window_event",
+    "group": "automationen",
+    "title": "Fensterereignis",
+    "url": "/doku/automationen/window_event/",
+    "markdown": "/doku/automationen/window_event/referenz.md",
+    "json": "/doku/automationen/window_event/vertrag.json"
+  },
+  {
+    "id": "windows_event",
+    "group": "automationen",
+    "title": "Windows-Ereignis",
+    "url": "/doku/automationen/windows_event/",
+    "markdown": "/doku/automationen/windows_event/referenz.md",
+    "json": "/doku/automationen/windows_event/vertrag.json"
+  },
+  {
+    "id": "AutomationAction",
+    "group": "automationen",
+    "title": "AutomationAction",
+    "url": "/doku/automationen/AutomationAction/",
+    "markdown": "/doku/automationen/AutomationAction/referenz.md",
+    "json": "/doku/automationen/AutomationAction/vertrag.json"
+  },
+  {
+    "id": "AutomationRunPolicy",
+    "group": "automationen",
+    "title": "AutomationRunPolicy",
+    "url": "/doku/automationen/AutomationRunPolicy/",
+    "markdown": "/doku/automationen/AutomationRunPolicy/referenz.md",
+    "json": "/doku/automationen/AutomationRunPolicy/vertrag.json"
+  },
+  {
+    "id": "key_combination",
+    "group": "makros",
+    "title": "Tastenkombination",
+    "url": "/doku/makros/key_combination/",
+    "markdown": "/doku/makros/key_combination/referenz.md",
+    "json": "/doku/makros/key_combination/vertrag.json"
+  },
+  {
+    "id": "key_down",
+    "group": "makros",
+    "title": "Taste drücken",
+    "url": "/doku/makros/key_down/",
+    "markdown": "/doku/makros/key_down/referenz.md",
+    "json": "/doku/makros/key_down/vertrag.json"
+  },
+  {
+    "id": "key_up",
+    "group": "makros",
+    "title": "Taste loslassen",
+    "url": "/doku/makros/key_up/",
+    "markdown": "/doku/makros/key_up/referenz.md",
+    "json": "/doku/makros/key_up/vertrag.json"
+  },
+  {
+    "id": "mouse_down",
+    "group": "makros",
+    "title": "Maustaste drücken",
+    "url": "/doku/makros/mouse_down/",
+    "markdown": "/doku/makros/mouse_down/referenz.md",
+    "json": "/doku/makros/mouse_down/vertrag.json"
+  },
+  {
+    "id": "mouse_move_absolute",
+    "group": "makros",
+    "title": "Maus absolut bewegen",
+    "url": "/doku/makros/mouse_move_absolute/",
+    "markdown": "/doku/makros/mouse_move_absolute/referenz.md",
+    "json": "/doku/makros/mouse_move_absolute/vertrag.json"
+  },
+  {
+    "id": "mouse_move_relative",
+    "group": "makros",
+    "title": "Maus relativ bewegen",
+    "url": "/doku/makros/mouse_move_relative/",
+    "markdown": "/doku/makros/mouse_move_relative/referenz.md",
+    "json": "/doku/makros/mouse_move_relative/vertrag.json"
+  },
+  {
+    "id": "mouse_up",
+    "group": "makros",
+    "title": "Maustaste loslassen",
+    "url": "/doku/makros/mouse_up/",
+    "markdown": "/doku/makros/mouse_up/referenz.md",
+    "json": "/doku/makros/mouse_up/vertrag.json"
+  },
+  {
+    "id": "mouse_wheel",
+    "group": "makros",
+    "title": "Mausrad bewegen",
+    "url": "/doku/makros/mouse_wheel/",
+    "markdown": "/doku/makros/mouse_wheel/referenz.md",
+    "json": "/doku/makros/mouse_wheel/vertrag.json"
+  },
+  {
+    "id": "text_input",
+    "group": "makros",
+    "title": "Text eingeben",
+    "url": "/doku/makros/text_input/",
+    "markdown": "/doku/makros/text_input/referenz.md",
+    "json": "/doku/makros/text_input/vertrag.json"
+  },
+  {
+    "id": "timeout",
+    "group": "makros",
+    "title": "Wartezeit",
+    "url": "/doku/makros/timeout/",
+    "markdown": "/doku/makros/timeout/referenz.md",
+    "json": "/doku/makros/timeout/vertrag.json"
+  },
+  {
+    "id": "recording",
+    "group": "makros",
+    "title": "Aufnahme und Gruppen",
+    "url": "/doku/makros/recording/",
+    "markdown": "/doku/makros/recording/referenz.md",
+    "json": "/doku/makros/recording/vertrag.json"
+  },
+  {
+    "id": "LogEvent",
+    "group": "logs",
+    "title": "LogEvent",
+    "url": "/doku/logs/LogEvent/",
+    "markdown": "/doku/logs/LogEvent/referenz.md",
+    "json": "/doku/logs/LogEvent/vertrag.json"
+  },
+  {
+    "id": "LogContext",
+    "group": "logs",
+    "title": "LogContext",
+    "url": "/doku/logs/LogContext/",
+    "markdown": "/doku/logs/LogContext/referenz.md",
+    "json": "/doku/logs/LogContext/vertrag.json"
+  },
+  {
+    "id": "LogRun",
+    "group": "logs",
+    "title": "LogRun",
+    "url": "/doku/logs/LogRun/",
+    "markdown": "/doku/logs/LogRun/referenz.md",
+    "json": "/doku/logs/LogRun/vertrag.json"
+  },
+  {
+    "id": "LogStepSnapshot",
+    "group": "logs",
+    "title": "LogStepSnapshot",
+    "url": "/doku/logs/LogStepSnapshot/",
+    "markdown": "/doku/logs/LogStepSnapshot/referenz.md",
+    "json": "/doku/logs/LogStepSnapshot/vertrag.json"
+  },
+  {
+    "id": "LogTriggerSnapshot",
+    "group": "logs",
+    "title": "LogTriggerSnapshot",
+    "url": "/doku/logs/LogTriggerSnapshot/",
+    "markdown": "/doku/logs/LogTriggerSnapshot/referenz.md",
+    "json": "/doku/logs/LogTriggerSnapshot/vertrag.json"
+  },
+  {
+    "id": "LogOutcome",
+    "group": "logs",
+    "title": "LogOutcome",
+    "url": "/doku/logs/LogOutcome/",
+    "markdown": "/doku/logs/LogOutcome/referenz.md",
+    "json": "/doku/logs/LogOutcome/vertrag.json"
+  },
+  {
+    "id": "StepLogOutcome",
+    "group": "logs",
+    "title": "StepLogOutcome",
+    "url": "/doku/logs/StepLogOutcome/",
+    "markdown": "/doku/logs/StepLogOutcome/referenz.md",
+    "json": "/doku/logs/StepLogOutcome/vertrag.json"
+  },
+  {
+    "id": "ExecutionLogLevel",
+    "group": "logs",
+    "title": "ExecutionLogLevel",
+    "url": "/doku/logs/ExecutionLogLevel/",
+    "markdown": "/doku/logs/ExecutionLogLevel/referenz.md",
+    "json": "/doku/logs/ExecutionLogLevel/vertrag.json"
+  },
+  {
+    "id": "LogReadState",
+    "group": "logs",
+    "title": "LogReadState",
+    "url": "/doku/logs/LogReadState/",
+    "markdown": "/doku/logs/LogReadState/referenz.md",
+    "json": "/doku/logs/LogReadState/vertrag.json"
+  },
+  {
+    "id": "LogSource",
+    "group": "logs",
+    "title": "LogSource",
+    "url": "/doku/logs/LogSource/",
+    "markdown": "/doku/logs/LogSource/referenz.md",
+    "json": "/doku/logs/LogSource/vertrag.json"
+  },
+  {
+    "id": "LogArea",
+    "group": "logs",
+    "title": "LogArea",
+    "url": "/doku/logs/LogArea/",
+    "markdown": "/doku/logs/LogArea/referenz.md",
+    "json": "/doku/logs/LogArea/vertrag.json"
+  },
+  {
+    "id": "LogQuery",
+    "group": "logs",
+    "title": "LogQuery",
+    "url": "/doku/logs/LogQuery/",
+    "markdown": "/doku/logs/LogQuery/referenz.md",
+    "json": "/doku/logs/LogQuery/vertrag.json"
+  },
+  {
+    "id": "LogPage",
+    "group": "logs",
+    "title": "LogPage",
+    "url": "/doku/logs/LogPage/",
+    "markdown": "/doku/logs/LogPage/referenz.md",
+    "json": "/doku/logs/LogPage/vertrag.json"
+  },
+  {
+    "id": "LogStepExecution",
+    "group": "logs",
+    "title": "LogStepExecution",
+    "url": "/doku/logs/LogStepExecution/",
+    "markdown": "/doku/logs/LogStepExecution/referenz.md",
+    "json": "/doku/logs/LogStepExecution/vertrag.json"
+  },
+  {
+    "id": "LogAction",
+    "group": "logs",
+    "title": "LogAction",
+    "url": "/doku/logs/LogAction/",
+    "markdown": "/doku/logs/LogAction/referenz.md",
+    "json": "/doku/logs/LogAction/vertrag.json"
+  },
+  {
+    "id": "LogDiagnostic",
+    "group": "logs",
+    "title": "LogDiagnostic",
+    "url": "/doku/logs/LogDiagnostic/",
+    "markdown": "/doku/logs/LogDiagnostic/referenz.md",
+    "json": "/doku/logs/LogDiagnostic/vertrag.json"
+  },
+  {
+    "id": "AutomationTriggerContext",
+    "group": "logs",
+    "title": "AutomationTriggerContext",
+    "url": "/doku/logs/AutomationTriggerContext/",
+    "markdown": "/doku/logs/AutomationTriggerContext/referenz.md",
+    "json": "/doku/logs/AutomationTriggerContext/vertrag.json"
+  },
+  {
+    "id": "ExecutionLogKind",
+    "group": "logs",
+    "title": "ExecutionLogKind",
+    "url": "/doku/logs/ExecutionLogKind/",
+    "markdown": "/doku/logs/ExecutionLogKind/referenz.md",
+    "json": "/doku/logs/ExecutionLogKind/vertrag.json"
+  },
+  {
+    "id": "LOG-ACCESS-001",
+    "group": "logs",
+    "title": "AccessDenied",
+    "url": "/doku/logs/LOG-ACCESS-001/",
+    "markdown": "/doku/logs/LOG-ACCESS-001/referenz.md",
+    "json": "/doku/logs/LOG-ACCESS-001/vertrag.json"
+  },
+  {
+    "id": "automation.decision",
+    "group": "logs",
+    "title": "AutomationDecision",
+    "url": "/doku/logs/automation.decision/",
+    "markdown": "/doku/logs/automation.decision/referenz.md",
+    "json": "/doku/logs/automation.decision/vertrag.json"
+  },
+  {
+    "id": "LOG-FILE-004",
+    "group": "logs",
+    "title": "FileUnavailable",
+    "url": "/doku/logs/LOG-FILE-004/",
+    "markdown": "/doku/logs/LOG-FILE-004/referenz.md",
+    "json": "/doku/logs/LOG-FILE-004/vertrag.json"
+  },
+  {
+    "id": "run.iteration-completed",
+    "group": "logs",
+    "title": "IterationCompleted",
+    "url": "/doku/logs/run.iteration-completed/",
+    "markdown": "/doku/logs/run.iteration-completed/referenz.md",
+    "json": "/doku/logs/run.iteration-completed/vertrag.json"
+  },
+  {
+    "id": "diagnostic.message",
+    "group": "logs",
+    "title": "Message",
+    "url": "/doku/logs/diagnostic.message/",
+    "markdown": "/doku/logs/diagnostic.message/referenz.md",
+    "json": "/doku/logs/diagnostic.message/vertrag.json"
+  },
+  {
+    "id": "run.completed",
+    "group": "logs",
+    "title": "RunCompleted",
+    "url": "/doku/logs/run.completed/",
+    "markdown": "/doku/logs/run.completed/referenz.md",
+    "json": "/doku/logs/run.completed/vertrag.json"
+  },
+  {
+    "id": "run.started",
+    "group": "logs",
+    "title": "RunStarted",
+    "url": "/doku/logs/run.started/",
+    "markdown": "/doku/logs/run.started/referenz.md",
+    "json": "/doku/logs/run.started/vertrag.json"
+  },
+  {
+    "id": "run.state",
+    "group": "logs",
+    "title": "RunState",
+    "url": "/doku/logs/run.state/",
+    "markdown": "/doku/logs/run.state/referenz.md",
+    "json": "/doku/logs/run.state/vertrag.json"
+  },
+  {
+    "id": "run.start-rejected",
+    "group": "logs",
+    "title": "StartRejected",
+    "url": "/doku/logs/run.start-rejected/",
+    "markdown": "/doku/logs/run.start-rejected/referenz.md",
+    "json": "/doku/logs/run.start-rejected/vertrag.json"
+  },
+  {
+    "id": "step.background-cancelled",
+    "group": "logs",
+    "title": "StepBackgroundCancelled",
+    "url": "/doku/logs/step.background-cancelled/",
+    "markdown": "/doku/logs/step.background-cancelled/referenz.md",
+    "json": "/doku/logs/step.background-cancelled/vertrag.json"
+  },
+  {
+    "id": "step.background-completed",
+    "group": "logs",
+    "title": "StepBackgroundCompleted",
+    "url": "/doku/logs/step.background-completed/",
+    "markdown": "/doku/logs/step.background-completed/referenz.md",
+    "json": "/doku/logs/step.background-completed/vertrag.json"
+  },
+  {
+    "id": "step.background-failed",
+    "group": "logs",
+    "title": "StepBackgroundFailed",
+    "url": "/doku/logs/step.background-failed/",
+    "markdown": "/doku/logs/step.background-failed/referenz.md",
+    "json": "/doku/logs/step.background-failed/vertrag.json"
+  },
+  {
+    "id": "step.background-started",
+    "group": "logs",
+    "title": "StepBackgroundStarted",
+    "url": "/doku/logs/step.background-started/",
+    "markdown": "/doku/logs/step.background-started/referenz.md",
+    "json": "/doku/logs/step.background-started/vertrag.json"
+  },
+  {
+    "id": "step.cancelled",
+    "group": "logs",
+    "title": "StepCancelled",
+    "url": "/doku/logs/step.cancelled/",
+    "markdown": "/doku/logs/step.cancelled/referenz.md",
+    "json": "/doku/logs/step.cancelled/vertrag.json"
+  },
+  {
+    "id": "step.completed",
+    "group": "logs",
+    "title": "StepCompleted",
+    "url": "/doku/logs/step.completed/",
+    "markdown": "/doku/logs/step.completed/referenz.md",
+    "json": "/doku/logs/step.completed/vertrag.json"
+  },
+  {
+    "id": "step.failed",
+    "group": "logs",
+    "title": "StepFailed",
+    "url": "/doku/logs/step.failed/",
+    "markdown": "/doku/logs/step.failed/referenz.md",
+    "json": "/doku/logs/step.failed/vertrag.json"
+  },
+  {
+    "id": "step.output",
+    "group": "logs",
+    "title": "StepOutput",
+    "url": "/doku/logs/step.output/",
+    "markdown": "/doku/logs/step.output/referenz.md",
+    "json": "/doku/logs/step.output/vertrag.json"
+  },
+  {
+    "id": "step.paths",
+    "group": "logs",
+    "title": "StepPaths",
+    "url": "/doku/logs/step.paths/",
+    "markdown": "/doku/logs/step.paths/referenz.md",
+    "json": "/doku/logs/step.paths/vertrag.json"
+  },
+  {
+    "id": "step.skipped",
+    "group": "logs",
+    "title": "StepSkipped",
+    "url": "/doku/logs/step.skipped/",
+    "markdown": "/doku/logs/step.skipped/referenz.md",
+    "json": "/doku/logs/step.skipped/vertrag.json"
+  },
+  {
+    "id": "step.started",
+    "group": "logs",
+    "title": "StepStarted",
+    "url": "/doku/logs/step.started/",
+    "markdown": "/doku/logs/step.started/referenz.md",
+    "json": "/doku/logs/step.started/vertrag.json"
+  },
+  {
+    "id": "storage.gap",
+    "group": "logs",
+    "title": "StorageGap",
+    "url": "/doku/logs/storage.gap/",
+    "markdown": "/doku/logs/storage.gap/referenz.md",
+    "json": "/doku/logs/storage.gap/vertrag.json"
+  },
+  {
+    "id": "automation.trigger",
+    "group": "logs",
+    "title": "Trigger",
+    "url": "/doku/logs/automation.trigger/",
+    "markdown": "/doku/logs/automation.trigger/referenz.md",
+    "json": "/doku/logs/automation.trigger/vertrag.json"
+  },
+  {
+    "id": "LOG-UNEXPECTED-001",
+    "group": "logs",
+    "title": "Unexpected",
+    "url": "/doku/logs/LOG-UNEXPECTED-001/",
+    "markdown": "/doku/logs/LOG-UNEXPECTED-001/referenz.md",
+    "json": "/doku/logs/LOG-UNEXPECTED-001/vertrag.json"
+  },
+  {
+    "id": "ActiveProcessResult",
+    "group": "werte",
+    "title": "ActiveProcessResult",
+    "url": "/doku/werte/ActiveProcessResult/",
+    "markdown": "/doku/werte/ActiveProcessResult/referenz.md",
+    "json": "/doku/werte/ActiveProcessResult/vertrag.json"
+  },
+  {
+    "id": "ActiveWindowResult",
+    "group": "werte",
+    "title": "ActiveWindowResult",
+    "url": "/doku/werte/ActiveWindowResult/",
+    "markdown": "/doku/werte/ActiveWindowResult/referenz.md",
+    "json": "/doku/werte/ActiveWindowResult/vertrag.json"
+  },
+  {
+    "id": "AudioDevicesQueryResult",
+    "group": "werte",
+    "title": "AudioDevicesQueryResult",
+    "url": "/doku/werte/AudioDevicesQueryResult/",
+    "markdown": "/doku/werte/AudioDevicesQueryResult/referenz.md",
+    "json": "/doku/werte/AudioDevicesQueryResult/vertrag.json"
+  },
+  {
+    "id": "AudioVolumeQueryResult",
+    "group": "werte",
+    "title": "AudioVolumeQueryResult",
+    "url": "/doku/werte/AudioVolumeQueryResult/",
+    "markdown": "/doku/werte/AudioVolumeQueryResult/referenz.md",
+    "json": "/doku/werte/AudioVolumeQueryResult/vertrag.json"
+  },
+  {
+    "id": "CameraCaptureResult",
+    "group": "werte",
+    "title": "CameraCaptureResult",
+    "url": "/doku/werte/CameraCaptureResult/",
+    "markdown": "/doku/werte/CameraCaptureResult/referenz.md",
+    "json": "/doku/werte/CameraCaptureResult/vertrag.json"
+  },
+  {
+    "id": "ClipboardContentQueryResult",
+    "group": "werte",
+    "title": "ClipboardContentQueryResult",
+    "url": "/doku/werte/ClipboardContentQueryResult/",
+    "markdown": "/doku/werte/ClipboardContentQueryResult/referenz.md",
+    "json": "/doku/werte/ClipboardContentQueryResult/vertrag.json"
+  },
+  {
+    "id": "ColorDetectionResult",
+    "group": "werte",
+    "title": "ColorDetectionResult",
+    "url": "/doku/werte/ColorDetectionResult/",
+    "markdown": "/doku/werte/ColorDetectionResult/referenz.md",
+    "json": "/doku/werte/ColorDetectionResult/vertrag.json"
+  },
+  {
+    "id": "DesktopDuplicationResult",
+    "group": "werte",
+    "title": "DesktopDuplicationResult",
+    "url": "/doku/werte/DesktopDuplicationResult/",
+    "markdown": "/doku/werte/DesktopDuplicationResult/referenz.md",
+    "json": "/doku/werte/DesktopDuplicationResult/vertrag.json"
+  },
+  {
+    "id": "DeviceCollectionQueryResult",
+    "group": "werte",
+    "title": "DeviceCollectionQueryResult",
+    "url": "/doku/werte/DeviceCollectionQueryResult/",
+    "markdown": "/doku/werte/DeviceCollectionQueryResult/referenz.md",
+    "json": "/doku/werte/DeviceCollectionQueryResult/vertrag.json"
+  },
+  {
+    "id": "DynamicRoiResult",
+    "group": "werte",
+    "title": "DynamicRoiResult",
+    "url": "/doku/werte/DynamicRoiResult/",
+    "markdown": "/doku/werte/DynamicRoiResult/referenz.md",
+    "json": "/doku/werte/DynamicRoiResult/vertrag.json"
+  },
+  {
+    "id": "FileSystemOperationResult",
+    "group": "werte",
+    "title": "FileSystemOperationResult",
+    "url": "/doku/werte/FileSystemOperationResult/",
+    "markdown": "/doku/werte/FileSystemOperationResult/referenz.md",
+    "json": "/doku/werte/FileSystemOperationResult/vertrag.json"
+  },
+  {
+    "id": "FileSystemPathQueryResult",
+    "group": "werte",
+    "title": "FileSystemPathQueryResult",
+    "url": "/doku/werte/FileSystemPathQueryResult/",
+    "markdown": "/doku/werte/FileSystemPathQueryResult/referenz.md",
+    "json": "/doku/werte/FileSystemPathQueryResult/vertrag.json"
+  },
+  {
+    "id": "FocusProcessResult",
+    "group": "werte",
+    "title": "FocusProcessResult",
+    "url": "/doku/werte/FocusProcessResult/",
+    "markdown": "/doku/werte/FocusProcessResult/referenz.md",
+    "json": "/doku/werte/FocusProcessResult/vertrag.json"
+  },
+  {
+    "id": "ForegroundWindowQueryResult",
+    "group": "werte",
+    "title": "ForegroundWindowQueryResult",
+    "url": "/doku/werte/ForegroundWindowQueryResult/",
+    "markdown": "/doku/werte/ForegroundWindowQueryResult/referenz.md",
+    "json": "/doku/werte/ForegroundWindowQueryResult/vertrag.json"
+  },
+  {
+    "id": "GetProcessResult",
+    "group": "werte",
+    "title": "GetProcessResult",
+    "url": "/doku/werte/GetProcessResult/",
+    "markdown": "/doku/werte/GetProcessResult/referenz.md",
+    "json": "/doku/werte/GetProcessResult/vertrag.json"
+  },
+  {
+    "id": "InputControlResult",
+    "group": "werte",
+    "title": "InputControlResult",
+    "url": "/doku/werte/InputControlResult/",
+    "markdown": "/doku/werte/InputControlResult/referenz.md",
+    "json": "/doku/werte/InputControlResult/vertrag.json"
+  },
+  {
+    "id": "InputIdleQueryResult",
+    "group": "werte",
+    "title": "InputIdleQueryResult",
+    "url": "/doku/werte/InputIdleQueryResult/",
+    "markdown": "/doku/werte/InputIdleQueryResult/referenz.md",
+    "json": "/doku/werte/InputIdleQueryResult/vertrag.json"
+  },
+  {
+    "id": "JobExecutionResult",
+    "group": "werte",
+    "title": "JobExecutionResult",
+    "url": "/doku/werte/JobExecutionResult/",
+    "markdown": "/doku/werte/JobExecutionResult/referenz.md",
+    "json": "/doku/werte/JobExecutionResult/vertrag.json"
+  },
+  {
+    "id": "KeyPointMatchingResult",
+    "group": "werte",
+    "title": "KeyPointMatchingResult",
+    "url": "/doku/werte/KeyPointMatchingResult/",
+    "markdown": "/doku/werte/KeyPointMatchingResult/referenz.md",
+    "json": "/doku/werte/KeyPointMatchingResult/vertrag.json"
+  },
+  {
+    "id": "KlickOnPoint3DResult",
+    "group": "werte",
+    "title": "KlickOnPoint3DResult",
+    "url": "/doku/werte/KlickOnPoint3DResult/",
+    "markdown": "/doku/werte/KlickOnPoint3DResult/referenz.md",
+    "json": "/doku/werte/KlickOnPoint3DResult/vertrag.json"
+  },
+  {
+    "id": "KlickOnPointResult",
+    "group": "werte",
+    "title": "KlickOnPointResult",
+    "url": "/doku/werte/KlickOnPointResult/",
+    "markdown": "/doku/werte/KlickOnPointResult/referenz.md",
+    "json": "/doku/werte/KlickOnPointResult/vertrag.json"
+  },
+  {
+    "id": "MakroExecutionResult",
+    "group": "werte",
+    "title": "MakroExecutionResult",
+    "url": "/doku/werte/MakroExecutionResult/",
+    "markdown": "/doku/werte/MakroExecutionResult/referenz.md",
+    "json": "/doku/werte/MakroExecutionResult/vertrag.json"
+  },
+  {
+    "id": "MonitorCollectionQueryResult",
+    "group": "werte",
+    "title": "MonitorCollectionQueryResult",
+    "url": "/doku/werte/MonitorCollectionQueryResult/",
+    "markdown": "/doku/werte/MonitorCollectionQueryResult/referenz.md",
+    "json": "/doku/werte/MonitorCollectionQueryResult/vertrag.json"
+  },
+  {
+    "id": "NetworkConnectivityQueryResult",
+    "group": "werte",
+    "title": "NetworkConnectivityQueryResult",
+    "url": "/doku/werte/NetworkConnectivityQueryResult/",
+    "markdown": "/doku/werte/NetworkConnectivityQueryResult/referenz.md",
+    "json": "/doku/werte/NetworkConnectivityQueryResult/vertrag.json"
+  },
+  {
+    "id": "OcrResult",
+    "group": "werte",
+    "title": "OcrResult",
+    "url": "/doku/werte/OcrResult/",
+    "markdown": "/doku/werte/OcrResult/referenz.md",
+    "json": "/doku/werte/OcrResult/vertrag.json"
+  },
+  {
+    "id": "PointComparisonResult",
+    "group": "werte",
+    "title": "PointComparisonResult",
+    "url": "/doku/werte/PointComparisonResult/",
+    "markdown": "/doku/werte/PointComparisonResult/referenz.md",
+    "json": "/doku/werte/PointComparisonResult/vertrag.json"
+  },
+  {
+    "id": "PowerStatusQueryResult",
+    "group": "werte",
+    "title": "PowerStatusQueryResult",
+    "url": "/doku/werte/PowerStatusQueryResult/",
+    "markdown": "/doku/werte/PowerStatusQueryResult/referenz.md",
+    "json": "/doku/werte/PowerStatusQueryResult/vertrag.json"
+  },
+  {
+    "id": "PredictMovementResult",
+    "group": "werte",
+    "title": "PredictMovementResult",
+    "url": "/doku/werte/PredictMovementResult/",
+    "markdown": "/doku/werte/PredictMovementResult/referenz.md",
+    "json": "/doku/werte/PredictMovementResult/vertrag.json"
+  },
+  {
+    "id": "PrinterStatusQueryResult",
+    "group": "werte",
+    "title": "PrinterStatusQueryResult",
+    "url": "/doku/werte/PrinterStatusQueryResult/",
+    "markdown": "/doku/werte/PrinterStatusQueryResult/referenz.md",
+    "json": "/doku/werte/PrinterStatusQueryResult/vertrag.json"
+  },
+  {
+    "id": "ProcessRunningQueryResult",
+    "group": "werte",
+    "title": "ProcessRunningQueryResult",
+    "url": "/doku/werte/ProcessRunningQueryResult/",
+    "markdown": "/doku/werte/ProcessRunningQueryResult/referenz.md",
+    "json": "/doku/werte/ProcessRunningQueryResult/vertrag.json"
+  },
+  {
+    "id": "SaveImageResult",
+    "group": "werte",
+    "title": "SaveImageResult",
+    "url": "/doku/werte/SaveImageResult/",
+    "markdown": "/doku/werte/SaveImageResult/referenz.md",
+    "json": "/doku/werte/SaveImageResult/vertrag.json"
+  },
+  {
+    "id": "ScriptExecutionResult",
+    "group": "werte",
+    "title": "ScriptExecutionResult",
+    "url": "/doku/werte/ScriptExecutionResult/",
+    "markdown": "/doku/werte/ScriptExecutionResult/referenz.md",
+    "json": "/doku/werte/ScriptExecutionResult/vertrag.json"
+  },
+  {
+    "id": "SecurityStatusQueryResult",
+    "group": "werte",
+    "title": "SecurityStatusQueryResult",
+    "url": "/doku/werte/SecurityStatusQueryResult/",
+    "markdown": "/doku/werte/SecurityStatusQueryResult/referenz.md",
+    "json": "/doku/werte/SecurityStatusQueryResult/vertrag.json"
+  },
+  {
+    "id": "SessionStateQueryResult",
+    "group": "werte",
+    "title": "SessionStateQueryResult",
+    "url": "/doku/werte/SessionStateQueryResult/",
+    "markdown": "/doku/werte/SessionStateQueryResult/referenz.md",
+    "json": "/doku/werte/SessionStateQueryResult/vertrag.json"
+  },
+  {
+    "id": "ShowImageResult",
+    "group": "werte",
+    "title": "ShowImageResult",
+    "url": "/doku/werte/ShowImageResult/",
+    "markdown": "/doku/werte/ShowImageResult/referenz.md",
+    "json": "/doku/werte/ShowImageResult/vertrag.json"
+  },
+  {
+    "id": "ShowOnDesktopResult",
+    "group": "werte",
+    "title": "ShowOnDesktopResult",
+    "url": "/doku/werte/ShowOnDesktopResult/",
+    "markdown": "/doku/werte/ShowOnDesktopResult/referenz.md",
+    "json": "/doku/werte/ShowOnDesktopResult/vertrag.json"
+  },
+  {
+    "id": "ShowTextResult",
+    "group": "werte",
+    "title": "ShowTextResult",
+    "url": "/doku/werte/ShowTextResult/",
+    "markdown": "/doku/werte/ShowTextResult/referenz.md",
+    "json": "/doku/werte/ShowTextResult/vertrag.json"
+  },
+  {
+    "id": "StartProcessResult",
+    "group": "werte",
+    "title": "StartProcessResult",
+    "url": "/doku/werte/StartProcessResult/",
+    "markdown": "/doku/werte/StartProcessResult/referenz.md",
+    "json": "/doku/werte/StartProcessResult/vertrag.json"
+  },
+  {
+    "id": "StorageDrivesQueryResult",
+    "group": "werte",
+    "title": "StorageDrivesQueryResult",
+    "url": "/doku/werte/StorageDrivesQueryResult/",
+    "markdown": "/doku/werte/StorageDrivesQueryResult/referenz.md",
+    "json": "/doku/werte/StorageDrivesQueryResult/vertrag.json"
+  },
+  {
+    "id": "SystemLifecycleQueryResult",
+    "group": "werte",
+    "title": "SystemLifecycleQueryResult",
+    "url": "/doku/werte/SystemLifecycleQueryResult/",
+    "markdown": "/doku/werte/SystemLifecycleQueryResult/referenz.md",
+    "json": "/doku/werte/SystemLifecycleQueryResult/vertrag.json"
+  },
+  {
+    "id": "SystemSettingsQueryResult",
+    "group": "werte",
+    "title": "SystemSettingsQueryResult",
+    "url": "/doku/werte/SystemSettingsQueryResult/",
+    "markdown": "/doku/werte/SystemSettingsQueryResult/referenz.md",
+    "json": "/doku/werte/SystemSettingsQueryResult/vertrag.json"
+  },
+  {
+    "id": "TemplateMatchingResult",
+    "group": "werte",
+    "title": "TemplateMatchingResult",
+    "url": "/doku/werte/TemplateMatchingResult/",
+    "markdown": "/doku/werte/TemplateMatchingResult/referenz.md",
+    "json": "/doku/werte/TemplateMatchingResult/vertrag.json"
+  },
+  {
+    "id": "TerminateProcessResult",
+    "group": "werte",
+    "title": "TerminateProcessResult",
+    "url": "/doku/werte/TerminateProcessResult/",
+    "markdown": "/doku/werte/TerminateProcessResult/referenz.md",
+    "json": "/doku/werte/TerminateProcessResult/vertrag.json"
+  },
+  {
+    "id": "TimeoutResult",
+    "group": "werte",
+    "title": "TimeoutResult",
+    "url": "/doku/werte/TimeoutResult/",
+    "markdown": "/doku/werte/TimeoutResult/referenz.md",
+    "json": "/doku/werte/TimeoutResult/vertrag.json"
+  },
+  {
+    "id": "UnsupportedWindowsQueryResult",
+    "group": "werte",
+    "title": "UnsupportedWindowsQueryResult",
+    "url": "/doku/werte/UnsupportedWindowsQueryResult/",
+    "markdown": "/doku/werte/UnsupportedWindowsQueryResult/referenz.md",
+    "json": "/doku/werte/UnsupportedWindowsQueryResult/vertrag.json"
+  },
+  {
+    "id": "UserChoiceResult",
+    "group": "werte",
+    "title": "UserChoiceResult",
+    "url": "/doku/werte/UserChoiceResult/",
+    "markdown": "/doku/werte/UserChoiceResult/referenz.md",
+    "json": "/doku/werte/UserChoiceResult/vertrag.json"
+  },
+  {
+    "id": "VideoCreationResult",
+    "group": "werte",
+    "title": "VideoCreationResult",
+    "url": "/doku/werte/VideoCreationResult/",
+    "markdown": "/doku/werte/VideoCreationResult/referenz.md",
+    "json": "/doku/werte/VideoCreationResult/vertrag.json"
+  },
+  {
+    "id": "WindowsSettingChangeResult",
+    "group": "werte",
+    "title": "WindowsSettingChangeResult",
+    "url": "/doku/werte/WindowsSettingChangeResult/",
+    "markdown": "/doku/werte/WindowsSettingChangeResult/referenz.md",
+    "json": "/doku/werte/WindowsSettingChangeResult/vertrag.json"
+  },
+  {
+    "id": "WindowsUpdateStatusQueryResult",
+    "group": "werte",
+    "title": "WindowsUpdateStatusQueryResult",
+    "url": "/doku/werte/WindowsUpdateStatusQueryResult/",
+    "markdown": "/doku/werte/WindowsUpdateStatusQueryResult/referenz.md",
+    "json": "/doku/werte/WindowsUpdateStatusQueryResult/vertrag.json"
+  },
+  {
+    "id": "YOLODetectionResult",
+    "group": "werte",
+    "title": "YOLODetectionResult",
+    "url": "/doku/werte/YOLODetectionResult/",
+    "markdown": "/doku/werte/YOLODetectionResult/referenz.md",
+    "json": "/doku/werte/YOLODetectionResult/vertrag.json"
+  },
+  {
+    "id": "audio.default_input",
+    "group": "werte",
+    "title": "audio.default_input",
+    "url": "/doku/werte/audio.default_input/",
+    "markdown": "/doku/werte/audio.default_input/referenz.md",
+    "json": "/doku/werte/audio.default_input/vertrag.json"
+  },
+  {
+    "id": "audio.default_output",
+    "group": "werte",
+    "title": "audio.default_output",
+    "url": "/doku/werte/audio.default_output/",
+    "markdown": "/doku/werte/audio.default_output/referenz.md",
+    "json": "/doku/werte/audio.default_output/vertrag.json"
+  },
+  {
+    "id": "audio.device.added",
+    "group": "werte",
+    "title": "Audiogerät hinzugefügt",
+    "url": "/doku/werte/audio.device.added/",
+    "markdown": "/doku/werte/audio.device.added/referenz.md",
+    "json": "/doku/werte/audio.device.added/vertrag.json"
+  },
+  {
+    "id": "audio.device.changed",
+    "group": "werte",
+    "title": "Audiogerät geändert",
+    "url": "/doku/werte/audio.device.changed/",
+    "markdown": "/doku/werte/audio.device.changed/referenz.md",
+    "json": "/doku/werte/audio.device.changed/vertrag.json"
+  },
+  {
+    "id": "audio.device.connected",
+    "group": "werte",
+    "title": "Audiogerät verbunden",
+    "url": "/doku/werte/audio.device.connected/",
+    "markdown": "/doku/werte/audio.device.connected/referenz.md",
+    "json": "/doku/werte/audio.device.connected/vertrag.json"
+  },
+  {
+    "id": "audio.device.default_changed",
+    "group": "werte",
+    "title": "Standard-Audiogerät geändert",
+    "url": "/doku/werte/audio.device.default_changed/",
+    "markdown": "/doku/werte/audio.device.default_changed/referenz.md",
+    "json": "/doku/werte/audio.device.default_changed/vertrag.json"
+  },
+  {
+    "id": "audio.device.disconnected",
+    "group": "werte",
+    "title": "Audiogerät getrennt",
+    "url": "/doku/werte/audio.device.disconnected/",
+    "markdown": "/doku/werte/audio.device.disconnected/referenz.md",
+    "json": "/doku/werte/audio.device.disconnected/vertrag.json"
+  },
+  {
+    "id": "audio.device.property_changed",
+    "group": "werte",
+    "title": "Audiogeräteeigenschaft geändert",
+    "url": "/doku/werte/audio.device.property_changed/",
+    "markdown": "/doku/werte/audio.device.property_changed/referenz.md",
+    "json": "/doku/werte/audio.device.property_changed/vertrag.json"
+  },
+  {
+    "id": "audio.device.removed",
+    "group": "werte",
+    "title": "Audiogerät entfernt",
+    "url": "/doku/werte/audio.device.removed/",
+    "markdown": "/doku/werte/audio.device.removed/referenz.md",
+    "json": "/doku/werte/audio.device.removed/vertrag.json"
+  },
+  {
+    "id": "audio.device.state_changed",
+    "group": "werte",
+    "title": "Audiogerätestatus geändert",
+    "url": "/doku/werte/audio.device.state_changed/",
+    "markdown": "/doku/werte/audio.device.state_changed/referenz.md",
+    "json": "/doku/werte/audio.device.state_changed/vertrag.json"
+  },
+  {
+    "id": "audio.devices",
+    "group": "werte",
+    "title": "Audiogeräte",
+    "url": "/doku/werte/audio.devices/",
+    "markdown": "/doku/werte/audio.devices/referenz.md",
+    "json": "/doku/werte/audio.devices/vertrag.json"
+  },
+  {
+    "id": "audio.master_volume",
+    "group": "werte",
+    "title": "audio.master_volume",
+    "url": "/doku/werte/audio.master_volume/",
+    "markdown": "/doku/werte/audio.master_volume/referenz.md",
+    "json": "/doku/werte/audio.master_volume/vertrag.json"
+  },
+  {
+    "id": "audio.mute",
+    "group": "werte",
+    "title": "audio.mute",
+    "url": "/doku/werte/audio.mute/",
+    "markdown": "/doku/werte/audio.mute/referenz.md",
+    "json": "/doku/werte/audio.mute/vertrag.json"
+  },
+  {
+    "id": "audio.volume",
+    "group": "werte",
+    "title": "Lautstärke und Stummschaltung",
+    "url": "/doku/werte/audio.volume/",
+    "markdown": "/doku/werte/audio.volume/referenz.md",
+    "json": "/doku/werte/audio.volume/vertrag.json"
+  },
+  {
+    "id": "audio.volume.changed",
+    "group": "werte",
+    "title": "Lautstärke geändert",
+    "url": "/doku/werte/audio.volume.changed/",
+    "markdown": "/doku/werte/audio.volume.changed/referenz.md",
+    "json": "/doku/werte/audio.volume.changed/vertrag.json"
+  },
+  {
+    "id": "audio.volume.level_changed",
+    "group": "werte",
+    "title": "Lautstärke geändert",
+    "url": "/doku/werte/audio.volume.level_changed/",
+    "markdown": "/doku/werte/audio.volume.level_changed/referenz.md",
+    "json": "/doku/werte/audio.volume.level_changed/vertrag.json"
+  },
+  {
+    "id": "audio.volume.muted",
+    "group": "werte",
+    "title": "Audio stummgeschaltet",
+    "url": "/doku/werte/audio.volume.muted/",
+    "markdown": "/doku/werte/audio.volume.muted/referenz.md",
+    "json": "/doku/werte/audio.volume.muted/vertrag.json"
+  },
+  {
+    "id": "audio.volume.unmuted",
+    "group": "werte",
+    "title": "Stummschaltung aufgehoben",
+    "url": "/doku/werte/audio.volume.unmuted/",
+    "markdown": "/doku/werte/audio.volume.unmuted/referenz.md",
+    "json": "/doku/werte/audio.volume.unmuted/vertrag.json"
+  },
+  {
+    "id": "bluetooth.devices",
+    "group": "werte",
+    "title": "Bluetooth-Geräte",
+    "url": "/doku/werte/bluetooth.devices/",
+    "markdown": "/doku/werte/bluetooth.devices/referenz.md",
+    "json": "/doku/werte/bluetooth.devices/vertrag.json"
+  },
+  {
+    "id": "bluetooth.state.changed",
+    "group": "werte",
+    "title": "Bluetooth-Geräteliste geändert",
+    "url": "/doku/werte/bluetooth.state.changed/",
+    "markdown": "/doku/werte/bluetooth.state.changed/referenz.md",
+    "json": "/doku/werte/bluetooth.state.changed/vertrag.json"
+  },
+  {
+    "id": "clipboard.changed",
+    "group": "werte",
+    "title": "Zwischenablage geändert",
+    "url": "/doku/werte/clipboard.changed/",
+    "markdown": "/doku/werte/clipboard.changed/referenz.md",
+    "json": "/doku/werte/clipboard.changed/vertrag.json"
+  },
+  {
+    "id": "clipboard.cleared",
+    "group": "werte",
+    "title": "Zwischenablage geleert",
+    "url": "/doku/werte/clipboard.cleared/",
+    "markdown": "/doku/werte/clipboard.cleared/referenz.md",
+    "json": "/doku/werte/clipboard.cleared/vertrag.json"
+  },
+  {
+    "id": "clipboard.content",
+    "group": "werte",
+    "title": "Zwischenablageninhalt",
+    "url": "/doku/werte/clipboard.content/",
+    "markdown": "/doku/werte/clipboard.content/referenz.md",
+    "json": "/doku/werte/clipboard.content/vertrag.json"
+  },
+  {
+    "id": "clipboard.content_changed",
+    "group": "werte",
+    "title": "Zwischenablageninhalt geändert",
+    "url": "/doku/werte/clipboard.content_changed/",
+    "markdown": "/doku/werte/clipboard.content_changed/referenz.md",
+    "json": "/doku/werte/clipboard.content_changed/vertrag.json"
+  },
+  {
+    "id": "clipboard.files_changed",
+    "group": "werte",
+    "title": "Dateien in Zwischenablage",
+    "url": "/doku/werte/clipboard.files_changed/",
+    "markdown": "/doku/werte/clipboard.files_changed/referenz.md",
+    "json": "/doku/werte/clipboard.files_changed/vertrag.json"
+  },
+  {
+    "id": "clipboard.image_changed",
+    "group": "werte",
+    "title": "Bild in Zwischenablage",
+    "url": "/doku/werte/clipboard.image_changed/",
+    "markdown": "/doku/werte/clipboard.image_changed/referenz.md",
+    "json": "/doku/werte/clipboard.image_changed/vertrag.json"
+  },
+  {
+    "id": "clipboard.text_changed",
+    "group": "werte",
+    "title": "Text in Zwischenablage",
+    "url": "/doku/werte/clipboard.text_changed/",
+    "markdown": "/doku/werte/clipboard.text_changed/referenz.md",
+    "json": "/doku/werte/clipboard.text_changed/vertrag.json"
+  },
+  {
+    "id": "device.hardware",
+    "group": "werte",
+    "title": "Hardwaregeräte",
+    "url": "/doku/werte/device.hardware/",
+    "markdown": "/doku/werte/device.hardware/referenz.md",
+    "json": "/doku/werte/device.hardware/vertrag.json"
+  },
+  {
+    "id": "device.hardware.changed",
+    "group": "werte",
+    "title": "Hardwaregerät geändert",
+    "url": "/doku/werte/device.hardware.changed/",
+    "markdown": "/doku/werte/device.hardware.changed/referenz.md",
+    "json": "/doku/werte/device.hardware.changed/vertrag.json"
+  },
+  {
+    "id": "device.hardware.connected",
+    "group": "werte",
+    "title": "Hardwaregerät verbunden",
+    "url": "/doku/werte/device.hardware.connected/",
+    "markdown": "/doku/werte/device.hardware.connected/referenz.md",
+    "json": "/doku/werte/device.hardware.connected/vertrag.json"
+  },
+  {
+    "id": "device.hardware.disconnected",
+    "group": "werte",
+    "title": "Hardwaregerät getrennt",
+    "url": "/doku/werte/device.hardware.disconnected/",
+    "markdown": "/doku/werte/device.hardware.disconnected/referenz.md",
+    "json": "/doku/werte/device.hardware.disconnected/vertrag.json"
+  },
+  {
+    "id": "device.hardware.updated",
+    "group": "werte",
+    "title": "Hardwarekonfiguration aktualisiert",
+    "url": "/doku/werte/device.hardware.updated/",
+    "markdown": "/doku/werte/device.hardware.updated/referenz.md",
+    "json": "/doku/werte/device.hardware.updated/vertrag.json"
+  },
+  {
+    "id": "device.usb",
+    "group": "werte",
+    "title": "USB-Geräte",
+    "url": "/doku/werte/device.usb/",
+    "markdown": "/doku/werte/device.usb/referenz.md",
+    "json": "/doku/werte/device.usb/vertrag.json"
+  },
+  {
+    "id": "device.usb.changed",
+    "group": "werte",
+    "title": "USB-Gerät geändert",
+    "url": "/doku/werte/device.usb.changed/",
+    "markdown": "/doku/werte/device.usb.changed/referenz.md",
+    "json": "/doku/werte/device.usb.changed/vertrag.json"
+  },
+  {
+    "id": "device.usb.connected",
+    "group": "werte",
+    "title": "USB-Gerät verbunden",
+    "url": "/doku/werte/device.usb.connected/",
+    "markdown": "/doku/werte/device.usb.connected/referenz.md",
+    "json": "/doku/werte/device.usb.connected/vertrag.json"
+  },
+  {
+    "id": "device.usb.disconnected",
+    "group": "werte",
+    "title": "USB-Gerät getrennt",
+    "url": "/doku/werte/device.usb.disconnected/",
+    "markdown": "/doku/werte/device.usb.disconnected/referenz.md",
+    "json": "/doku/werte/device.usb.disconnected/vertrag.json"
+  },
+  {
+    "id": "display.configuration.changed",
+    "group": "werte",
+    "title": "Bildschirmkonfiguration geändert",
+    "url": "/doku/werte/display.configuration.changed/",
+    "markdown": "/doku/werte/display.configuration.changed/referenz.md",
+    "json": "/doku/werte/display.configuration.changed/vertrag.json"
+  },
+  {
+    "id": "display.connected",
+    "group": "werte",
+    "title": "Bildschirm verbunden",
+    "url": "/doku/werte/display.connected/",
+    "markdown": "/doku/werte/display.connected/referenz.md",
+    "json": "/doku/werte/display.connected/vertrag.json"
+  },
+  {
+    "id": "display.disconnected",
+    "group": "werte",
+    "title": "Bildschirm getrennt",
+    "url": "/doku/werte/display.disconnected/",
+    "markdown": "/doku/werte/display.disconnected/referenz.md",
+    "json": "/doku/werte/display.disconnected/vertrag.json"
+  },
+  {
+    "id": "display.mode",
+    "group": "werte",
+    "title": "display.mode",
+    "url": "/doku/werte/display.mode/",
+    "markdown": "/doku/werte/display.mode/referenz.md",
+    "json": "/doku/werte/display.mode/vertrag.json"
+  },
+  {
+    "id": "display.monitors",
+    "group": "werte",
+    "title": "Angeschlossene Monitore",
+    "url": "/doku/werte/display.monitors/",
+    "markdown": "/doku/werte/display.monitors/referenz.md",
+    "json": "/doku/werte/display.monitors/vertrag.json"
+  },
+  {
+    "id": "display.orientation_changed",
+    "group": "werte",
+    "title": "Bildschirmausrichtung geändert",
+    "url": "/doku/werte/display.orientation_changed/",
+    "markdown": "/doku/werte/display.orientation_changed/referenz.md",
+    "json": "/doku/werte/display.orientation_changed/vertrag.json"
+  },
+  {
+    "id": "display.primary",
+    "group": "werte",
+    "title": "display.primary",
+    "url": "/doku/werte/display.primary/",
+    "markdown": "/doku/werte/display.primary/referenz.md",
+    "json": "/doku/werte/display.primary/vertrag.json"
+  },
+  {
+    "id": "display.primary_changed",
+    "group": "werte",
+    "title": "Hauptbildschirm geändert",
+    "url": "/doku/werte/display.primary_changed/",
+    "markdown": "/doku/werte/display.primary_changed/referenz.md",
+    "json": "/doku/werte/display.primary_changed/vertrag.json"
+  },
+  {
+    "id": "display.resolution_changed",
+    "group": "werte",
+    "title": "Bildschirmauflösung geändert",
+    "url": "/doku/werte/display.resolution_changed/",
+    "markdown": "/doku/werte/display.resolution_changed/referenz.md",
+    "json": "/doku/werte/display.resolution_changed/vertrag.json"
+  },
+  {
+    "id": "display.settings.changed",
+    "group": "werte",
+    "title": "Bildschirmeinstellungen geändert",
+    "url": "/doku/werte/display.settings.changed/",
+    "markdown": "/doku/werte/display.settings.changed/referenz.md",
+    "json": "/doku/werte/display.settings.changed/vertrag.json"
+  },
+  {
+    "id": "filesystem.changed",
+    "group": "werte",
+    "title": "Datei oder Ordner geändert",
+    "url": "/doku/werte/filesystem.changed/",
+    "markdown": "/doku/werte/filesystem.changed/referenz.md",
+    "json": "/doku/werte/filesystem.changed/vertrag.json"
+  },
+  {
+    "id": "filesystem.created",
+    "group": "werte",
+    "title": "Datei oder Ordner erstellt",
+    "url": "/doku/werte/filesystem.created/",
+    "markdown": "/doku/werte/filesystem.created/referenz.md",
+    "json": "/doku/werte/filesystem.created/vertrag.json"
+  },
+  {
+    "id": "filesystem.deleted",
+    "group": "werte",
+    "title": "Datei oder Ordner gelöscht",
+    "url": "/doku/werte/filesystem.deleted/",
+    "markdown": "/doku/werte/filesystem.deleted/referenz.md",
+    "json": "/doku/werte/filesystem.deleted/vertrag.json"
+  },
+  {
+    "id": "filesystem.path",
+    "group": "werte",
+    "title": "Datei- oder Ordnerzustand",
+    "url": "/doku/werte/filesystem.path/",
+    "markdown": "/doku/werte/filesystem.path/referenz.md",
+    "json": "/doku/werte/filesystem.path/vertrag.json"
+  },
+  {
+    "id": "filesystem.renamed",
+    "group": "werte",
+    "title": "Datei oder Ordner umbenannt",
+    "url": "/doku/werte/filesystem.renamed/",
+    "markdown": "/doku/werte/filesystem.renamed/referenz.md",
+    "json": "/doku/werte/filesystem.renamed/vertrag.json"
+  },
+  {
+    "id": "input.idle",
+    "group": "werte",
+    "title": "Zeit seit letzter Eingabe",
+    "url": "/doku/werte/input.idle/",
+    "markdown": "/doku/werte/input.idle/referenz.md",
+    "json": "/doku/werte/input.idle/vertrag.json"
+  },
+  {
+    "id": "input.idle.changed",
+    "group": "werte",
+    "title": "Leerlaufgrenze erreicht oder verlassen",
+    "url": "/doku/werte/input.idle.changed/",
+    "markdown": "/doku/werte/input.idle.changed/referenz.md",
+    "json": "/doku/werte/input.idle.changed/vertrag.json"
+  },
+  {
+    "id": "input.idle.entered",
+    "group": "werte",
+    "title": "Leerlaufgrenze erreicht",
+    "url": "/doku/werte/input.idle.entered/",
+    "markdown": "/doku/werte/input.idle.entered/referenz.md",
+    "json": "/doku/werte/input.idle.entered/vertrag.json"
+  },
+  {
+    "id": "input.idle.left",
+    "group": "werte",
+    "title": "Leerlauf beendet",
+    "url": "/doku/werte/input.idle.left/",
+    "markdown": "/doku/werte/input.idle.left/referenz.md",
+    "json": "/doku/werte/input.idle.left/vertrag.json"
+  },
+  {
+    "id": "network.address.changed",
+    "group": "werte",
+    "title": "Netzwerkadresse geändert",
+    "url": "/doku/werte/network.address.changed/",
+    "markdown": "/doku/werte/network.address.changed/referenz.md",
+    "json": "/doku/werte/network.address.changed/vertrag.json"
+  },
+  {
+    "id": "network.availability.changed",
+    "group": "werte",
+    "title": "Netzwerkverfügbarkeit geändert",
+    "url": "/doku/werte/network.availability.changed/",
+    "markdown": "/doku/werte/network.availability.changed/referenz.md",
+    "json": "/doku/werte/network.availability.changed/vertrag.json"
+  },
+  {
+    "id": "network.connected",
+    "group": "werte",
+    "title": "Netzwerk verfügbar",
+    "url": "/doku/werte/network.connected/",
+    "markdown": "/doku/werte/network.connected/referenz.md",
+    "json": "/doku/werte/network.connected/vertrag.json"
+  },
+  {
+    "id": "network.connectivity",
+    "group": "werte",
+    "title": "Aktuelle Netzwerkverbindung",
+    "url": "/doku/werte/network.connectivity/",
+    "markdown": "/doku/werte/network.connectivity/referenz.md",
+    "json": "/doku/werte/network.connectivity/vertrag.json"
+  },
+  {
+    "id": "network.disconnected",
+    "group": "werte",
+    "title": "Netzwerk nicht verfügbar",
+    "url": "/doku/werte/network.disconnected/",
+    "markdown": "/doku/werte/network.disconnected/referenz.md",
+    "json": "/doku/werte/network.disconnected/vertrag.json"
+  },
+  {
+    "id": "network.vpn_connection",
+    "group": "werte",
+    "title": "network.vpn_connection",
+    "url": "/doku/werte/network.vpn_connection/",
+    "markdown": "/doku/werte/network.vpn_connection/referenz.md",
+    "json": "/doku/werte/network.vpn_connection/vertrag.json"
+  },
+  {
+    "id": "network.wifi_connection",
+    "group": "werte",
+    "title": "network.wifi_connection",
+    "url": "/doku/werte/network.wifi_connection/",
+    "markdown": "/doku/werte/network.wifi_connection/referenz.md",
+    "json": "/doku/werte/network.wifi_connection/vertrag.json"
+  },
+  {
+    "id": "network.wifi.adapter_added",
+    "group": "werte",
+    "title": "WLAN-Schnittstelle hinzugefügt oder aktiviert",
+    "url": "/doku/werte/network.wifi.adapter_added/",
+    "markdown": "/doku/werte/network.wifi.adapter_added/referenz.md",
+    "json": "/doku/werte/network.wifi.adapter_added/vertrag.json"
+  },
+  {
+    "id": "network.wifi.adapter_removed",
+    "group": "werte",
+    "title": "WLAN-Schnittstelle entfernt oder deaktiviert",
+    "url": "/doku/werte/network.wifi.adapter_removed/",
+    "markdown": "/doku/werte/network.wifi.adapter_removed/referenz.md",
+    "json": "/doku/werte/network.wifi.adapter_removed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.associated",
+    "group": "werte",
+    "title": "WLAN zugeordnet",
+    "url": "/doku/werte/network.wifi.associated/",
+    "markdown": "/doku/werte/network.wifi.associated/referenz.md",
+    "json": "/doku/werte/network.wifi.associated/vertrag.json"
+  },
+  {
+    "id": "network.wifi.associating",
+    "group": "werte",
+    "title": "WLAN-Zuordnung wird aufgebaut",
+    "url": "/doku/werte/network.wifi.associating/",
+    "markdown": "/doku/werte/network.wifi.associating/referenz.md",
+    "json": "/doku/werte/network.wifi.associating/vertrag.json"
+  },
+  {
+    "id": "network.wifi.authenticating",
+    "group": "werte",
+    "title": "WLAN wird authentifiziert",
+    "url": "/doku/werte/network.wifi.authenticating/",
+    "markdown": "/doku/werte/network.wifi.authenticating/referenz.md",
+    "json": "/doku/werte/network.wifi.authenticating/vertrag.json"
+  },
+  {
+    "id": "network.wifi.autoconfig_disabled",
+    "group": "werte",
+    "title": "WLAN-Autokonfiguration deaktiviert",
+    "url": "/doku/werte/network.wifi.autoconfig_disabled/",
+    "markdown": "/doku/werte/network.wifi.autoconfig_disabled/referenz.md",
+    "json": "/doku/werte/network.wifi.autoconfig_disabled/vertrag.json"
+  },
+  {
+    "id": "network.wifi.autoconfig_enabled",
+    "group": "werte",
+    "title": "WLAN-Autokonfiguration aktiviert",
+    "url": "/doku/werte/network.wifi.autoconfig_enabled/",
+    "markdown": "/doku/werte/network.wifi.autoconfig_enabled/referenz.md",
+    "json": "/doku/werte/network.wifi.autoconfig_enabled/vertrag.json"
+  },
+  {
+    "id": "network.wifi.changed",
+    "group": "werte",
+    "title": "WLAN-Ereignis",
+    "url": "/doku/werte/network.wifi.changed/",
+    "markdown": "/doku/werte/network.wifi.changed/referenz.md",
+    "json": "/doku/werte/network.wifi.changed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.connected",
+    "group": "werte",
+    "title": "WLAN verbunden",
+    "url": "/doku/werte/network.wifi.connected/",
+    "markdown": "/doku/werte/network.wifi.connected/referenz.md",
+    "json": "/doku/werte/network.wifi.connected/vertrag.json"
+  },
+  {
+    "id": "network.wifi.connecting",
+    "group": "werte",
+    "title": "WLAN-Verbindung wird aufgebaut",
+    "url": "/doku/werte/network.wifi.connecting/",
+    "markdown": "/doku/werte/network.wifi.connecting/referenz.md",
+    "json": "/doku/werte/network.wifi.connecting/vertrag.json"
+  },
+  {
+    "id": "network.wifi.connection_failed",
+    "group": "werte",
+    "title": "WLAN-Verbindung fehlgeschlagen",
+    "url": "/doku/werte/network.wifi.connection_failed/",
+    "markdown": "/doku/werte/network.wifi.connection_failed/referenz.md",
+    "json": "/doku/werte/network.wifi.connection_failed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.disconnected",
+    "group": "werte",
+    "title": "WLAN-Verbindung getrennt",
+    "url": "/doku/werte/network.wifi.disconnected/",
+    "markdown": "/doku/werte/network.wifi.disconnected/referenz.md",
+    "json": "/doku/werte/network.wifi.disconnected/vertrag.json"
+  },
+  {
+    "id": "network.wifi.disconnecting",
+    "group": "werte",
+    "title": "WLAN wird getrennt",
+    "url": "/doku/werte/network.wifi.disconnecting/",
+    "markdown": "/doku/werte/network.wifi.disconnecting/referenz.md",
+    "json": "/doku/werte/network.wifi.disconnecting/vertrag.json"
+  },
+  {
+    "id": "network.wifi.network_available",
+    "group": "werte",
+    "title": "WLAN-Netzwerk verfügbar",
+    "url": "/doku/werte/network.wifi.network_available/",
+    "markdown": "/doku/werte/network.wifi.network_available/referenz.md",
+    "json": "/doku/werte/network.wifi.network_available/vertrag.json"
+  },
+  {
+    "id": "network.wifi.network_unavailable",
+    "group": "werte",
+    "title": "WLAN-Netzwerk nicht verfügbar",
+    "url": "/doku/werte/network.wifi.network_unavailable/",
+    "markdown": "/doku/werte/network.wifi.network_unavailable/referenz.md",
+    "json": "/doku/werte/network.wifi.network_unavailable/vertrag.json"
+  },
+  {
+    "id": "network.wifi.profile_changed",
+    "group": "werte",
+    "title": "WLAN-Profil geändert",
+    "url": "/doku/werte/network.wifi.profile_changed/",
+    "markdown": "/doku/werte/network.wifi.profile_changed/referenz.md",
+    "json": "/doku/werte/network.wifi.profile_changed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.radio_state_changed",
+    "group": "werte",
+    "title": "WLAN-Funkstatus geändert",
+    "url": "/doku/werte/network.wifi.radio_state_changed/",
+    "markdown": "/doku/werte/network.wifi.radio_state_changed/referenz.md",
+    "json": "/doku/werte/network.wifi.radio_state_changed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.roaming_completed",
+    "group": "werte",
+    "title": "WLAN-Roaming abgeschlossen",
+    "url": "/doku/werte/network.wifi.roaming_completed/",
+    "markdown": "/doku/werte/network.wifi.roaming_completed/referenz.md",
+    "json": "/doku/werte/network.wifi.roaming_completed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.roaming_started",
+    "group": "werte",
+    "title": "WLAN-Roaming gestartet",
+    "url": "/doku/werte/network.wifi.roaming_started/",
+    "markdown": "/doku/werte/network.wifi.roaming_started/referenz.md",
+    "json": "/doku/werte/network.wifi.roaming_started/vertrag.json"
+  },
+  {
+    "id": "network.wifi.scan_completed",
+    "group": "werte",
+    "title": "WLAN-Suche abgeschlossen",
+    "url": "/doku/werte/network.wifi.scan_completed/",
+    "markdown": "/doku/werte/network.wifi.scan_completed/referenz.md",
+    "json": "/doku/werte/network.wifi.scan_completed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.scan_failed",
+    "group": "werte",
+    "title": "WLAN-Suche fehlgeschlagen",
+    "url": "/doku/werte/network.wifi.scan_failed/",
+    "markdown": "/doku/werte/network.wifi.scan_failed/referenz.md",
+    "json": "/doku/werte/network.wifi.scan_failed/vertrag.json"
+  },
+  {
+    "id": "network.wifi.signal_quality_changed",
+    "group": "werte",
+    "title": "WLAN-Signalstärke geändert",
+    "url": "/doku/werte/network.wifi.signal_quality_changed/",
+    "markdown": "/doku/werte/network.wifi.signal_quality_changed/referenz.md",
+    "json": "/doku/werte/network.wifi.signal_quality_changed/vertrag.json"
+  },
+  {
+    "id": "notifications.focus_mode",
+    "group": "werte",
+    "title": "notifications.focus_mode",
+    "url": "/doku/werte/notifications.focus_mode/",
+    "markdown": "/doku/werte/notifications.focus_mode/referenz.md",
+    "json": "/doku/werte/notifications.focus_mode/vertrag.json"
+  },
+  {
+    "id": "personalization.theme",
+    "group": "werte",
+    "title": "personalization.theme",
+    "url": "/doku/werte/personalization.theme/",
+    "markdown": "/doku/werte/personalization.theme/referenz.md",
+    "json": "/doku/werte/personalization.theme/vertrag.json"
+  },
+  {
+    "id": "personalization.wallpaper",
+    "group": "werte",
+    "title": "personalization.wallpaper",
+    "url": "/doku/werte/personalization.wallpaper/",
+    "markdown": "/doku/werte/personalization.wallpaper/referenz.md",
+    "json": "/doku/werte/personalization.wallpaper/vertrag.json"
+  },
+  {
+    "id": "power.ac_connected",
+    "group": "werte",
+    "title": "Netzteil angeschlossen",
+    "url": "/doku/werte/power.ac_connected/",
+    "markdown": "/doku/werte/power.ac_connected/referenz.md",
+    "json": "/doku/werte/power.ac_connected/vertrag.json"
+  },
+  {
+    "id": "power.ac_disconnected",
+    "group": "werte",
+    "title": "Netzteil getrennt",
+    "url": "/doku/werte/power.ac_disconnected/",
+    "markdown": "/doku/werte/power.ac_disconnected/referenz.md",
+    "json": "/doku/werte/power.ac_disconnected/vertrag.json"
+  },
+  {
+    "id": "power.battery_level_changed",
+    "group": "werte",
+    "title": "Akkustand geändert",
+    "url": "/doku/werte/power.battery_level_changed/",
+    "markdown": "/doku/werte/power.battery_level_changed/referenz.md",
+    "json": "/doku/werte/power.battery_level_changed/vertrag.json"
+  },
+  {
+    "id": "power.charging_started",
+    "group": "werte",
+    "title": "Laden begonnen",
+    "url": "/doku/werte/power.charging_started/",
+    "markdown": "/doku/werte/power.charging_started/referenz.md",
+    "json": "/doku/werte/power.charging_started/vertrag.json"
+  },
+  {
+    "id": "power.charging_stopped",
+    "group": "werte",
+    "title": "Laden beendet",
+    "url": "/doku/werte/power.charging_stopped/",
+    "markdown": "/doku/werte/power.charging_stopped/referenz.md",
+    "json": "/doku/werte/power.charging_stopped/vertrag.json"
+  },
+  {
+    "id": "power.display_timeout",
+    "group": "werte",
+    "title": "power.display_timeout",
+    "url": "/doku/werte/power.display_timeout/",
+    "markdown": "/doku/werte/power.display_timeout/referenz.md",
+    "json": "/doku/werte/power.display_timeout/vertrag.json"
+  },
+  {
+    "id": "power.mode.changed",
+    "group": "werte",
+    "title": "Energiemodus geändert",
+    "url": "/doku/werte/power.mode.changed/",
+    "markdown": "/doku/werte/power.mode.changed/referenz.md",
+    "json": "/doku/werte/power.mode.changed/vertrag.json"
+  },
+  {
+    "id": "power.resumed",
+    "group": "werte",
+    "title": "Standby beendet",
+    "url": "/doku/werte/power.resumed/",
+    "markdown": "/doku/werte/power.resumed/referenz.md",
+    "json": "/doku/werte/power.resumed/vertrag.json"
+  },
+  {
+    "id": "power.scheme",
+    "group": "werte",
+    "title": "power.scheme",
+    "url": "/doku/werte/power.scheme/",
+    "markdown": "/doku/werte/power.scheme/referenz.md",
+    "json": "/doku/werte/power.scheme/vertrag.json"
+  },
+  {
+    "id": "power.sleep_timeout",
+    "group": "werte",
+    "title": "power.sleep_timeout",
+    "url": "/doku/werte/power.sleep_timeout/",
+    "markdown": "/doku/werte/power.sleep_timeout/referenz.md",
+    "json": "/doku/werte/power.sleep_timeout/vertrag.json"
+  },
+  {
+    "id": "power.status",
+    "group": "werte",
+    "title": "Akku und Energiequelle",
+    "url": "/doku/werte/power.status/",
+    "markdown": "/doku/werte/power.status/referenz.md",
+    "json": "/doku/werte/power.status/vertrag.json"
+  },
+  {
+    "id": "power.status.changed",
+    "group": "werte",
+    "title": "Energiestatus geändert",
+    "url": "/doku/werte/power.status.changed/",
+    "markdown": "/doku/werte/power.status.changed/referenz.md",
+    "json": "/doku/werte/power.status.changed/vertrag.json"
+  },
+  {
+    "id": "power.suspended",
+    "group": "werte",
+    "title": "Standby gestartet",
+    "url": "/doku/werte/power.suspended/",
+    "markdown": "/doku/werte/power.suspended/referenz.md",
+    "json": "/doku/werte/power.suspended/vertrag.json"
+  },
+  {
+    "id": "printer.added",
+    "group": "werte",
+    "title": "Drucker hinzugefügt",
+    "url": "/doku/werte/printer.added/",
+    "markdown": "/doku/werte/printer.added/referenz.md",
+    "json": "/doku/werte/printer.added/vertrag.json"
+  },
+  {
+    "id": "printer.connection_failed",
+    "group": "werte",
+    "title": "Druckerverbindung fehlgeschlagen",
+    "url": "/doku/werte/printer.connection_failed/",
+    "markdown": "/doku/werte/printer.connection_failed/referenz.md",
+    "json": "/doku/werte/printer.connection_failed/vertrag.json"
+  },
+  {
+    "id": "printer.default",
+    "group": "werte",
+    "title": "printer.default",
+    "url": "/doku/werte/printer.default/",
+    "markdown": "/doku/werte/printer.default/referenz.md",
+    "json": "/doku/werte/printer.default/vertrag.json"
+  },
+  {
+    "id": "printer.job.added",
+    "group": "werte",
+    "title": "Druckauftrag hinzugefügt",
+    "url": "/doku/werte/printer.job.added/",
+    "markdown": "/doku/werte/printer.job.added/referenz.md",
+    "json": "/doku/werte/printer.job.added/vertrag.json"
+  },
+  {
+    "id": "printer.job.changed",
+    "group": "werte",
+    "title": "Druckauftrag geändert",
+    "url": "/doku/werte/printer.job.changed/",
+    "markdown": "/doku/werte/printer.job.changed/referenz.md",
+    "json": "/doku/werte/printer.job.changed/vertrag.json"
+  },
+  {
+    "id": "printer.job.deleted",
+    "group": "werte",
+    "title": "Druckauftrag entfernt",
+    "url": "/doku/werte/printer.job.deleted/",
+    "markdown": "/doku/werte/printer.job.deleted/referenz.md",
+    "json": "/doku/werte/printer.job.deleted/vertrag.json"
+  },
+  {
+    "id": "printer.queue.changed",
+    "group": "werte",
+    "title": "Druckerwarteschlange geändert",
+    "url": "/doku/werte/printer.queue.changed/",
+    "markdown": "/doku/werte/printer.queue.changed/referenz.md",
+    "json": "/doku/werte/printer.queue.changed/vertrag.json"
+  },
+  {
+    "id": "printer.removed",
+    "group": "werte",
+    "title": "Drucker entfernt",
+    "url": "/doku/werte/printer.removed/",
+    "markdown": "/doku/werte/printer.removed/referenz.md",
+    "json": "/doku/werte/printer.removed/vertrag.json"
+  },
+  {
+    "id": "printer.settings_changed",
+    "group": "werte",
+    "title": "Druckerstatus oder Einstellungen geändert",
+    "url": "/doku/werte/printer.settings_changed/",
+    "markdown": "/doku/werte/printer.settings_changed/referenz.md",
+    "json": "/doku/werte/printer.settings_changed/vertrag.json"
+  },
+  {
+    "id": "printer.state.changed",
+    "group": "werte",
+    "title": "Weiteres Druckerereignis",
+    "url": "/doku/werte/printer.state.changed/",
+    "markdown": "/doku/werte/printer.state.changed/referenz.md",
+    "json": "/doku/werte/printer.state.changed/vertrag.json"
+  },
+  {
+    "id": "printer.status",
+    "group": "werte",
+    "title": "Druckerstatus",
+    "url": "/doku/werte/printer.status/",
+    "markdown": "/doku/werte/printer.status/referenz.md",
+    "json": "/doku/werte/printer.status/vertrag.json"
+  },
+  {
+    "id": "process.exited",
+    "group": "werte",
+    "title": "Prozess beendet",
+    "url": "/doku/werte/process.exited/",
+    "markdown": "/doku/werte/process.exited/referenz.md",
+    "json": "/doku/werte/process.exited/vertrag.json"
+  },
+  {
+    "id": "process.running",
+    "group": "werte",
+    "title": "Läuft ein Prozess?",
+    "url": "/doku/werte/process.running/",
+    "markdown": "/doku/werte/process.running/referenz.md",
+    "json": "/doku/werte/process.running/vertrag.json"
+  },
+  {
+    "id": "process.started",
+    "group": "werte",
+    "title": "Prozess gestartet",
+    "url": "/doku/werte/process.started/",
+    "markdown": "/doku/werte/process.started/referenz.md",
+    "json": "/doku/werte/process.started/vertrag.json"
+  },
+  {
+    "id": "security.settings.changed",
+    "group": "werte",
+    "title": "Sicherheitseinstellung geändert",
+    "url": "/doku/werte/security.settings.changed/",
+    "markdown": "/doku/werte/security.settings.changed/referenz.md",
+    "json": "/doku/werte/security.settings.changed/vertrag.json"
+  },
+  {
+    "id": "security.state.changed",
+    "group": "werte",
+    "title": "Windows-Sicherheit geändert",
+    "url": "/doku/werte/security.state.changed/",
+    "markdown": "/doku/werte/security.state.changed/referenz.md",
+    "json": "/doku/werte/security.state.changed/vertrag.json"
+  },
+  {
+    "id": "security.status",
+    "group": "werte",
+    "title": "Windows-Sicherheitsstatus",
+    "url": "/doku/werte/security.status/",
+    "markdown": "/doku/werte/security.status/referenz.md",
+    "json": "/doku/werte/security.status/vertrag.json"
+  },
+  {
+    "id": "security.threat.action_taken",
+    "group": "werte",
+    "title": "Sicherheitsmaßnahme ausgeführt",
+    "url": "/doku/werte/security.threat.action_taken/",
+    "markdown": "/doku/werte/security.threat.action_taken/referenz.md",
+    "json": "/doku/werte/security.threat.action_taken/vertrag.json"
+  },
+  {
+    "id": "security.threat.detected",
+    "group": "werte",
+    "title": "Bedrohung erkannt",
+    "url": "/doku/werte/security.threat.detected/",
+    "markdown": "/doku/werte/security.threat.detected/referenz.md",
+    "json": "/doku/werte/security.threat.detected/vertrag.json"
+  },
+  {
+    "id": "session.console_connected",
+    "group": "werte",
+    "title": "Konsolensitzung verbunden",
+    "url": "/doku/werte/session.console_connected/",
+    "markdown": "/doku/werte/session.console_connected/referenz.md",
+    "json": "/doku/werte/session.console_connected/vertrag.json"
+  },
+  {
+    "id": "session.console_disconnected",
+    "group": "werte",
+    "title": "Konsolensitzung getrennt",
+    "url": "/doku/werte/session.console_disconnected/",
+    "markdown": "/doku/werte/session.console_disconnected/referenz.md",
+    "json": "/doku/werte/session.console_disconnected/vertrag.json"
+  },
+  {
+    "id": "session.locked",
+    "group": "werte",
+    "title": "Sitzung gesperrt",
+    "url": "/doku/werte/session.locked/",
+    "markdown": "/doku/werte/session.locked/referenz.md",
+    "json": "/doku/werte/session.locked/vertrag.json"
+  },
+  {
+    "id": "session.logged_off",
+    "group": "werte",
+    "title": "Benutzer abgemeldet",
+    "url": "/doku/werte/session.logged_off/",
+    "markdown": "/doku/werte/session.logged_off/referenz.md",
+    "json": "/doku/werte/session.logged_off/vertrag.json"
+  },
+  {
+    "id": "session.logged_on",
+    "group": "werte",
+    "title": "Benutzer angemeldet",
+    "url": "/doku/werte/session.logged_on/",
+    "markdown": "/doku/werte/session.logged_on/referenz.md",
+    "json": "/doku/werte/session.logged_on/vertrag.json"
+  },
+  {
+    "id": "session.remote_connected",
+    "group": "werte",
+    "title": "Remotesitzung verbunden",
+    "url": "/doku/werte/session.remote_connected/",
+    "markdown": "/doku/werte/session.remote_connected/referenz.md",
+    "json": "/doku/werte/session.remote_connected/vertrag.json"
+  },
+  {
+    "id": "session.remote_disconnected",
+    "group": "werte",
+    "title": "Remotesitzung getrennt",
+    "url": "/doku/werte/session.remote_disconnected/",
+    "markdown": "/doku/werte/session.remote_disconnected/referenz.md",
+    "json": "/doku/werte/session.remote_disconnected/vertrag.json"
+  },
+  {
+    "id": "session.state",
+    "group": "werte",
+    "title": "Aktuelle Windows-Sitzung",
+    "url": "/doku/werte/session.state/",
+    "markdown": "/doku/werte/session.state/referenz.md",
+    "json": "/doku/werte/session.state/vertrag.json"
+  },
+  {
+    "id": "session.state.changed",
+    "group": "werte",
+    "title": "Windows-Sitzung geändert",
+    "url": "/doku/werte/session.state.changed/",
+    "markdown": "/doku/werte/session.state.changed/referenz.md",
+    "json": "/doku/werte/session.state.changed/vertrag.json"
+  },
+  {
+    "id": "session.unlocked",
+    "group": "werte",
+    "title": "Sitzung entsperrt",
+    "url": "/doku/werte/session.unlocked/",
+    "markdown": "/doku/werte/session.unlocked/referenz.md",
+    "json": "/doku/werte/session.unlocked/vertrag.json"
+  },
+  {
+    "id": "storage.drive.changed",
+    "group": "werte",
+    "title": "Laufwerk geändert",
+    "url": "/doku/werte/storage.drive.changed/",
+    "markdown": "/doku/werte/storage.drive.changed/referenz.md",
+    "json": "/doku/werte/storage.drive.changed/vertrag.json"
+  },
+  {
+    "id": "storage.drive.mounted",
+    "group": "werte",
+    "title": "Laufwerk eingebunden",
+    "url": "/doku/werte/storage.drive.mounted/",
+    "markdown": "/doku/werte/storage.drive.mounted/referenz.md",
+    "json": "/doku/werte/storage.drive.mounted/vertrag.json"
+  },
+  {
+    "id": "storage.drive.unmounted",
+    "group": "werte",
+    "title": "Laufwerk entfernt",
+    "url": "/doku/werte/storage.drive.unmounted/",
+    "markdown": "/doku/werte/storage.drive.unmounted/referenz.md",
+    "json": "/doku/werte/storage.drive.unmounted/vertrag.json"
+  },
+  {
+    "id": "storage.drives",
+    "group": "werte",
+    "title": "Laufwerke und freier Speicher",
+    "url": "/doku/werte/storage.drives/",
+    "markdown": "/doku/werte/storage.drives/referenz.md",
+    "json": "/doku/werte/storage.drives/vertrag.json"
+  },
+  {
+    "id": "storage.media.inserted",
+    "group": "werte",
+    "title": "Wechselmedium eingelegt",
+    "url": "/doku/werte/storage.media.inserted/",
+    "markdown": "/doku/werte/storage.media.inserted/referenz.md",
+    "json": "/doku/werte/storage.media.inserted/vertrag.json"
+  },
+  {
+    "id": "storage.media.removed",
+    "group": "werte",
+    "title": "Wechselmedium entfernt",
+    "url": "/doku/werte/storage.media.removed/",
+    "markdown": "/doku/werte/storage.media.removed/referenz.md",
+    "json": "/doku/werte/storage.media.removed/vertrag.json"
+  },
+  {
+    "id": "system.lifecycle",
+    "group": "werte",
+    "title": "Systemlaufzeit",
+    "url": "/doku/werte/system.lifecycle/",
+    "markdown": "/doku/werte/system.lifecycle/referenz.md",
+    "json": "/doku/werte/system.lifecycle/vertrag.json"
+  },
+  {
+    "id": "system.lifecycle.changed",
+    "group": "werte",
+    "title": "Abmelden oder Herunterfahren",
+    "url": "/doku/werte/system.lifecycle.changed/",
+    "markdown": "/doku/werte/system.lifecycle.changed/referenz.md",
+    "json": "/doku/werte/system.lifecycle.changed/vertrag.json"
+  },
+  {
+    "id": "system.lifecycle.logoff",
+    "group": "werte",
+    "title": "Benutzer wird abgemeldet",
+    "url": "/doku/werte/system.lifecycle.logoff/",
+    "markdown": "/doku/werte/system.lifecycle.logoff/referenz.md",
+    "json": "/doku/werte/system.lifecycle.logoff/vertrag.json"
+  },
+  {
+    "id": "system.lifecycle.shutdown",
+    "group": "werte",
+    "title": "Windows wird heruntergefahren",
+    "url": "/doku/werte/system.lifecycle.shutdown/",
+    "markdown": "/doku/werte/system.lifecycle.shutdown/referenz.md",
+    "json": "/doku/werte/system.lifecycle.shutdown/vertrag.json"
+  },
+  {
+    "id": "system.settings",
+    "group": "werte",
+    "title": "Zeit, Sprache und Darstellung",
+    "url": "/doku/werte/system.settings/",
+    "markdown": "/doku/werte/system.settings/referenz.md",
+    "json": "/doku/werte/system.settings/vertrag.json"
+  },
+  {
+    "id": "system.settings.changed",
+    "group": "werte",
+    "title": "Systemeinstellung geändert",
+    "url": "/doku/werte/system.settings.changed/",
+    "markdown": "/doku/werte/system.settings.changed/referenz.md",
+    "json": "/doku/werte/system.settings.changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.colors_changed",
+    "group": "werte",
+    "title": "Farben geändert",
+    "url": "/doku/werte/system.settings.colors_changed/",
+    "markdown": "/doku/werte/system.settings.colors_changed/referenz.md",
+    "json": "/doku/werte/system.settings.colors_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.desktop_changed",
+    "group": "werte",
+    "title": "Desktop-Einstellung geändert",
+    "url": "/doku/werte/system.settings.desktop_changed/",
+    "markdown": "/doku/werte/system.settings.desktop_changed/referenz.md",
+    "json": "/doku/werte/system.settings.desktop_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.general_changed",
+    "group": "werte",
+    "title": "Allgemeine Systemeinstellung geändert",
+    "url": "/doku/werte/system.settings.general_changed/",
+    "markdown": "/doku/werte/system.settings.general_changed/referenz.md",
+    "json": "/doku/werte/system.settings.general_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.icons_changed",
+    "group": "werte",
+    "title": "Symbole geändert",
+    "url": "/doku/werte/system.settings.icons_changed/",
+    "markdown": "/doku/werte/system.settings.icons_changed/referenz.md",
+    "json": "/doku/werte/system.settings.icons_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.keyboard_changed",
+    "group": "werte",
+    "title": "Tastatureinstellung geändert",
+    "url": "/doku/werte/system.settings.keyboard_changed/",
+    "markdown": "/doku/werte/system.settings.keyboard_changed/referenz.md",
+    "json": "/doku/werte/system.settings.keyboard_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.locale_changed",
+    "group": "werte",
+    "title": "Region oder Sprache geändert",
+    "url": "/doku/werte/system.settings.locale_changed/",
+    "markdown": "/doku/werte/system.settings.locale_changed/referenz.md",
+    "json": "/doku/werte/system.settings.locale_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.menu_changed",
+    "group": "werte",
+    "title": "Menüeinstellung geändert",
+    "url": "/doku/werte/system.settings.menu_changed/",
+    "markdown": "/doku/werte/system.settings.menu_changed/referenz.md",
+    "json": "/doku/werte/system.settings.menu_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.mouse_changed",
+    "group": "werte",
+    "title": "Mauseinstellung geändert",
+    "url": "/doku/werte/system.settings.mouse_changed/",
+    "markdown": "/doku/werte/system.settings.mouse_changed/referenz.md",
+    "json": "/doku/werte/system.settings.mouse_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.power_changed",
+    "group": "werte",
+    "title": "Energieeinstellung geändert",
+    "url": "/doku/werte/system.settings.power_changed/",
+    "markdown": "/doku/werte/system.settings.power_changed/referenz.md",
+    "json": "/doku/werte/system.settings.power_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.screensaver_changed",
+    "group": "werte",
+    "title": "Bildschirmschoner geändert",
+    "url": "/doku/werte/system.settings.screensaver_changed/",
+    "markdown": "/doku/werte/system.settings.screensaver_changed/referenz.md",
+    "json": "/doku/werte/system.settings.screensaver_changed/vertrag.json"
+  },
+  {
+    "id": "system.settings.window_changed",
+    "group": "werte",
+    "title": "Fenstereinstellung geändert",
+    "url": "/doku/werte/system.settings.window_changed/",
+    "markdown": "/doku/werte/system.settings.window_changed/referenz.md",
+    "json": "/doku/werte/system.settings.window_changed/vertrag.json"
+  },
+  {
+    "id": "system.time.changed",
+    "group": "werte",
+    "title": "Systemzeit geändert",
+    "url": "/doku/werte/system.time.changed/",
+    "markdown": "/doku/werte/system.time.changed/referenz.md",
+    "json": "/doku/werte/system.time.changed/vertrag.json"
+  },
+  {
+    "id": "system.time.clock_adjusted",
+    "group": "werte",
+    "title": "Systemuhr angepasst",
+    "url": "/doku/werte/system.time.clock_adjusted/",
+    "markdown": "/doku/werte/system.time.clock_adjusted/referenz.md",
+    "json": "/doku/werte/system.time.clock_adjusted/vertrag.json"
+  },
+  {
+    "id": "system.time.timezone_changed",
+    "group": "werte",
+    "title": "Zeitzone geändert",
+    "url": "/doku/werte/system.time.timezone_changed/",
+    "markdown": "/doku/werte/system.time.timezone_changed/referenz.md",
+    "json": "/doku/werte/system.time.timezone_changed/vertrag.json"
+  },
+  {
+    "id": "window.changed",
+    "group": "werte",
+    "title": "Fenster geändert",
+    "url": "/doku/werte/window.changed/",
+    "markdown": "/doku/werte/window.changed/referenz.md",
+    "json": "/doku/werte/window.changed/vertrag.json"
+  },
+  {
+    "id": "window.closed",
+    "group": "werte",
+    "title": "Fenster geschlossen",
+    "url": "/doku/werte/window.closed/",
+    "markdown": "/doku/werte/window.closed/referenz.md",
+    "json": "/doku/werte/window.closed/vertrag.json"
+  },
+  {
+    "id": "window.focused",
+    "group": "werte",
+    "title": "Fenster in den Vordergrund gewechselt",
+    "url": "/doku/werte/window.focused/",
+    "markdown": "/doku/werte/window.focused/referenz.md",
+    "json": "/doku/werte/window.focused/vertrag.json"
+  },
+  {
+    "id": "window.foreground",
+    "group": "werte",
+    "title": "Aktives Fenster",
+    "url": "/doku/werte/window.foreground/",
+    "markdown": "/doku/werte/window.foreground/referenz.md",
+    "json": "/doku/werte/window.foreground/vertrag.json"
+  },
+  {
+    "id": "window.hidden",
+    "group": "werte",
+    "title": "Fenster ausgeblendet",
+    "url": "/doku/werte/window.hidden/",
+    "markdown": "/doku/werte/window.hidden/referenz.md",
+    "json": "/doku/werte/window.hidden/vertrag.json"
+  },
+  {
+    "id": "window.minimized",
+    "group": "werte",
+    "title": "Fenster minimiert",
+    "url": "/doku/werte/window.minimized/",
+    "markdown": "/doku/werte/window.minimized/referenz.md",
+    "json": "/doku/werte/window.minimized/vertrag.json"
+  },
+  {
+    "id": "window.moved_or_resized",
+    "group": "werte",
+    "title": "Fenster verschoben oder skaliert",
+    "url": "/doku/werte/window.moved_or_resized/",
+    "markdown": "/doku/werte/window.moved_or_resized/referenz.md",
+    "json": "/doku/werte/window.moved_or_resized/vertrag.json"
+  },
+  {
+    "id": "window.opened",
+    "group": "werte",
+    "title": "Fenster geöffnet",
+    "url": "/doku/werte/window.opened/",
+    "markdown": "/doku/werte/window.opened/referenz.md",
+    "json": "/doku/werte/window.opened/vertrag.json"
+  },
+  {
+    "id": "window.restored",
+    "group": "werte",
+    "title": "Fenster wiederhergestellt",
+    "url": "/doku/werte/window.restored/",
+    "markdown": "/doku/werte/window.restored/referenz.md",
+    "json": "/doku/werte/window.restored/vertrag.json"
+  },
+  {
+    "id": "window.shown",
+    "group": "werte",
+    "title": "Fenster angezeigt",
+    "url": "/doku/werte/window.shown/",
+    "markdown": "/doku/werte/window.shown/referenz.md",
+    "json": "/doku/werte/window.shown/vertrag.json"
+  },
+  {
+    "id": "windows_update.changed",
+    "group": "werte",
+    "title": "Windows Update geändert",
+    "url": "/doku/werte/windows_update.changed/",
+    "markdown": "/doku/werte/windows_update.changed/referenz.md",
+    "json": "/doku/werte/windows_update.changed/vertrag.json"
+  },
+  {
+    "id": "windows_update.download_started",
+    "group": "werte",
+    "title": "Update-Download gestartet",
+    "url": "/doku/werte/windows_update.download_started/",
+    "markdown": "/doku/werte/windows_update.download_started/referenz.md",
+    "json": "/doku/werte/windows_update.download_started/vertrag.json"
+  },
+  {
+    "id": "windows_update.downloaded",
+    "group": "werte",
+    "title": "Update heruntergeladen",
+    "url": "/doku/werte/windows_update.downloaded/",
+    "markdown": "/doku/werte/windows_update.downloaded/referenz.md",
+    "json": "/doku/werte/windows_update.downloaded/vertrag.json"
+  },
+  {
+    "id": "windows_update.failed",
+    "group": "werte",
+    "title": "Update fehlgeschlagen",
+    "url": "/doku/werte/windows_update.failed/",
+    "markdown": "/doku/werte/windows_update.failed/referenz.md",
+    "json": "/doku/werte/windows_update.failed/vertrag.json"
+  },
+  {
+    "id": "windows_update.installed",
+    "group": "werte",
+    "title": "Update installiert",
+    "url": "/doku/werte/windows_update.installed/",
+    "markdown": "/doku/werte/windows_update.installed/referenz.md",
+    "json": "/doku/werte/windows_update.installed/vertrag.json"
+  },
+  {
+    "id": "windows_update.restart_required",
+    "group": "werte",
+    "title": "Update erfordert Neustart",
+    "url": "/doku/werte/windows_update.restart_required/",
+    "markdown": "/doku/werte/windows_update.restart_required/referenz.md",
+    "json": "/doku/werte/windows_update.restart_required/vertrag.json"
+  },
+  {
+    "id": "windows_update.status",
+    "group": "werte",
+    "title": "Windows-Update-Status",
+    "url": "/doku/werte/windows_update.status/",
+    "markdown": "/doku/werte/windows_update.status/referenz.md",
+    "json": "/doku/werte/windows_update.status/vertrag.json"
+  }
+]

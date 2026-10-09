@@ -1,0 +1,9 @@
+{
+  "$type": "windows_event",
+  "Kind": "WindowsEvent",
+  "event_type": "network.availability.changed",
+  "filters": {},
+  "debounce": "00:00:01",
+  "delay_after_event": "00:00:00",
+  "kind": "WindowsEvent"
+}

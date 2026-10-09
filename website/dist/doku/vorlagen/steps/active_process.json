@@ -1,0 +1,17 @@
+{
+  "type": "active_process",
+  "settings": {
+    "target": {
+      "process_source": {
+        "provider_id": "",
+        "source_id": ""
+      },
+      "process_name": "",
+      "executable_path": "",
+      "window_title_contains": ""
+    }
+  },
+  "id": "7d3962ef-45d1-44a8-69db-2fa973922fc6",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -46,7 +46,7 @@ public static class JobVariableInputMigration
                         ValueKind = shape?.ValueKind ?? ResultValueKind.ResultObject,
                         Cardinality = shape?.Cardinalities.FirstOrDefault(ResultCardinality.Single)
                                       ?? ResultCardinality.Single,
-                        Value = LegacyDirectValue(step, field)?.DeepClone()
+                        Value = GetLegacyDirectValue(step, field)?.DeepClone()
                                 ?? field.DefaultValue?.DeepClone()
                     };
                     job.LocalValues.Add(placeholder);
@@ -209,7 +209,7 @@ public static class JobVariableInputMigration
         return string.IsNullOrEmpty(input.Key) ? usage.Path : input.Key;
     }
 
-    private static JsonNode? LegacyDirectValue(JobStep step, StepFieldDescriptor field) => step switch
+    public static JsonNode? GetLegacyDirectValue(JobStep? step, StepFieldDescriptor field) => step switch
     {
         DynamicRoiStep dynamicRoi when field.Id == DynamicRoiStepDefinition.PaddingSourceFieldId
             && dynamicRoi.Settings.Padding >= 0 => JsonValue.Create(dynamicRoi.Settings.Padding),

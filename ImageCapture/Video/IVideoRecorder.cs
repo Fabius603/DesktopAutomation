@@ -11,4 +11,5 @@ public interface IVideoRecorder : IDisposable
     Task StartAsync(CancellationToken token);
     void AddFrame(Bitmap frame);
     Task StopAndSave();
+    Task StopAndSave(CancellationToken ct) => StopAndSave();
 }

@@ -40,7 +40,7 @@ namespace TaskAutomation.Steps
             var alpha = (byte)Math.Clamp((int)(s.Opacity * 255f), 0, 255);
 
             ctx.DesktopResultOverlay.ShowText(
-                stepKey: step.Id,
+                stepKey: ctx.ResourceKey(step.Id),
                 text: text,
                 fontSize: s.FontSize,
                 r: r, g: g, b: b, a: alpha,

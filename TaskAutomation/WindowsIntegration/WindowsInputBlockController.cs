@@ -13,20 +13,32 @@ public static class WindowsInputBlockController
     private const uint LlkhfInjected = 0x10;
     private const uint LlmhfInjected = 0x01;
     private static readonly object Sync = new();
+    private static readonly InputBlockOwnership Owners = new();
+    private static readonly Dictionary<Guid, Timer> OwnerTimers = [];
+    private static readonly Dictionary<Guid, Guid> OwnerVersions = [];
     private static Thread? _ownerThread;
     private static uint _ownerThreadId;
 
-    public static void Block(TimeSpan safetyTimeout)
+    public static void Block(TimeSpan safetyTimeout) => Block(Guid.Empty, safetyTimeout);
+    public static void Block(Guid ownerId, TimeSpan safetyTimeout)
     {
         if (safetyTimeout <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(safetyTimeout));
 
         lock (Sync)
         {
-            ReleaseCore();
+            if (OwnerTimers.Remove(ownerId, out var previousTimer)) previousTimer.Dispose();
+            Owners.Acquire(ownerId);
+            var version = Guid.NewGuid();
+            OwnerVersions[ownerId] = version;
+            OwnerTimers[ownerId] = new Timer(_ =>
+            {
+                lock (Sync) if (OwnerVersions.GetValueOrDefault(ownerId) == version) Unblock(ownerId);
+            }, null, safetyTimeout, Timeout.InfiniteTimeSpan);
+            if (_ownerThread is { IsAlive: true }) return;
             var started = new ManualResetEventSlim(false);
             Exception? startError = null;
-            var owner = new Thread(() => RunHookLoop(safetyTimeout, started, ex => startError = ex))
+            var owner = new Thread(() => RunHookLoop(TimeSpan.FromDays(1), started, ex => startError = ex))
             {
                 IsBackground = true,
                 Name = "DesktopAutomation.PhysicalInputBlocker"
@@ -35,12 +47,12 @@ public static class WindowsInputBlockController
             owner.Start();
             if (!started.Wait(TimeSpan.FromSeconds(2)))
             {
-                ReleaseCore();
+                Unblock(ownerId);
                 throw new TimeoutException("Das Blockieren der Eingaben hat nicht rechtzeitig geantwortet.");
             }
             if (startError is not null)
             {
-                ReleaseCore();
+                Unblock(ownerId);
                 throw startError;
             }
         }
@@ -49,7 +61,22 @@ public static class WindowsInputBlockController
     public static void Unblock()
     {
         lock (Sync)
+        {
+            Owners.Clear();
+            foreach (var timer in OwnerTimers.Values) timer.Dispose();
+            OwnerTimers.Clear();
+            OwnerVersions.Clear();
             ReleaseCore();
+        }
+    }
+    public static void Unblock(Guid ownerId)
+    {
+        lock (Sync)
+        {
+            OwnerVersions.Remove(ownerId);
+            if (OwnerTimers.Remove(ownerId, out var timer)) timer.Dispose();
+            if (Owners.Release(ownerId)) ReleaseCore();
+        }
     }
 
     private static void RunHookLoop(TimeSpan safetyTimeout, ManualResetEventSlim started, Action<Exception> reportError)

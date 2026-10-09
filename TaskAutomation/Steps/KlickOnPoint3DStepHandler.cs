@@ -129,7 +129,7 @@ namespace TaskAutomation.Steps
                 "KlickOnPoint3DStepHandler: Pixel delta (dx:{DX}, dy:{DY}), movement factors=(x:{FactorX:F3}, y:{FactorY:F3}), applied mouse delta (dx:{AppliedDX}, dy:{AppliedDY}), global origin=({OriginX},{OriginY}), target=({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
                 delta.X, delta.Y, step.Settings.EffectiveMovementFactorX,
                 step.Settings.EffectiveMovementFactorY, appliedDelta.X, appliedDelta.Y,
-                globalOrigin.X, globalOrigin.Y, target.X, target.Y, detection.Confidence,
+                globalOrigin.X, globalOrigin.Y, target.X, target.Y, detection?.Confidence ?? 0,
                 step.Settings.OffsetX, step.Settings.OffsetY, step.Settings.ClickType);
 
             var macro = CreateClickMacro(step.Settings, appliedDelta);

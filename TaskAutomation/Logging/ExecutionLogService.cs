@@ -52,7 +52,7 @@ public sealed class ExecutionLogService : IExecutionLogService, IDisposable
 
     public void InitializeRun(ExecutionLogSession session, Job job, Guid instanceId)
     {
-        var run = _repository.ReadRuns().First(run => run.Id == session.Id);
+        var run = (_repository.GetRun(session.Id) ?? throw new InvalidOperationException("Execution run is unavailable."));
         _repository.SaveRun(run with { InstanceId = instanceId, Context = run.Context with { InstanceId = instanceId }, Steps = LogRunSnapshots.Steps(job) });
     }
 
@@ -76,7 +76,7 @@ public sealed class ExecutionLogService : IExecutionLogService, IDisposable
 
     public void Record(ExecutionLogSession session, LogEvent entry)
     {
-        var run = _repository.ReadRuns().First(run => run.Id == session.Id);
+        var run = (_repository.GetRun(session.Id) ?? throw new InvalidOperationException("Execution run is unavailable."));
         if (entry.Parameters.GetValueOrDefault("DebugState") is { } state && run.EndedAt is null)
         {
             run = _repository.SaveRun(run with { Outcome = state == "Paused" ? LogOutcome.Paused : LogOutcome.Running });
@@ -105,7 +105,7 @@ public sealed class ExecutionLogService : IExecutionLogService, IDisposable
         => Finish(session, cancelled ? LogOutcome.Stopped : success ? LogOutcome.Successful : LogOutcome.Failed, details ?? "Unknown");
     public void Finish(ExecutionLogSession session, LogOutcome outcome, string reason)
     {
-        var run = _repository.ReadRuns().First(run => run.Id == session.Id);
+        var run = (_repository.GetRun(session.Id) ?? throw new InvalidOperationException("Execution run is unavailable."));
         var ended = DateTimeOffset.UtcNow;
         outcome = LogOutcomeRules.Complete(outcome, run.ErrorCount, run.WarningCount);
         var final = _repository.SaveRun(run with

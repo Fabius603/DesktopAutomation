@@ -43,10 +43,10 @@ namespace ImageDetection.YOLO
         private readonly YoloManagerOptions _opt;
         private readonly ILabelProvider _labels;
         private readonly EventHandler<ModelDownloadProgressEventArgs> _downloadProgressHandler;
-        private readonly ConcurrentDictionary<string, YoloBuffers> _yolobufferCache = new();
+        private readonly ConcurrentDictionary<string, YoloBuffers> _yolobufferCache = new(StringComparer.OrdinalIgnoreCase);
 
         private readonly ConcurrentDictionary<string, Lazy<Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)>>> _cache
-            = new();
+            = new(StringComparer.OrdinalIgnoreCase);
 
         public event Action<string, ModelDownloadStatus, int, string?>? DownloadProgressChanged;
 
@@ -65,10 +65,10 @@ namespace ImageDetection.YOLO
             var providers = new List<string> { "CPU" };
             if (IsCudaAvailable()) providers.Add("CUDA");
             if (IsDirectMLAvailable()) providers.Add("DirectML");
-            
-            _logger.LogInformation("Available ONNX Runtime Execution Providers: {Providers}", 
+
+            _logger.LogInformation("Available ONNX Runtime Execution Providers: {Providers}",
                 string.Join(", ", providers));
-            
+
             // Automatische Backend-Auswahl falls Auto gewählt
             if (_opt.GpuBackend == YoloGpuBackend.Auto)
             {
@@ -129,9 +129,9 @@ namespace ImageDetection.YOLO
         public List<string> GetClassesForModel(string modelKey)
         {
             try
-            {                
+            {
                 var onnxPath = Path.Combine(_downloader.ModelFolderPath, modelKey + ".onnx");
-                
+
                 if (!File.Exists(onnxPath))
                 {
                     _logger.LogWarning("ONNX-Datei für Modell {modelKey} nicht gefunden: {onnxPath}", modelKey, onnxPath);
@@ -233,7 +233,7 @@ namespace ImageDetection.YOLO
                     {
                         lastDirectMLError = ex;
                         _logger.LogWarning(ex, "DirectML failed, trying fallback options");
-                        
+
                         // Versuche CUDA als Fallback für DirectML
                         if (IsCudaAvailable() && lastCudaError == null)
                         {
@@ -287,6 +287,7 @@ namespace ImageDetection.YOLO
             Rectangle? roi = null,
             CancellationToken ct = default)
         {
+            using var lease = await ModelLifetime.AcquireAsync(this, modelKey, ct).ConfigureAwait(false);
             var (model, session, labels) = await GetOrCreateAsync(modelKey, ct).ConfigureAwait(false);
 
             // Input-Name holen ohne LINQ
@@ -314,61 +315,61 @@ namespace ImageDetection.YOLO
             try
             {
 
-            // Preprocessing: direkt ROI -> Letterbox -> Tensor
-            var (scale, padX, padY) = PreprocessIntoBuffers(bitmap, useRoi, buf);
+                // Preprocessing: direkt ROI -> Letterbox -> Tensor
+                var (scale, padX, padY) = PreprocessIntoBuffers(bitmap, useRoi, buf);
 
-            EnsureInputBuffers(buf, session);
+                EnsureInputBuffers(buf, session);
 
-            // Float16-Modelle: float32-Buffer -> float16 konvertieren
-            if (buf.IsFloat16Input)
-                CopyFloat32ToFloat16(buf.Input, buf.InputFp16!);
+                // Float16-Modelle: float32-Buffer -> float16 konvertieren
+                if (buf.IsFloat16Input)
+                    CopyFloat32ToFloat16(buf.Input, buf.InputFp16!);
 
-            var currentInput = buf.IsFloat16Input
-                ? NamedOnnxValue.CreateFromTensor(
-                    buf.InputName!,
-                    new DenseTensor<Float16>(
-                        buf.InputFp16!, new[] { 1, 3, buf.Size, buf.Size }))
-                : NamedOnnxValue.CreateFromTensor(
-                    buf.InputName!,
-                    new DenseTensor<float>(
-                        buf.Input, new[] { 1, 3, buf.Size, buf.Size }));
-            using var results = session.Run([currentInput]);
-            using var currentOutput = results.First();
-            if (buf.IsFloat16Output)
-            {
-                var tensor = currentOutput.AsTensor<Float16>();
-                buf.OutputDims = tensor.Dimensions.ToArray();
-                if (buf.Output?.Length != tensor.Length)
-                    buf.Output = new float[tensor.Length];
-                for (var i = 0; i < tensor.Length; i++)
-                    buf.Output[i] = (float)tensor.GetValue(i);
-            }
-            else
-            {
-                var tensor = currentOutput.AsTensor<float>();
-                buf.OutputDims = tensor.Dimensions.ToArray();
-                if (buf.Output?.Length != tensor.Length)
-                    buf.Output = new float[tensor.Length];
-                tensor.ToArray().CopyTo(buf.Output, 0);
-            }
+                var currentInput = buf.IsFloat16Input
+                    ? NamedOnnxValue.CreateFromTensor(
+                        buf.InputName!,
+                        new DenseTensor<Float16>(
+                            buf.InputFp16!, new[] { 1, 3, buf.Size, buf.Size }))
+                    : NamedOnnxValue.CreateFromTensor(
+                        buf.InputName!,
+                        new DenseTensor<float>(
+                            buf.Input, new[] { 1, 3, buf.Size, buf.Size }));
+                using var results = session.Run([currentInput]);
+                using var currentOutput = results.First();
+                if (buf.IsFloat16Output)
+                {
+                    var tensor = currentOutput.AsTensor<Float16>();
+                    buf.OutputDims = tensor.Dimensions.ToArray();
+                    if (buf.Output?.Length != tensor.Length)
+                        buf.Output = new float[tensor.Length];
+                    for (var i = 0; i < tensor.Length; i++)
+                        buf.Output[i] = (float)tensor.GetValue(i);
+                }
+                else
+                {
+                    var tensor = currentOutput.AsTensor<float>();
+                    buf.OutputDims = tensor.Dimensions.ToArray();
+                    if (buf.Output?.Length != tensor.Length)
+                        buf.Output = new float[tensor.Length];
+                    tensor.ToArray().CopyTo(buf.Output, 0);
+                }
 
-            // Kein DenseTensor-Wrapper – direkt auf buf.Output arbeiten
-            var (isCHW, num, attrs) = InterpretDims(buf.OutputDims!);
-            YoloModelCompatibility.ValidateDetectionOutput(buf.OutputDims!, labels.Count);
+                // Kein DenseTensor-Wrapper – direkt auf buf.Output arbeiten
+                var (isCHW, num, attrs) = InterpretDims(buf.OutputDims!);
+                YoloModelCompatibility.ValidateDetectionOutput(buf.OutputDims!, labels.Count);
 
-            var allList = DecodeDetections(
-                buf.Output!, buf.OutputDims!, isCHW, num, attrs, threshold,
-                inputSize, scale, padX, padY,
-                roiOffsetInImage: useRoi.Location,
-                requiredClassIds: classIds);
+                var allList = DecodeDetections(
+                    buf.Output!, buf.OutputDims!, isCHW, num, attrs, threshold,
+                    inputSize, scale, padX, padY,
+                    roiOffsetInImage: useRoi.Location,
+                    requiredClassIds: classIds);
 
-            if (allList.Count == 0)
-                return new DetectionResult { Success = false };
+                if (allList.Count == 0)
+                    return new DetectionResult { Success = false };
 
-            // Erstes = bestes (absteigend sortiert)
-            var best = (DetectionResult)allList[0];
-            best.AllResults = allList;
-            return best;
+                // Erstes = bestes (absteigend sortiert)
+                var best = (DetectionResult)allList[0];
+                best.AllResults = allList;
+                return best;
             }
             finally
             {
@@ -380,10 +381,10 @@ namespace ImageDetection.YOLO
         {
             if (buf.InputName != null) return;
 
-            buf.InputName  = session.InputMetadata.Keys.First();
+            buf.InputName = session.InputMetadata.Keys.First();
             buf.OutputName = session.OutputMetadata.Keys.First();
 
-            buf.IsFloat16Input  = session.InputMetadata[buf.InputName].ElementDataType  == TensorElementType.Float16;
+            buf.IsFloat16Input = session.InputMetadata[buf.InputName].ElementDataType == TensorElementType.Float16;
             buf.IsFloat16Output = session.OutputMetadata[buf.OutputName].ElementDataType == TensorElementType.Float16;
 
             if (buf.IsFloat16Input)
@@ -399,11 +400,18 @@ namespace ImageDetection.YOLO
 
         // ------------ Cache & Initialisierung ------------
 
-        private Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)> GetOrCreateAsync(string modelKey, CancellationToken ct)
+        private async Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)> GetOrCreateAsync(string modelKey, CancellationToken ct)
         {
             var lazy = _cache.GetOrAdd(modelKey, key => new Lazy<Task<(YOLOModel, InferenceSession, IReadOnlyList<string>)>>(
                 () => CreateAsync(key, ct), LazyThreadSafetyMode.ExecutionAndPublication));
-            return lazy.Value;
+            try { return await lazy.Value.WaitAsync(ct).ConfigureAwait(false); }
+            catch
+            {
+                if (lazy.Value.IsFaulted || lazy.Value.IsCanceled)
+                    ((ICollection<KeyValuePair<string, Lazy<Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)>>>>)_cache)
+                        .Remove(new(modelKey, lazy));
+                throw;
+            }
         }
 
         private YoloBuffers GetOrCreateBuffers(string modelKey, int inputSize)
@@ -529,11 +537,11 @@ namespace ImageDetection.YOLO
                 var rounded = Rectangle.Round(absBox);
                 results.Add(new DetectionResult
                 {
-                    Success    = true,
+                    Success = true,
                     Confidence = score,
                     BoundingBox = rounded,
                     CenterPoint = new Point(
-                        (int)Math.Round(absBox.X + absBox.Width  * 0.5f),
+                        (int)Math.Round(absBox.X + absBox.Width * 0.5f),
                         (int)Math.Round(absBox.Y + absBox.Height * 0.5f)),
                 });
             }
@@ -619,6 +627,9 @@ namespace ImageDetection.YOLO
         }
 
         public bool UnloadModel(string modelKey)
+            => ModelLifetime.TryUnload(this, modelKey, () => UnloadCore(modelKey));
+
+        private bool UnloadCore(string modelKey)
         {
             if (_yolobufferCache.TryRemove(modelKey, out var buffers))
             {

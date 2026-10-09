@@ -20,7 +20,7 @@ namespace TaskAutomation.Steps
         {
             var settings = step.Settings;
 
-            var points = CollectPoints(settings.Points, ctx);
+            var points = CollectPoints(settings.Points, ctx, out var complete);
             if (points.Count == 0)
             {
                 ctx.Logger.LogInformation(
@@ -34,18 +34,18 @@ namespace TaskAutomation.Steps
             {
                 bool matches = settings.Mode switch
                 {
-                    PointComparisonMode.Offset     => EvaluateOffset(point, settings.OffsetSettings, ctx),
+                    PointComparisonMode.Offset => EvaluateOffset(point, settings.OffsetSettings, ctx),
                     PointComparisonMode.Expression => EvaluateExpression(point, settings.ExpressionSettings),
-                    _                              => false
+                    _ => false
                 };
                 if (matches) matchCount++;
             }
 
             bool result = settings.MatchRequirement switch
             {
-                PointMatchRequirement.All => matchCount == points.Count,
+                PointMatchRequirement.All => complete && matchCount == points.Count,
                 PointMatchRequirement.Any => matchCount > 0,
-                _                        => false
+                _ => false
             };
 
             ctx.Logger.LogInformation(
@@ -56,8 +56,9 @@ namespace TaskAutomation.Steps
                 new PointComparisonResult { WasExecuted = true, Matches = result, MatchCount = matchCount, TotalCount = points.Count });
         }
 
-        private static List<PixelPoint> CollectPoints(List<PointEntry> entries, IStepPipelineContext ctx)
+        private static List<PixelPoint> CollectPoints(List<PointEntry> entries, IStepPipelineContext ctx, out bool complete)
         {
+            complete = true;
             var result = new List<PixelPoint>();
             foreach (var entry in entries)
             {
@@ -69,6 +70,7 @@ namespace TaskAutomation.Steps
                 {
                     var resolved = ResultBindingResolver.Resolve<PixelPoint>(ctx.Results, entry.PointsSource);
                     if (resolved.IsSuccess) result.AddRange(resolved.Values);
+                    else complete = false;
                 }
             }
             return result;
@@ -92,8 +94,8 @@ namespace TaskAutomation.Steps
                 refPoint = resolved.FirstOrDefault;
             }
 
-            return Math.Abs(point.X - refPoint.X) <= settings.OffsetX
-                && Math.Abs(point.Y - refPoint.Y) <= settings.OffsetY;
+            return Math.Abs((long)point.X - refPoint.X) <= settings.OffsetX
+                && Math.Abs((long)point.Y - refPoint.Y) <= settings.OffsetY;
         }
 
         private static bool EvaluateExpression(
@@ -109,13 +111,13 @@ namespace TaskAutomation.Steps
 
                 return expr.Operator switch
                 {
-                    PointAxisOperator.LessThan           => axisValue < expr.Value,
-                    PointAxisOperator.LessThanOrEqual    => axisValue <= expr.Value,
-                    PointAxisOperator.GreaterThan        => axisValue > expr.Value,
+                    PointAxisOperator.LessThan => axisValue < expr.Value,
+                    PointAxisOperator.LessThanOrEqual => axisValue <= expr.Value,
+                    PointAxisOperator.GreaterThan => axisValue > expr.Value,
                     PointAxisOperator.GreaterThanOrEqual => axisValue >= expr.Value,
-                    PointAxisOperator.Equal              => axisValue == expr.Value,
-                    PointAxisOperator.NotEqual           => axisValue != expr.Value,
-                    _                                    => false
+                    PointAxisOperator.Equal => axisValue == expr.Value,
+                    PointAxisOperator.NotEqual => axisValue != expr.Value,
+                    _ => false
                 };
             });
 

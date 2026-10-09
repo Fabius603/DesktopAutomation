@@ -1,0 +1,419 @@
+## Werte und Ergebnisse: Lautstärke und Stummschaltung
+
+ID: audio.volume
+Website: /doku/werte/audio.volume/
+
+### errors
+
+Verfügbarkeit und Ereignisevidenz hängen von Windows-Version, installiertem Gerät/Dienst und Rechten ab. Die Abfrage ist ein zeitlicher Snapshot. Nur die im Katalog gesetzten Unterstützungsmerkmale verwenden: eine reine Änderungsfunktion liefert keinen eigenen Abfragevertrag, eine reine Abfrage ist kein Ereignistrigger. Bei Windows-Einstellungen den Erfolg und Fehlercode im Step-Ergebnis prüfen.
+
+### example
+
+Wähle audio.volume im Step „Windows-Zustand abfragen“ und verbinde einen unten beschriebenen Ergebniswert mit einer Bedingung.
+
+### purpose
+
+Zustandsabfrage: Lautstärke und Stummschaltung. Liest den aktuellen vom System angebotenen Zustand und stellt die hier aufgeführten typisierten Werte bereit. Wähle die Funktion im Windows-Auswahldialog; die verfügbaren Parameter stehen unten. Der Katalog verlangt keine erhöhte Ausführung; einzelne Systemzugriffe können dennoch Rechte voraussetzen.
+
+### result.captured_at
+
+Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+
+### result.device_exists
+
+Ob das gefilterte Hardwaregerät in der aktuellen Abfrage vorhanden ist. Einzelwert dieses Ergebnisses.
+
+### result.device_id
+
+Vom System ermittelte Geräte-ID; sie ist kein frei gewählter Anzeigename. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.error_code
+
+Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.error_message
+
+Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.is_muted
+
+Ob die Audioausgabe stummgeschaltet ist. Einzelwert dieses Ergebnisses.
+
+### result.on_off_state
+
+Ein-/Aus-Zustand der entsprechenden Gerätefunktion gemäß Ergebnisvertrag. Einzelwert dieses Ergebnisses.
+
+### result.on_off_state.option.Off
+
+Der abgefragte Schalter ist ausgeschaltet.
+
+### result.on_off_state.option.On
+
+Der abgefragte Schalter ist eingeschaltet.
+
+### result.on_off_state.option.Unknown
+
+Die vorhandenen Daten erlauben keinen eindeutigeren Zustand.
+
+### result.status
+
+Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+
+### result.status.option.AccessDenied
+
+Windows verweigert den Zugriff; kein negativer fachlicher Zustand, sondern fehlende Berechtigung.
+
+### result.status.option.Failed
+
+Lauf wegen Fehler fehlgeschlagen.
+
+### result.status.option.Success
+
+Windows-Aufruf erfolgreich. Erst anschließend den fachlichen Ergebniswert auswerten.
+
+### result.status.option.Timeout
+
+Windows-Aufruf überschritt seine Zeitgrenze; daraus keinen Systemzustand ableiten.
+
+### result.status.option.Unsupported
+
+Funktion auf diesem Zielsystem nicht unterstützt.
+
+### result.volume_percentage
+
+Aktuelle Lautstärke als Prozentwert von 0 bis 100; dies ist anders als Erkennungskonfidenzen bereits eine Prozentskala. Einzelwert dieses Ergebnisses.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "audio.volume",
+  "name": "Lautstärke und Stummschaltung",
+  "fields": [],
+  "result": {
+    "TypeName": "AudioVolumeQueryResult",
+    "DisplayName": "AudioVolumeQueryResult",
+    "Properties": [
+      {
+        "Name": "Exists",
+        "DisplayName": "Exists",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "device_exists",
+        "EnumDisplayNames": null,
+        "StableId": "device_exists"
+      },
+      {
+        "Name": "IsMuted",
+        "DisplayName": "Is Muted",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "is_muted",
+        "EnumDisplayNames": null,
+        "StableId": "is_muted"
+      },
+      {
+        "Name": "Percentage",
+        "DisplayName": "Percentage",
+        "DataType": "Number",
+        "Description": "Number",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "volume_percentage",
+        "EnumDisplayNames": null,
+        "StableId": "volume_percentage"
+      },
+      {
+        "Name": "Id",
+        "DisplayName": "Id",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "device_id",
+        "EnumDisplayNames": null,
+        "StableId": "device_id"
+      },
+      {
+        "Name": "OnOffState",
+        "DisplayName": "On Off State",
+        "DataType": "Enum",
+        "Description": "Enum",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": "TaskAutomation.WindowsIntegration.WindowsOnOffState",
+        "EnumValues": [
+          "Unknown",
+          "Off",
+          "On"
+        ],
+        "Id": "on_off_state",
+        "EnumDisplayNames": null,
+        "StableId": "on_off_state"
+      },
+      {
+        "Name": "Status",
+        "DisplayName": "Status",
+        "DataType": "Enum",
+        "Description": "Enum",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": "TaskAutomation.WindowsIntegration.WindowsCapabilityStatus",
+        "EnumValues": [
+          "Success",
+          "Unsupported",
+          "AccessDenied",
+          "Timeout",
+          "Failed"
+        ],
+        "Id": "status",
+        "EnumDisplayNames": null,
+        "StableId": "status"
+      },
+      {
+        "Name": "CapturedAt",
+        "DisplayName": "Captured At",
+        "DataType": "DateTime",
+        "Description": "DateTime",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "captured_at",
+        "EnumDisplayNames": null,
+        "StableId": "captured_at"
+      },
+      {
+        "Name": "ErrorCode",
+        "DisplayName": "Error Code",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "error_code",
+        "EnumDisplayNames": null,
+        "StableId": "error_code"
+      },
+      {
+        "Name": "ErrorMessage",
+        "DisplayName": "Error Message",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": "No detection point available",
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "error_message",
+        "EnumDisplayNames": null,
+        "StableId": "error_message"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "Exists",
+        "DisplayName": "Exists",
+        "Property": {
+          "Name": "Exists",
+          "DisplayName": "Exists",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "device_exists",
+          "EnumDisplayNames": null,
+          "StableId": "device_exists"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "IsMuted",
+        "DisplayName": "Is Muted",
+        "Property": {
+          "Name": "IsMuted",
+          "DisplayName": "Is Muted",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "is_muted",
+          "EnumDisplayNames": null,
+          "StableId": "is_muted"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Percentage",
+        "DisplayName": "Percentage",
+        "Property": {
+          "Name": "Percentage",
+          "DisplayName": "Percentage",
+          "DataType": "Number",
+          "Description": "Number",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "volume_percentage",
+          "EnumDisplayNames": null,
+          "StableId": "volume_percentage"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Id",
+        "DisplayName": "Id",
+        "Property": {
+          "Name": "Id",
+          "DisplayName": "Id",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "device_id",
+          "EnumDisplayNames": null,
+          "StableId": "device_id"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "OnOffState",
+        "DisplayName": "On Off State",
+        "Property": {
+          "Name": "OnOffState",
+          "DisplayName": "On Off State",
+          "DataType": "Enum",
+          "Description": "Enum",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": "TaskAutomation.WindowsIntegration.WindowsOnOffState",
+          "EnumValues": [
+            "Unknown",
+            "Off",
+            "On"
+          ],
+          "Id": "on_off_state",
+          "EnumDisplayNames": null,
+          "StableId": "on_off_state"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Status",
+        "DisplayName": "Status",
+        "Property": {
+          "Name": "Status",
+          "DisplayName": "Status",
+          "DataType": "Enum",
+          "Description": "Enum",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": "TaskAutomation.WindowsIntegration.WindowsCapabilityStatus",
+          "EnumValues": [
+            "Success",
+            "Unsupported",
+            "AccessDenied",
+            "Timeout",
+            "Failed"
+          ],
+          "Id": "status",
+          "EnumDisplayNames": null,
+          "StableId": "status"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "CapturedAt",
+        "DisplayName": "Captured At",
+        "Property": {
+          "Name": "CapturedAt",
+          "DisplayName": "Captured At",
+          "DataType": "DateTime",
+          "Description": "DateTime",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "captured_at",
+          "EnumDisplayNames": null,
+          "StableId": "captured_at"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "ErrorCode",
+        "DisplayName": "Error Code",
+        "Property": {
+          "Name": "ErrorCode",
+          "DisplayName": "Error Code",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "error_code",
+          "EnumDisplayNames": null,
+          "StableId": "error_code"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "ErrorMessage",
+        "DisplayName": "Error Message",
+        "Property": {
+          "Name": "ErrorMessage",
+          "DisplayName": "Error Message",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": "No detection point available",
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "error_message",
+          "EnumDisplayNames": null,
+          "StableId": "error_message"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+

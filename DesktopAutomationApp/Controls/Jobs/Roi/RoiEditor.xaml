@@ -9,14 +9,15 @@
              xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated">
     <Border Background="Transparent">
         <StackPanel>
-            <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}"
-                      IsChecked="{Binding IsRoiEnabled, ElementName=Root, Mode=TwoWay}"
-                      HorizontalAlignment="Left" Margin="0,0,0,10"/>
+            <Grid Background="Transparent" Margin="0,0,0,10" MinHeight="34">
+                <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}"
+                          IsChecked="{Binding IsRoiEnabled, ElementName=Root, Mode=TwoWay}"
+                          HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,32,0"/>
+                <generated:GeneratedWholeValueSourceSelector HorizontalAlignment="Right"
+                                                              DataContext="{Binding WholeValueSource}"/>
+            </Grid>
 
-            <controls:ResponsiveActionPanel CanWrap="False" MinPrimaryWidth="220"
-                                            HorizontalSpacing="12"
-                                            VerticalSpacing="6">
-                <Grid>
+            <Grid>
                     <Border Style="{StaticResource CompoundValueSourceGroup}"
                             Visibility="{Binding WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <geometry:ResponsiveGeometryPanel MinItemWidth="150" MaxColumns="2"
@@ -41,11 +42,7 @@
                     </Border>
                     <jobs:ValueReferencePicker DataContext="{Binding WholeValueSource.Picker}"
                                                Visibility="{Binding DataContext.WholeValueSource.UsesReference, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                </Grid>
-                <generated:GeneratedWholeValueSourceSelector HorizontalAlignment="Right"
-                                                              VerticalAlignment="Center"
-                                                              DataContext="{Binding WholeValueSource}"/>
-            </controls:ResponsiveActionPanel>
+            </Grid>
 
             <StackPanel Visibility="{Binding WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}"

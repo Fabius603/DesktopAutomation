@@ -1,0 +1,10 @@
+{
+  "$type": "file_system_event",
+  "Kind": "FileSystemEvent",
+  "event_kind": "Created",
+  "directory_path": "",
+  "filter": "*.*",
+  "include_subdirectories": false,
+  "wait_until_ready": true,
+  "kind": "FileSystemEvent"
+}

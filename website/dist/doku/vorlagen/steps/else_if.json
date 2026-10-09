@@ -1,0 +1,11 @@
+{
+  "type": "else_if",
+  "settings": {
+    "match_mode": "All",
+    "conditions": []
+  },
+  "CanBeDisabled": false,
+  "id": "79e1b543-d926-da4d-1f16-fcb2f330150b",
+  "inputs": {},
+  "is_enabled": true
+}

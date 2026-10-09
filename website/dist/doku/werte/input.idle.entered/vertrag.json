@@ -1,0 +1,27 @@
+{
+  "appVersion": "1.6.1",
+  "contract": {
+    "id": "input.idle.entered",
+    "name": "Leerlaufgrenze erreicht",
+    "fields": [
+      {
+        "id": "threshold_ms",
+        "name": "Leerlaufgrenze (ms)",
+        "type": "Duration",
+        "Required": true,
+        "defaultValue": "60000",
+        "options": []
+      }
+    ],
+    "result": null
+  },
+  "explanations": {
+    "purpose": "Ereignis: Leerlaufgrenze erreicht. Die Automation reagiert auf eine beobachtete Änderung; ein Ereignis ersetzt keine aktuelle Zustandsabfrage. Wähle die Funktion im Windows-Auswahldialog; die verfügbaren Parameter stehen unten. Der Katalog verlangt keine erhöhte Ausführung; einzelne Systemzugriffe können dennoch Rechte voraussetzen.",
+    "example": "Wähle input.idle.entered als Windows-Ereignis einer deaktivierten Automation und ergänze die angebotenen Filter; teste das Ziel zunächst manuell.",
+    "errors": "Verfügbarkeit und Ereignisevidenz hängen von Windows-Version, installiertem Gerät/Dienst und Rechten ab. Die Abfrage ist ein zeitlicher Snapshot. Nur die im Katalog gesetzten Unterstützungsmerkmale verwenden: eine reine Änderungsfunktion liefert keinen eigenen Abfragevertrag, eine reine Abfrage ist kein Ereignistrigger. Bei Windows-Einstellungen den Erfolg und Fehlercode im Step-Ergebnis prüfen.",
+    "field.threshold_ms": "Leerlaufgrenze in Millisekunden; 60000 entspricht einer Minute ohne Eingabe."
+  },
+  "template": null,
+  "screenshots": [],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

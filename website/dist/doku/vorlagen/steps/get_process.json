@@ -1,0 +1,17 @@
+{
+  "type": "get_process",
+  "settings": {
+    "query": {
+      "process_source": {
+        "provider_id": "",
+        "source_id": ""
+      },
+      "process_name": "",
+      "executable_path": "",
+      "window_title_contains": ""
+    }
+  },
+  "id": "4d2791b6-420f-dcae-97a3-f32ff904ab70",
+  "inputs": {},
+  "is_enabled": true
+}

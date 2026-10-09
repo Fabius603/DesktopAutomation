@@ -12,17 +12,19 @@ public sealed class JobExecutionCancellation : IDisposable
     private readonly CancellationTokenSource _executionCts;
     private readonly CancellationTokenSource _endPhaseCts = new();
     private readonly CancellationTokenRegistration _externalRegistration;
+    private readonly CancellationTokenRegistration _forceRegistration;
     private int _state = (int)JobExecutionState.Starting;
     private int _forceStopRequested;
 
     public event Action<JobExecutionState>? StateChanged;
 
-    public JobExecutionCancellation(CancellationToken externalToken = default)
+    public JobExecutionCancellation(CancellationToken externalToken = default, CancellationToken forceToken = default)
     {
         _executionCts = new CancellationTokenSource();
         _externalRegistration = externalToken.CanBeCanceled
             ? externalToken.Register(() => RequestStop())
             : default;
+        _forceRegistration = forceToken.CanBeCanceled ? forceToken.Register(() => ForceStop()) : default;
     }
 
     public CancellationToken ExecutionToken => _executionCts.Token;
@@ -77,6 +79,8 @@ public sealed class JobExecutionCancellation : IDisposable
 
     internal void EnterStartPhase() => SetActivePhase(JobExecutionState.RunningStartSteps);
     internal void EnterRunPhase() => SetActivePhase(JobExecutionState.RunningSteps);
+
+    internal void WaitForChildren() => SetActivePhase(JobExecutionState.WaitingForChildren);
 
     internal bool BeginEndPhase()
     {
@@ -135,6 +139,7 @@ public sealed class JobExecutionCancellation : IDisposable
     public void Dispose()
     {
         _externalRegistration.Dispose();
+        _forceRegistration.Dispose();
         _executionCts.Dispose();
         _endPhaseCts.Dispose();
     }

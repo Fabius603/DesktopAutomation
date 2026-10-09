@@ -1,0 +1,218 @@
+## Werte und Ergebnisse: UserChoiceResult
+
+ID: UserChoiceResult
+Website: /doku/werte/UserChoiceResult/
+
+### errors
+
+Ein konfigurierte Quelle hat noch nicht zwingend einen Wert geliefert. Prüfe den fachlichen Erfolgswert, fehlende optionale Eigenschaften und den Ausführungszustand des Produzenten. Nur DynamicRoi besitzt die dokumentierte Ausnahme für späteres Feedback; andere Verbraucher dürfen keine beliebigen Vorwärtsreferenzen verwenden.
+
+### example
+
+Eine Ergebnisreferenz verwendet provider_id=step_result und source_id=v1/<kodierte-Step-ID>/<kodierte-Ergebnis-ID>. Die Anleitung „Werte verbinden“ zeigt eine vollständige Verbindung. Prüfe Typ und Kardinalität vor der Verwendung in einer Bedingung oder Folgeaktion.
+
+### purpose
+
+Typisierter Ergebnisvertrag UserChoiceResult. Wird von Benutzerauswahl abfragen geliefert. Die stabilen Ergebnis-IDs unten sind unabhängig von CLR-Namen und UI-Übersetzungen. Wähle im Ergebnis-Auswahldialog eine kompatible Eigenschaft statt das ganze Objekt ungeprüft als Text zu verwenden.
+
+### result.selected_index
+
+Index der gewählten Antwort, nullbasiert. Vor Verwendung was_cancelled prüfen. Einzelwert dieses Ergebnisses.
+
+### result.selected_label
+
+Sichtbarer Text der gewählten Antwort, geeignet für eine verständliche Rückmeldung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.selected_option_id
+
+Stabile ID der gewählten Antwort; sie ist vom sichtbaren Label und vom fachlichen Textwert getrennt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.selected_value
+
+Weitergereichter fachlicher Textwert der Antwort, geeignet für nachfolgende Vergleiche. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.was_cancelled
+
+Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bedeutet nicht, dass der komplette Job gestoppt wurde. Einzelwert dieses Ergebnisses.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "UserChoiceResult",
+  "name": "UserChoiceResult",
+  "result": {
+    "TypeName": "UserChoiceResult",
+    "DisplayName": "UserChoiceResult",
+    "Properties": [
+      {
+        "Name": "SelectedOptionId",
+        "DisplayName": "Selected Option Id",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "selected_option_id",
+        "EnumDisplayNames": null,
+        "StableId": "selected_option_id"
+      },
+      {
+        "Name": "SelectedLabel",
+        "DisplayName": "Selected Label",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "selected_label",
+        "EnumDisplayNames": null,
+        "StableId": "selected_label"
+      },
+      {
+        "Name": "SelectedValue",
+        "DisplayName": "Selected Value",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "selected_value",
+        "EnumDisplayNames": null,
+        "StableId": "selected_value"
+      },
+      {
+        "Name": "SelectedIndex",
+        "DisplayName": "Selected Index",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "selected_index",
+        "EnumDisplayNames": null,
+        "StableId": "selected_index"
+      },
+      {
+        "Name": "WasCancelled",
+        "DisplayName": "Was Cancelled",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "was_cancelled",
+        "EnumDisplayNames": null,
+        "StableId": "was_cancelled"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "SelectedOptionId",
+        "DisplayName": "Selected Option Id",
+        "Property": {
+          "Name": "SelectedOptionId",
+          "DisplayName": "Selected Option Id",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "selected_option_id",
+          "EnumDisplayNames": null,
+          "StableId": "selected_option_id"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SelectedLabel",
+        "DisplayName": "Selected Label",
+        "Property": {
+          "Name": "SelectedLabel",
+          "DisplayName": "Selected Label",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "selected_label",
+          "EnumDisplayNames": null,
+          "StableId": "selected_label"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SelectedValue",
+        "DisplayName": "Selected Value",
+        "Property": {
+          "Name": "SelectedValue",
+          "DisplayName": "Selected Value",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "selected_value",
+          "EnumDisplayNames": null,
+          "StableId": "selected_value"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SelectedIndex",
+        "DisplayName": "Selected Index",
+        "Property": {
+          "Name": "SelectedIndex",
+          "DisplayName": "Selected Index",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "selected_index",
+          "EnumDisplayNames": null,
+          "StableId": "selected_index"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "WasCancelled",
+        "DisplayName": "Was Cancelled",
+        "Property": {
+          "Name": "WasCancelled",
+          "DisplayName": "Was Cancelled",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "was_cancelled",
+          "EnumDisplayNames": null,
+          "StableId": "was_cancelled"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+

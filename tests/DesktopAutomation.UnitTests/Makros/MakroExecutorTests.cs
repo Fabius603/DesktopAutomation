@@ -8,6 +8,49 @@ namespace TaskAutomation.Tests.Makros;
 
 public sealed class MakroExecutorTests
 {
+
+    [Fact]
+    public async Task ConcurrentMacros_DoNotInterleaveOrReleaseAnotherMacrosKeys()
+    {
+        var input = new RecordingInputController();
+        var delay = new BlockingDelay();
+        var executor = new MakroExecutor(NullLogger<MakroExecutor>.Instance, delay, input);
+        var first = executor.ExecuteMakro(Macro(new KeyDownBefehl { Key = "A" }, new TimeoutBefehl { Duration = 1 }), null!, default);
+        await delay.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var second = executor.ExecuteMakro(Macro(new KeyDownBefehl { Key = "A" }), null!, default);
+        Assert.False(second.IsCompleted);
+        Assert.Equal(["key:VK_A:True"], input.Calls);
+        delay.Release.SetResult();
+        await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(["key:VK_A:True", "key:VK_A:False", "key:VK_A:True", "key:VK_A:False"], input.Calls);
+    }
+
+    [Fact]
+    public async Task CancellationWhileWaitingForMacro_ProducesNoInput()
+    {
+        var input = new RecordingInputController();
+        var delay = new BlockingDelay();
+        var executor = new MakroExecutor(NullLogger<MakroExecutor>.Instance, delay, input);
+        var first = executor.ExecuteMakro(Macro(new KeyDownBefehl { Key = "A" }, new TimeoutBefehl { Duration = 1 }), null!, default);
+        await delay.Entered.Task;
+        using var cancellation = new CancellationTokenSource();
+        var second = executor.ExecuteMakro(Macro(new KeyDownBefehl { Key = "B" }), null!, cancellation.Token);
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => second);
+        delay.Release.SetResult();
+        await first;
+        Assert.Equal(["key:VK_A:True", "key:VK_A:False"], input.Calls);
+    }
+
+    private sealed class BlockingDelay : IPreciseDelayService
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken = default) => DelayUntilAsync(0, cancellationToken);
+        public Task DelayUntilAsync(long targetTimestamp, CancellationToken cancellationToken = default)
+        { Entered.TrySetResult(); return Release.Task.WaitAsync(cancellationToken); }
+    }
+
     [Fact]
     public async Task ExecuteMakro_ReplaysRelativeMovementButtonsAndKeysInOrder()
     {

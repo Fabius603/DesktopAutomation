@@ -1,0 +1,879 @@
+{
+  "formatVersion": 4,
+  "id": "57688acd-8067-3af9-22e4-d36616242722",
+  "name": "Eingang mit Best\u00E4tigung sichern",
+  "repeating": false,
+  "variables": [],
+  "localValues": [
+    {
+      "owner_step_id": "sicherung-0",
+      "input_path": "title",
+      "id": "fcbcfdb4-de7f-5282-f4c1-61dd51cd5345",
+      "name": "user_choice_title",
+      "description": "user_choice.title",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Dateisicherung"
+    },
+    {
+      "owner_step_id": "sicherung-0",
+      "input_path": "question",
+      "id": "d61d26ac-f24f-0a8b-f5b5-f1b9dea685ce",
+      "name": "user_choice_question",
+      "description": "user_choice.question",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Beispieldateien sichern?"
+    },
+    {
+      "owner_step_id": "sicherung-0",
+      "input_path": "description",
+      "id": "61845746-a5a3-e40a-2555-613178b8b49d",
+      "name": "user_choice_description",
+      "description": "user_choice.description",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "sicherung-0",
+      "input_path": "desktop_index",
+      "id": "deecae5d-2c48-e55d-d77f-17e68a511fbf",
+      "name": "user_choice_desktop_index",
+      "description": "user_choice.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "sicherung-0",
+      "input_path": "options",
+      "id": "ccc4b1c4-b854-7ac9-fe1f-557def598362",
+      "name": "user_choice_options",
+      "description": "user_choice.options",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Collection",
+      "value": [
+        {
+          "id": "ja",
+          "label": "Sichern",
+          "value": "ja"
+        },
+        {
+          "id": "nein",
+          "label": "\u00DCberspringen",
+          "value": "nein"
+        }
+      ]
+    },
+    {
+      "owner_step_id": "sicherung-1",
+      "input_path": "conditions",
+      "id": "9a033b75-c9fc-26dc-5b3c-6b255dfc29d1",
+      "name": "if_conditions",
+      "description": "if.conditions",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "match_mode": "All",
+        "conditions": [
+          {
+            "operator": "Equals",
+            "comparison_value": "ja",
+            "provider_id": "step_result",
+            "source_id": "v1/sicherung-0/selected_value"
+          }
+        ]
+      }
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "operation",
+      "id": "cf7e6989-afaf-b340-62c3-4c233b6a3eb8",
+      "name": "file_system_operation_operation",
+      "description": "file_system_operation.operation",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Copy",
+      "enum_type_name": "file_system_operation.operation",
+      "enum_values": [
+        "Copy",
+        "Move",
+        "Rename",
+        "Delete"
+      ]
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "source_path",
+      "id": "c239d895-5edf-7dff-0d66-37b08f353a3f",
+      "name": "file_system_operation_source_path",
+      "description": "file_system_operation.source_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Rechnungen"
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "target_path",
+      "id": "64c507d1-40e7-4aa1-4f0e-5b7bc8d2e97b",
+      "name": "file_system_operation_target_path",
+      "description": "file_system_operation.target_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Sicherung\\Rechnungen"
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "new_name",
+      "id": "a29b7744-8d68-994f-def1-d3f8a68b3b75",
+      "name": "file_system_operation_new_name",
+      "description": "file_system_operation.new_name",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "filter",
+      "id": "696d7022-e751-7580-e592-e65cc328e742",
+      "name": "file_system_operation_filter",
+      "description": "file_system_operation.filter",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "create_parent_directories",
+      "id": "d9ea1219-e301-6457-191a-cc19855360ad",
+      "name": "file_system_operation_create_parent_directories",
+      "description": "file_system_operation.create_parent_directories",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "retry_locked_files",
+      "id": "8ae8aaf2-0cb3-8dec-597f-a6245802a2ec",
+      "name": "file_system_operation_retry_locked_files",
+      "description": "file_system_operation.retry_locked_files",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "retry_count",
+      "id": "aa939d3f-acfb-6cb0-cb43-5fdb2be89418",
+      "name": "file_system_operation_retry_count",
+      "description": "file_system_operation.retry_count",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 3
+    },
+    {
+      "owner_step_id": "sicherung-2",
+      "input_path": "retry_delay_ms",
+      "id": "560e5db2-07c4-31c0-6945-c23ea923f6e0",
+      "name": "file_system_operation_retry_delay_ms",
+      "description": "file_system_operation.retry_delay_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "operation",
+      "id": "ba084962-c20d-21c9-9e9b-8bf83f35507e",
+      "name": "file_system_operation_operation_2",
+      "description": "file_system_operation.operation",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Copy",
+      "enum_type_name": "file_system_operation.operation",
+      "enum_values": [
+        "Copy",
+        "Move",
+        "Rename",
+        "Delete"
+      ]
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "source_path",
+      "id": "789aa263-df85-8fbe-8eb7-5278c15015f2",
+      "name": "file_system_operation_source_path_2",
+      "description": "file_system_operation.source_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Notizen"
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "target_path",
+      "id": "7b303ccf-3743-2bfd-b833-e7d79a12c771",
+      "name": "file_system_operation_target_path_2",
+      "description": "file_system_operation.target_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Sicherung\\Notizen"
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "new_name",
+      "id": "85655f57-2d02-06a7-23d8-5c4176fb9fd7",
+      "name": "file_system_operation_new_name_2",
+      "description": "file_system_operation.new_name",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "filter",
+      "id": "bc9e2393-896e-48ea-96c1-986bfd025775",
+      "name": "file_system_operation_filter_2",
+      "description": "file_system_operation.filter",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "create_parent_directories",
+      "id": "69120fef-e552-dcbc-b556-6cda81b8d2e3",
+      "name": "file_system_operation_create_parent_directories_2",
+      "description": "file_system_operation.create_parent_directories",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "retry_locked_files",
+      "id": "7e98c17f-f355-27af-97bd-538a950c966b",
+      "name": "file_system_operation_retry_locked_files_2",
+      "description": "file_system_operation.retry_locked_files",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "retry_count",
+      "id": "958cc9bc-45e3-6349-7c40-f82808aa1fcf",
+      "name": "file_system_operation_retry_count_2",
+      "description": "file_system_operation.retry_count",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 3
+    },
+    {
+      "owner_step_id": "sicherung-3",
+      "input_path": "retry_delay_ms",
+      "id": "a7214429-bb9a-a1e0-b69e-65cc8bf8580e",
+      "name": "file_system_operation_retry_delay_ms_2",
+      "description": "file_system_operation.retry_delay_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "text_result",
+      "id": "63230236-4a70-daee-c683-878fca9188f7",
+      "name": "show_text_text_result",
+      "description": "show_text.text_result",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Beide Ordner wurden kopiert."
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "desktop_index",
+      "id": "3bf2bc4a-d7ca-a4ce-f30b-4d65eb9af9a1",
+      "name": "show_text_desktop_index",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "font_size",
+      "id": "a8615491-7f76-bb20-6e80-521bad2100f0",
+      "name": "show_text_font_size",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "font_color",
+      "id": "1710f95e-fec5-1028-8622-c57bec00cfae",
+      "name": "show_text_font_color",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "opacity",
+      "id": "deb11b4d-0ccc-8b88-a872-d7063f1004fe",
+      "name": "show_text_opacity",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "duration_ms",
+      "id": "65803b7a-c140-0c42-c8a8-fdc10c3ff4e5",
+      "name": "show_text_duration_ms",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "clear_on_job_end",
+      "id": "55294e91-f75e-7f88-81c8-d0e32945c021",
+      "name": "show_text_clear_on_job_end",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "offset_x",
+      "id": "4f714b10-8b2e-72a0-37e9-48a4d598d2fb",
+      "name": "show_text_offset_x",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-4",
+      "input_path": "offset_y",
+      "id": "47e0a565-8772-c162-0b13-086bd95a1e07",
+      "name": "show_text_offset_y",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "text_result",
+      "id": "f863bb2a-17f2-b324-9f54-ddedbb5a7c57",
+      "name": "show_text_text_result_2",
+      "description": "show_text.text_result",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Sicherung wurde nicht angefordert."
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "desktop_index",
+      "id": "31b98f34-31bd-35ca-3d6d-fd338fa70ced",
+      "name": "show_text_desktop_index_2",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "font_size",
+      "id": "8ad66eb9-250e-0017-208a-4912516c1082",
+      "name": "show_text_font_size_2",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "font_color",
+      "id": "9276042d-daa7-201b-c10b-1a5c802d1ba5",
+      "name": "show_text_font_color_2",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "opacity",
+      "id": "364311b3-9a87-7d29-5314-62f9cac246d1",
+      "name": "show_text_opacity_2",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "duration_ms",
+      "id": "454c3e4d-4e52-23af-4fa2-6780421da46b",
+      "name": "show_text_duration_ms_2",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "clear_on_job_end",
+      "id": "9eec10d8-0bda-8284-c545-b0641d4f1815",
+      "name": "show_text_clear_on_job_end_2",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "offset_x",
+      "id": "638dfc04-377b-f52e-1bac-385c0434cbf4",
+      "name": "show_text_offset_x_2",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-6",
+      "input_path": "offset_y",
+      "id": "553f0954-3e85-6c5c-c574-4df6d109f00d",
+      "name": "show_text_offset_y_2",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "text_result",
+      "id": "eb068c9d-a1fd-ee94-a773-4c69d05145a5",
+      "name": "show_text_text_result_3",
+      "description": "show_text.text_result",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Die Details stehen im Ausf\u00FChrungsverlauf."
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "desktop_index",
+      "id": "d8b80220-7cde-6f65-2ecd-ffbead0c2c8f",
+      "name": "show_text_desktop_index_3",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "font_size",
+      "id": "9b700460-c85a-4087-4a4b-d4f24896117c",
+      "name": "show_text_font_size_3",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "font_color",
+      "id": "10857c39-1eda-846b-c665-b0532a72cd55",
+      "name": "show_text_font_color_3",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "opacity",
+      "id": "5f51b552-74d5-c50c-2a26-91b75816f338",
+      "name": "show_text_opacity_3",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "duration_ms",
+      "id": "ac6d9c2f-9194-f430-e388-6c18551a9912",
+      "name": "show_text_duration_ms_3",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "clear_on_job_end",
+      "id": "c4fd7b71-8d35-1809-1226-86b000553ed9",
+      "name": "show_text_clear_on_job_end_3",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "offset_x",
+      "id": "7bab1e90-b018-47f3-621a-10213f36346b",
+      "name": "show_text_offset_x_3",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "sicherung-8",
+      "input_path": "offset_y",
+      "id": "9553d792-de0f-a78b-afe0-2d0c7fd2d9bf",
+      "name": "show_text_offset_y_3",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    }
+  ],
+  "startSteps": [],
+  "steps": [
+    {
+      "type": "user_choice",
+      "id": "sicherung-0",
+      "inputs": {
+        "title": {
+          "provider_id": "local_value",
+          "source_id": "fcbcfdb4-de7f-5282-f4c1-61dd51cd5345"
+        },
+        "question": {
+          "provider_id": "local_value",
+          "source_id": "d61d26ac-f24f-0a8b-f5b5-f1b9dea685ce"
+        },
+        "description": {
+          "provider_id": "local_value",
+          "source_id": "61845746-a5a3-e40a-2555-613178b8b49d"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "deecae5d-2c48-e55d-d77f-17e68a511fbf"
+        },
+        "options": {
+          "schema_id": "desktopautomation.user-choice-options/v1",
+          "provider_id": "local_value",
+          "source_id": "ccc4b1c4-b854-7ac9-fe1f-557def598362"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "if",
+      "CanBeDisabled": false,
+      "id": "sicherung-1",
+      "inputs": {
+        "conditions": {
+          "provider_id": "local_value",
+          "source_id": "9a033b75-c9fc-26dc-5b3c-6b255dfc29d1"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "file_system_operation",
+      "id": "sicherung-2",
+      "inputs": {
+        "operation": {
+          "provider_id": "local_value",
+          "source_id": "cf7e6989-afaf-b340-62c3-4c233b6a3eb8"
+        },
+        "source_path": {
+          "provider_id": "local_value",
+          "source_id": "c239d895-5edf-7dff-0d66-37b08f353a3f"
+        },
+        "target_path": {
+          "provider_id": "local_value",
+          "source_id": "64c507d1-40e7-4aa1-4f0e-5b7bc8d2e97b"
+        },
+        "new_name": {
+          "provider_id": "local_value",
+          "source_id": "a29b7744-8d68-994f-def1-d3f8a68b3b75"
+        },
+        "filter": {
+          "provider_id": "local_value",
+          "source_id": "696d7022-e751-7580-e592-e65cc328e742"
+        },
+        "create_parent_directories": {
+          "provider_id": "local_value",
+          "source_id": "d9ea1219-e301-6457-191a-cc19855360ad"
+        },
+        "retry_locked_files": {
+          "provider_id": "local_value",
+          "source_id": "8ae8aaf2-0cb3-8dec-597f-a6245802a2ec"
+        },
+        "retry_count": {
+          "provider_id": "local_value",
+          "source_id": "aa939d3f-acfb-6cb0-cb43-5fdb2be89418"
+        },
+        "retry_delay_ms": {
+          "provider_id": "local_value",
+          "source_id": "560e5db2-07c4-31c0-6945-c23ea923f6e0"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "file_system_operation",
+      "id": "sicherung-3",
+      "inputs": {
+        "operation": {
+          "provider_id": "local_value",
+          "source_id": "ba084962-c20d-21c9-9e9b-8bf83f35507e"
+        },
+        "source_path": {
+          "provider_id": "local_value",
+          "source_id": "789aa263-df85-8fbe-8eb7-5278c15015f2"
+        },
+        "target_path": {
+          "provider_id": "local_value",
+          "source_id": "7b303ccf-3743-2bfd-b833-e7d79a12c771"
+        },
+        "new_name": {
+          "provider_id": "local_value",
+          "source_id": "85655f57-2d02-06a7-23d8-5c4176fb9fd7"
+        },
+        "filter": {
+          "provider_id": "local_value",
+          "source_id": "bc9e2393-896e-48ea-96c1-986bfd025775"
+        },
+        "create_parent_directories": {
+          "provider_id": "local_value",
+          "source_id": "69120fef-e552-dcbc-b556-6cda81b8d2e3"
+        },
+        "retry_locked_files": {
+          "provider_id": "local_value",
+          "source_id": "7e98c17f-f355-27af-97bd-538a950c966b"
+        },
+        "retry_count": {
+          "provider_id": "local_value",
+          "source_id": "958cc9bc-45e3-6349-7c40-f82808aa1fcf"
+        },
+        "retry_delay_ms": {
+          "provider_id": "local_value",
+          "source_id": "a7214429-bb9a-a1e0-b69e-65cc8bf8580e"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "show_text",
+      "id": "sicherung-4",
+      "inputs": {
+        "text_result": {
+          "provider_id": "local_value",
+          "source_id": "63230236-4a70-daee-c683-878fca9188f7"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "3bf2bc4a-d7ca-a4ce-f30b-4d65eb9af9a1"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "a8615491-7f76-bb20-6e80-521bad2100f0"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "1710f95e-fec5-1028-8622-c57bec00cfae"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "deb11b4d-0ccc-8b88-a872-d7063f1004fe"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "65803b7a-c140-0c42-c8a8-fdc10c3ff4e5"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "55294e91-f75e-7f88-81c8-d0e32945c021"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "4f714b10-8b2e-72a0-37e9-48a4d598d2fb"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "47e0a565-8772-c162-0b13-086bd95a1e07"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "else",
+      "CanBeDisabled": false,
+      "id": "sicherung-5",
+      "inputs": {},
+      "is_enabled": true
+    },
+    {
+      "type": "show_text",
+      "id": "sicherung-6",
+      "inputs": {
+        "text_result": {
+          "provider_id": "local_value",
+          "source_id": "f863bb2a-17f2-b324-9f54-ddedbb5a7c57"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "31b98f34-31bd-35ca-3d6d-fd338fa70ced"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "8ad66eb9-250e-0017-208a-4912516c1082"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "9276042d-daa7-201b-c10b-1a5c802d1ba5"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "364311b3-9a87-7d29-5314-62f9cac246d1"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "454c3e4d-4e52-23af-4fa2-6780421da46b"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "9eec10d8-0bda-8284-c545-b0641d4f1815"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "638dfc04-377b-f52e-1bac-385c0434cbf4"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "553f0954-3e85-6c5c-c574-4df6d109f00d"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "end_if",
+      "CanBeDisabled": false,
+      "id": "sicherung-7",
+      "inputs": {},
+      "is_enabled": true
+    },
+    {
+      "type": "show_text",
+      "id": "sicherung-8",
+      "inputs": {
+        "text_result": {
+          "provider_id": "local_value",
+          "source_id": "eb068c9d-a1fd-ee94-a773-4c69d05145a5"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "d8b80220-7cde-6f65-2ecd-ffbead0c2c8f"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "9b700460-c85a-4087-4a4b-d4f24896117c"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "10857c39-1eda-846b-c665-b0532a72cd55"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "5f51b552-74d5-c50c-2a26-91b75816f338"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "ac6d9c2f-9194-f430-e388-6c18551a9912"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "c4fd7b71-8d35-1809-1226-86b000553ed9"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "7bab1e90-b018-47f3-621a-10213f36346b"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "9553d792-de0f-a78b-afe0-2d0c7fd2d9bf"
+        }
+      },
+      "is_enabled": true
+    }
+  ],
+  "endSteps": [],
+  "endPhaseTimeoutSeconds": 10
+}

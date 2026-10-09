@@ -14,15 +14,15 @@ namespace TaskAutomation.Jobs
     public interface IJobExecutor
     {
         // ── Events ─────────────────────────────────────────────────────────────
-        event EventHandler<JobErrorEventArgs>?     JobErrorOccurred;
+        event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
         event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
         // ── Zustand / Daten ────────────────────────────────────────────────────
-        IReadOnlyDictionary<string, Job>   AllJobs   { get; }
+        IReadOnlyDictionary<string, Job> AllJobs { get; }
         IReadOnlyDictionary<string, Makro> AllMakros { get; }
 
         /// <summary>YOLO-Manager – wird auch von UI-Dialogen für Modell-/Klassenlisten verwendet.</summary>
-        IYoloManager  YoloManager   { get; }
+        IYoloManager YoloManager { get; }
 
         /// <summary>MakroExecutor – wird auch vom JobDispatcher für direkte Makro-Ausführung verwendet.</summary>
         IMakroExecutor MakroExecutor { get; }
@@ -31,10 +31,16 @@ namespace TaskAutomation.Jobs
 
         // ── Orchestrierung ─────────────────────────────────────────────────────
         Task ExecuteJob(string jobName, CancellationToken ct = default);
-        Task ExecuteJob(Guid   jobId,   CancellationToken ct = default);
+        Task ExecuteJob(Guid jobId, CancellationToken ct = default);
         Task ExecuteJob(Guid jobId, JobStartContext startContext, CancellationToken ct = default);
         Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation);
         Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation, JobDebugSession? debugSession);
+        async Task<JobExecutionOutcome> ExecuteDefinitionAsync(Job job, JobStartContext context,
+            JobExecutionCancellation cancellation, JobDebugSession? debugSession = null)
+        {
+            await ExecuteJob(job.Id, context, cancellation, debugSession).ConfigureAwait(false);
+            return new(cancellation.State.IsTerminal() ? cancellation.State : JobExecutionState.Completed);
+        }
         Task ReloadJobsAsync();
         Task ReloadMakrosAsync();
 

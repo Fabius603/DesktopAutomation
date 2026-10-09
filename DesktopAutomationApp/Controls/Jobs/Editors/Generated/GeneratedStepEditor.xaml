@@ -26,14 +26,6 @@
         <Style TargetType="RadioButton" BasedOn="{StaticResource StepRadioButton}"/>
         <generated:GeneratedStepFieldTemplateSelector x:Key="GeneratedStepFieldTemplateSelector"/>
         <generated:GeneratedStepFieldTemplateSelector x:Key="InlineStepValueTemplateSelector" IgnoreInputReference="True"/>
-        <Style x:Key="VirtualizedCompoundEditorItem" TargetType="ListBoxItem">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Focusable" Value="True"/>
-            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
-                <Border x:Name="SelectionBorder" BorderBrush="Transparent" BorderThickness="2" CornerRadius="6"><ContentPresenter/></Border>
-                <ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="SelectionBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/></Trigger></ControlTemplate.Triggers>
-            </ControlTemplate></Setter.Value></Setter>
-        </Style>
         <DataTemplate x:Key="TextFieldTemplate">
             <TextBox MinWidth="0" HorizontalAlignment="Stretch"
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
@@ -100,21 +92,7 @@
                           SelectedValuePath="Value"
                           TextSearch.TextPath="Label"
                           SelectedValue="{Binding SelectedEnumValue, Mode=TwoWay}"/>
-                <TextBlock Margin="2,4,2,0"
-                           Foreground="{DynamicResource App.Brush.Danger}"
-                           Text="{Binding EnumValidationMessage}"
-                           TextWrapping="Wrap">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasInvalidEnumValue}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="ProcessSourceOptionTemplate">
@@ -180,12 +158,17 @@
                                   SelectCommandParameter="{Binding}"/>
         </DataTemplate>
         <DataTemplate x:Key="InputReferenceFieldTemplate">
-            <Grid x:Name="InputValueHost">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid>
+            <Grid x:Name="InputValueHost" Background="Transparent">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="MinHeight" Value="34"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding UsesMultilineTextInput}" Value="True"><Setter Property="MinHeight" Value="60"/></DataTrigger>
+                            <DataTrigger Binding="{Binding UsesEmojiText}" Value="True"><Setter Property="MinHeight" Value="60"/></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid Style="{StaticResource StepValueSourceContent}">
                     <ContentControl Content="{Binding}"
                                     ContentTemplateSelector="{StaticResource InlineStepValueTemplateSelector}"
                                     Visibility="{Binding ShowsDirectInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -213,9 +196,11 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+                    <Border Style="{StaticResource StepFieldErrorOutline}" AutomationProperties.AutomationId="StepFieldErrorOutline"/>
                 </Grid>
-                <Button Grid.Column="1" Width="34" Height="34" Margin="5,0,0,0" VerticalAlignment="Top"
-                        Padding="0" Style="{StaticResource ButtonSecondary}"
+                <Button x:Name="SourceButton" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        AutomationProperties.AutomationId="StepValueSourceAction"
+                        Style="{StaticResource StepValueSourceAction}"
                         Visibility="{Binding ShowsInputSourceSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                         ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"
                         Click="OpenButtonContextMenu_Click">
@@ -235,7 +220,7 @@
                                       IsCheckable="True" IsChecked="{Binding InputReferenceEditor.Picker.IsSecretSource, Mode=OneWay}"/>
                         </ContextMenu>
                     </Button.ContextMenu>
-                    <iconPacks:PackIconMaterial Kind="RhombusOutline" Width="15" Height="15"
+                    <iconPacks:PackIconMaterial Kind="LinkVariant" Width="15" Height="15"
                                                 VerticalAlignment="Center" HorizontalAlignment="Center"
                                                 Foreground="{DynamicResource App.Brush.Accent}"/>
                 </Button>
@@ -261,14 +246,15 @@
                 <TextBlock Text="{Binding CameraEditor.CameraStatus}" Foreground="{DynamicResource App.Brush.TextMuted}"
                            TextWrapping="Wrap" Margin="0,4,0,8"/>
                 <TextBlock Text="{loc:Translate Key=Ui.Step.Camera.Quality}" Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
-                <ComboBox ItemsSource="{Binding CameraEditor.Qualities}" SelectedItem="{Binding CameraEditor.SelectedQuality, Mode=TwoWay}"
+                <Grid>
+                    <ComboBox ItemsSource="{Binding CameraEditor.Qualities}" SelectedItem="{Binding CameraEditor.SelectedQuality, Mode=TwoWay}"
                           DisplayMemberPath="DisplayName" IsEnabled="{Binding CameraEditor.IsLoadingQualities, Converter={StaticResource InverseBooleanConverter}}"
                           MinWidth="0" HorizontalAlignment="Stretch"/>
+                    <Border Style="{StaticResource StepErrorOutline}" AutomationProperties.HelpText="{Binding CameraEditor.InvalidQualityMessage}"
+                            Visibility="{Binding CameraEditor.HasInvalidQualityToken, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Grid>
                 <TextBlock Text="{Binding CameraEditor.QualityStatus}" Foreground="{DynamicResource App.Brush.TextMuted}"
                            TextWrapping="Wrap" Margin="0,4,0,0"/>
-                <TextBlock Text="{Binding CameraEditor.InvalidQualityMessage}" Foreground="{DynamicResource App.Brush.Danger}"
-                           TextWrapping="Wrap" Margin="0,4,0,0"
-                           Visibility="{Binding CameraEditor.HasInvalidQualityToken, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="VisualOverlayFieldTemplate">
@@ -437,6 +423,17 @@
                         </Style>
                     </ContentControl.Style>
                 </ContentControl>
+                <Border Grid.Row="1" AutomationProperties.AutomationId="StepFieldErrorOutline">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource StepFieldErrorOutline}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UsesInputReference}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="ChoiceBranchHeaderTemplate">

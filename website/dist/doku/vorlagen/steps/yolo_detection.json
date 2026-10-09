@@ -1,0 +1,26 @@
+{
+  "type": "yolo_detection",
+  "settings": {
+    "model": "",
+    "confidence_threshold": 0.5,
+    "class_name": "",
+    "roi": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "enable_roi": false,
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "dynamic_roi_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "84d7921e-2d7a-d7f3-ad05-8f65a32352c8",
+  "inputs": {},
+  "is_enabled": true
+}

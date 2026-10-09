@@ -1,0 +1,1 @@
+{"width":464,"height":465,"mode":"fields","markers":[{"number":1,"label":"Bedingungen","bounds":[48,10,364,435],"inputs":[{"kind":"reference","value":"Ergebnisvariablen \u2192 Schritt 1: Benutzerauswahl abfragen  \u2192  R\u00FCckgabewert der Antwort"},{"kind":"choice","value":"Equals"},{"kind":"text","value":"yes"}]}]}

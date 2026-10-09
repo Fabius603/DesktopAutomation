@@ -19,6 +19,44 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class StepDefinitionCatalogTests
 {
     [Fact]
+    public void RoiPicker_OffersLaterFeedbackProducerWithoutOfferingOtherForwardResults()
+    {
+        var capture = new DesktopDuplicationStep();
+        var consumer = new OcrStep();
+        var feedback = new DynamicRoiStep();
+        var laterCapture = new DesktopDuplicationStep();
+        var viewModel = new AddJobStepDialogViewModel(new ControllableJobExecutor([]), [capture],
+            allJobSteps: [capture, consumer, feedback, laterCapture], cameraCaptureService: new CameraDefinitionTestService());
+        Assert.True(viewModel.TryLoadGeneratedStep(consumer));
+        var editor = viewModel.GeneratedEditor!;
+        var roi = Assert.Single(editor.Fields, field => field.Descriptor.Id == "roi").RoiEditor!;
+        roi.DetectionDynamicRoiSource.Load(ResultBinding.ForStepResult(feedback.Id, "global_bounds"));
+        Assert.False(roi.DetectionDynamicRoiSource.HasMissingReference);
+        var image = Assert.Single(editor.Fields, field => field.Descriptor.Id == "image_source").InputReferenceEditor!.Picker;
+        image.Load(ResultBinding.ForStepResult(laterCapture.Id, "image"));
+        Assert.True(image.HasMissingReference);
+    }
+
+    [Fact]
+    public void FeedbackSourceCatalog_SharesVariableUpdatesWithRegularPickers()
+    {
+        var parent = new ValueReferenceSourceCatalog([]);
+        var roi = new DynamicRoiStep();
+        var child = parent.WithAdditionalSources([new SourceStepItem(roi.Id, "ROI", StepResultMetadata.GetResultTypeForStep(roi)!)]);
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Rectangle,
+            Value = JsonSerializer.SerializeToNode(new TaskAutomation.Contracts.Geometry.PixelRegion(0, 0, 10, 10))
+        };
+        parent.AddVariable(variable);
+        var picker = new ValueReferencePickerViewModel(child, StepInputContractRegistry.Get(typeof(OcrStep), "dynamicRoi")!, false);
+        picker.Load(new ResultBinding { ProviderId = ValueProviderIds.JobVariable, SourceId = variable.Id.ToString("D") });
+        Assert.False(picker.HasMissingReference);
+        Assert.Same(variable, picker.SelectedJobVariable);
+    }
+
+    [Fact]
     public void MovementThreshold_IsAdvancedDefaultsToTenAndSurvivesEditing()
     {
         var definition = new KlickOnPoint3DStepDefinition();
@@ -692,6 +730,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.False(padding.InputReferenceEditor.Picker.CanUseSecrets);
         Assert.True(padding.InputReferenceEditor.Picker.IsDirectSource);
         Assert.True(padding.ShowsInputSourceSelector);
+        Assert.Equal("0", padding.InputText);
         Assert.Equal(0, padding.IntegerValue);
         Assert.False(padding.UsesValueReferencePicker);
         Assert.True(padding.UsesTextInput);
@@ -720,9 +759,11 @@ public sealed class StepDefinitionCatalogTests
                 field.Descriptor.Id == (stepType == "KlickOnPoint"
                     ? KlickOnPointStepDefinition.PointsSourceFieldId
                     : KlickOnPoint3DStepDefinition.PointsSourceFieldId));
-            Assert.True(point.InputReferenceEditor!.Picker.IsDirectSource);
-            Assert.False(point.UsesValueReferencePicker);
-            Assert.True(point.UsesTextInput);
+            Assert.False(point.SupportsDirectValue);
+            Assert.False(point.UseDirectValueCommand.CanExecute(null));
+            Assert.True(point.InputReferenceEditor!.Picker.IsStepResultSource);
+            Assert.True(point.ShowsInputSourcePicker);
+            Assert.False(point.ShowsDirectInput);
             Assert.True(point.InputReferenceEditor.Picker.CanUseJobVariables);
             Assert.True(point.InputReferenceEditor.Picker.CanUseStepResults);
             Assert.False(point.InputReferenceEditor.Picker.CanUseSecrets);

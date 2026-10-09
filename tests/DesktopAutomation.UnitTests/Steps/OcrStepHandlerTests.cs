@@ -10,6 +10,71 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class OcrStepHandlerTests
 {
     [Fact]
+    public async Task FailedEngineInitialization_CanBeRetried()
+    {
+        var attempts = 0;
+        using var service = new TesseractOcrService(NullLogger<TesseractOcrService>.Instance, languages =>
+        {
+            if (Interlocked.Increment(ref attempts) == 1) throw new InvalidOperationException("temporary initialization error");
+            return new Tesseract.TesseractEngine(Path.Combine(AppContext.BaseDirectory, "tessdata"), languages, Tesseract.EngineMode.LstmOnly);
+        });
+        using var image = new Bitmap(20, 20);
+        var options = new OcrRecognitionOptions("eng", OcrPageLayout.TextLine);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RecognizeAsync(image, options, default));
+        Assert.NotNull(await service.RecognizeAsync(image, options, default));
+        Assert.Equal(2, attempts);
+    }
+
+
+    [Fact]
+    public async Task RoiOutsideImage_DoesNotRecognizeEntireImage()
+    {
+        using var bitmap = new Bitmap(20, 20);
+        var context = new PipelineContextStub();
+        context.Results.Set<DesktopDuplicationStep>(new DesktopDuplicationResult
+        { WasExecuted = true, Image = bitmap }, "capture");
+        var service = new RecordingOcrService(new OcrRecognition("unexpected", .9, [], []));
+        var step = new OcrStep
+        {
+            Settings = new()
+            {
+                ImageSource = Binding("capture", "image", "Image"),
+                EnableROI = true,
+                ROI = new PixelRegion(50, 50, 5, 5)
+            }
+        };
+        var result = Assert.IsType<OcrResult>(await new OcrStepHandler(service).ExecuteAsync(step, context, default));
+        Assert.False(result.Found);
+        Assert.Null(service.Options);
+        Assert.True(result.AppliedRoi!.Value.IsEmpty);
+    }
+
+    [Fact]
+    public async Task ConcurrentRecognition_SharedLanguageRemainsUsable()
+    {
+        var enginesCreated = 0;
+        using var service = new TesseractOcrService(NullLogger<TesseractOcrService>.Instance, languages =>
+        {
+            Interlocked.Increment(ref enginesCreated);
+            return new Tesseract.TesseractEngine(Path.Combine(AppContext.BaseDirectory, "tessdata"), languages, Tesseract.EngineMode.LstmOnly);
+        });
+        using var bitmap = new Bitmap(440, 120);
+        using (var graphics = Graphics.FromImage(bitmap))
+        using (var font = new Font("Arial", 48, FontStyle.Bold, GraphicsUnit.Pixel))
+        { graphics.Clear(Color.White); graphics.DrawString("OCR 42", font, Brushes.Black, 5, 20); }
+        var images = Enumerable.Range(0, 8).Select(_ => (Bitmap)bitmap.Clone()).ToArray();
+        var tasks = images.Select(copy => Task.Run(async () =>
+        {
+            using var image = copy;
+            return await service.RecognizeAsync(image, new OcrRecognitionOptions("eng", OcrPageLayout.TextLine), default);
+        })).ToArray();
+        var results = await Task.WhenAll(tasks);
+        Assert.Equal(1, enginesCreated);
+        Assert.All(results, result => { Assert.Contains("OCR 42", result.Text); Assert.InRange(result.Confidence, .5, 1); });
+        Assert.All(results, result => Assert.InRange(result.Confidence, result.Words.Min(word => word.Confidence) - .1, 1));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_OffsetsWordCoordinatesFromRoiAndCapture()
     {
         using var bitmap = new Bitmap(20, 20);
@@ -83,6 +148,7 @@ public sealed class OcrStepHandlerTests
 
         Assert.Contains("OCR 42", result.Text, StringComparison.OrdinalIgnoreCase);
         Assert.NotEmpty(result.Words);
+        Assert.InRange(result.Confidence, .5, 1);
         Assert.All(result.Words, word => Assert.False(word.BoundingBox.IsEmpty));
     }
 

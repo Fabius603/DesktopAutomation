@@ -1,0 +1,27 @@
+{
+  "type": "start_process",
+  "settings": {
+    "target": {
+      "process_source": {
+        "provider_id": "",
+        "source_id": ""
+      },
+      "process_name": "",
+      "executable_path": "",
+      "window_title_contains": ""
+    },
+    "action": "Start",
+    "executable_path": "",
+    "arguments": "",
+    "working_directory": "",
+    "wait_for_exit": false,
+    "monitor_index": 0,
+    "placement_mode": "Centered",
+    "offset_x": 0,
+    "offset_y": 0,
+    "window_mode": "ApplicationDefault"
+  },
+  "id": "6fbbf6ae-f17e-bbfb-d307-3c3f4e398d7a",
+  "inputs": {},
+  "is_enabled": true
+}

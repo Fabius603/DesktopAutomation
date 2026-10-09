@@ -11,6 +11,11 @@ namespace TaskAutomation.Steps
 {
     public sealed class PredictMovementStepHandler : JobStepHandler<PredictMovementStep, PredictMovementResult>
     {
+        private readonly Func<DateTime> _utcNow;
+
+        public PredictMovementStepHandler() : this(() => DateTime.UtcNow) { }
+        public PredictMovementStepHandler(Func<DateTime> utcNow) => _utcNow = utcNow;
+
         private const int MaxSamples = 12;
         private const double RegressionEpsilon = 1e-12;
         private const double MinimumRobustScale = 1.0;
@@ -37,9 +42,11 @@ namespace TaskAutomation.Steps
             var state = GetState(ctx, step.Id);
             var sampleTimestamp = source.SourceCaptureTimestampUtc;
 
-            PruneOldSamplesAndTracks(state, sampleTimestamp, step.Settings.MaxSampleAgeMs);
+            var now = _utcNow();
+            PruneOldSamplesAndTracks(state, now, step.Settings.MaxSampleAgeMs);
 
-            if (!resolved.IsSuccess)
+            if (!resolved.IsSuccess || (step.Settings.MaxSampleAgeMs > 0
+                && now - sampleTimestamp > TimeSpan.FromMilliseconds(step.Settings.MaxSampleAgeMs)))
             {
                 // A single missed detection must not destroy an otherwise stable track. Old
                 // tracks are removed by MaxSampleAgeMs and can therefore survive brief gaps.
@@ -58,12 +65,12 @@ namespace TaskAutomation.Steps
             AssignDetectionsToTracks(state, detections, sampleTimestamp, step.Settings.ResetDistanceThreshold);
 
             var actionLeadMs = EstimateActionLeadMs(state);
-            var predictedFor = Max(sampleTimestamp, DateTime.UtcNow).AddMilliseconds(actionLeadMs);
+            var predictedFor = Max(sampleTimestamp, now).AddMilliseconds(actionLeadMs);
             var predictions = new List<TrackPrediction>();
 
             foreach (var (trackId, track) in state.Tracks)
             {
-                PruneOldSamples(track, sampleTimestamp, step.Settings.MaxSampleAgeMs);
+                PruneOldSamples(track, now, step.Settings.MaxSampleAgeMs);
                 if (track.Samples.Count < step.Settings.MinSamples)
                     continue;
 
@@ -637,8 +644,8 @@ namespace TaskAutomation.Steps
 
         private static double Distance(PixelPoint a, PixelPoint b)
         {
-            var dx = a.X - b.X;
-            var dy = a.Y - b.Y;
+            var dx = (double)a.X - b.X;
+            var dy = (double)a.Y - b.Y;
             return Math.Sqrt(dx * dx + dy * dy);
         }
 

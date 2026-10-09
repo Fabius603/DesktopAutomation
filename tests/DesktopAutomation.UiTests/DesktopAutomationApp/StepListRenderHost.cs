@@ -28,6 +28,10 @@ internal static class StepListRenderHost
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--render-validation-layout") return ValidationLayoutRenderHost.Run(args[1]);
+        if (args.Length == 2 && args[0] == "--render-overlays") return ValueSourceRenderHost.RunOverlays(args[1]);
+        if (args.Length == 2 && args[0] == "--render-value-sources") return ValueSourceRenderHost.Run(args[1]);
+        if (args.Length == 2 && args[0] == "--render-scrollbars") return ScrollBarRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-collapsible-panes") return CollapsiblePanesRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-distribution") return DistributionSettingsRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-start-page") return StartPageRenderHost.Run(args[1]);

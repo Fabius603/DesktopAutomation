@@ -1,0 +1,8 @@
+{
+  "$type": "process_exited",
+  "Kind": "ProcessExited",
+  "process_name": "",
+  "window_title_contains": "",
+  "delay_after_event": "00:00:00",
+  "kind": "ProcessExited"
+}

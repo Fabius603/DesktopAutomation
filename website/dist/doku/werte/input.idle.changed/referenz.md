@@ -1,0 +1,40 @@
+## Werte und Ergebnisse: Leerlaufgrenze erreicht oder verlassen
+
+ID: input.idle.changed
+Website: /doku/werte/input.idle.changed/
+
+### errors
+
+Verfügbarkeit und Ereignisevidenz hängen von Windows-Version, installiertem Gerät/Dienst und Rechten ab. Die Abfrage ist ein zeitlicher Snapshot. Nur die im Katalog gesetzten Unterstützungsmerkmale verwenden: eine reine Änderungsfunktion liefert keinen eigenen Abfragevertrag, eine reine Abfrage ist kein Ereignistrigger. Bei Windows-Einstellungen den Erfolg und Fehlercode im Step-Ergebnis prüfen.
+
+### example
+
+Wähle input.idle.changed als Windows-Ereignis einer deaktivierten Automation und ergänze die angebotenen Filter; teste das Ziel zunächst manuell.
+
+### field.threshold_ms
+
+Leerlaufgrenze in Millisekunden; 60000 entspricht einer Minute ohne Eingabe.
+
+### purpose
+
+Ereignis: Leerlaufgrenze erreicht oder verlassen. Die Automation reagiert auf eine beobachtete Änderung; ein Ereignis ersetzt keine aktuelle Zustandsabfrage. Wähle die Funktion im Windows-Auswahldialog; die verfügbaren Parameter stehen unten. Der Katalog verlangt keine erhöhte Ausführung; einzelne Systemzugriffe können dennoch Rechte voraussetzen.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "input.idle.changed",
+  "name": "Leerlaufgrenze erreicht oder verlassen",
+  "fields": [
+    {
+      "id": "threshold_ms",
+      "name": "Leerlaufgrenze (ms)",
+      "type": "Duration",
+      "Required": true,
+      "defaultValue": "60000",
+      "options": []
+    }
+  ],
+  "result": null
+}
+```
+

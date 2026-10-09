@@ -46,9 +46,14 @@ public static class JobValidation
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
     {
         if (candidate == null) return new(null!, false, "Es konnte kein Step erstellt werden.");
-        var steps = precedingSteps.Concat([candidate]).ToList();
+        var steps = precedingSteps.Concat([candidate])
+            .Concat(GetRoiFeedbackSources(allSteps ?? []))
+            .DistinctBy(step => step.Id).ToList();
         return ValidateStep(steps, candidate, allSteps, variables, providerSources);
     }
+
+    public static IReadOnlyList<JobStep> GetRoiFeedbackSources(IReadOnlyList<JobStep> steps) =>
+        steps.Where(step => step is DynamicRoiStep && step.IsEnabled).ToArray();
 
     public static bool IsSourceStepAllowed(IReadOnlyList<JobStep> steps, JobStep consumer, JobStep source)
     {
@@ -418,9 +423,11 @@ public static class JobValidation
             return null;
         }
 
-        var source = steps.Take(Math.Max(0, consumerIndex))
-            .FirstOrDefault(candidate => string.Equals(
-                candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
+        var candidates = contract.Key == "dynamicRoi"
+            ? steps.Where((candidate, index) => index < consumerIndex || candidate is DynamicRoiStep)
+            : steps.Take(Math.Max(0, consumerIndex));
+        var source = candidates.FirstOrDefault(candidate => string.Equals(
+            candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
         if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
         if (!contract.AllowsProvider(ValueProviderIds.StepResult))
             return $"Die Wertquelle '{ValueProviderIds.StepResult}' ist für die Eingabe '{key}' nicht erlaubt.";

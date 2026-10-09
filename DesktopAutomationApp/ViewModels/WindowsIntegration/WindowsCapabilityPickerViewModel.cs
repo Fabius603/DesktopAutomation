@@ -199,10 +199,11 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
     private void RefreshParameters(IReadOnlyDictionary<string, string?>? values = null)
     {
         Parameters.Clear();
+        var effectiveValues = WindowsCapabilitySelectionRules.WithParameterDefaults(SelectedCapability, values ?? new Dictionary<string, string?>());
         foreach (var descriptor in SelectedCapability?.Parameters ?? [])
         {
             string? value = null;
-            values?.TryGetValue(descriptor.Name, out value);
+            effectiveValues.TryGetValue(descriptor.Name, out value);
             var parameter = new WindowsParameterValueViewModel(descriptor, _optionProvider, value);
             parameter.ValueChanged += ParameterChanged;
             Parameters.Add(parameter);

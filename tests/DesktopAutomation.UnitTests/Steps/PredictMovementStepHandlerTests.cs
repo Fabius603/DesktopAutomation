@@ -9,6 +9,38 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class PredictMovementStepHandlerTests
 {
+
+    [Fact]
+    public async Task FrozenCapture_ExpiresAccordingToCurrentTime()
+    {
+        var now = new DateTime(2026, 10, 8, 12, 0, 0, DateTimeKind.Utc);
+        var context = new PipelineContextStub();
+        var step = Step();
+        var handler = new PredictMovementStepHandler(() => now);
+        AddSample(context, new Point(10, 10), now.AddMilliseconds(-20));
+        await handler.ExecuteAsync(step, context, default);
+        AddSample(context, new Point(11, 11), now.AddMilliseconds(-10));
+        Assert.True(Assert.IsType<PredictMovementResult>(await handler.ExecuteAsync(step, context, default)).Found);
+        now = now.AddMilliseconds(step.Settings.MaxSampleAgeMs + 1);
+        var result = Assert.IsType<PredictMovementResult>(await handler.ExecuteAsync(step, context, default));
+        Assert.False(result.Found);
+        Assert.Empty(context.PredictMovementStates[step.Id].Tracks);
+    }
+
+    [Fact]
+    public async Task FarApartLargeCoordinates_DoNotJoinOneMovementTrack()
+    {
+        var now = DateTime.UtcNow;
+        var handler = new PredictMovementStepHandler(() => now);
+        var context = new PipelineContextStub();
+        var step = Step();
+        AddSample(context, new Point(0, 0), now.AddMilliseconds(-20));
+        await handler.ExecuteAsync(step, context, default);
+        AddSample(context, new Point(65536, 65536), now.AddMilliseconds(-10));
+        var result = Assert.IsType<PredictMovementResult>(await handler.ExecuteAsync(step, context, default));
+        Assert.False(result.Found);
+    }
+
     [Fact]
     public async Task ExecuteAsync_MissingOrWrongSourceReturnsNotFound()
     {

@@ -154,12 +154,28 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
     private bool TryBuildStep(bool validate, out JobStep? step, out string? error)
     {
         var draft = _baseDraft.Clone();
+        var presentationFields = Fields.Concat(Fields.SelectMany(CompositeInputEditors).SelectMany(editor => editor.InputFields))
+            .Concat(Sections.SelectMany(section => FindPointPairs(section.Nodes)).SelectMany(pair => new[] { pair.XField, pair.YField }))
+            .Distinct().ToArray();
+        if (validate)
+            foreach (var field in presentationFields) field.Validation.SetMessage(null);
+        void MarkField(GeneratedStepFieldViewModel field, string? message)
+        {
+            if (validate) field.Validation.SetMessage(message);
+        }
         var incompleteNodeLabel = Sections
             .SelectMany(section => FindIncompleteReferenceLabels(section.Nodes))
             .FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(incompleteNodeLabel))
         {
             error = Loc.Format("Ui.Step.Generated.Validation.Required", incompleteNodeLabel);
+            foreach (var field in presentationFields.Where(field => field.Label == incompleteNodeLabel || IsIncomplete(field)))
+                MarkField(field, error);
+            foreach (var pair in Sections.SelectMany(section => FindPointPairs(section.Nodes)).Where(pair => pair.Label == incompleteNodeLabel))
+            {
+                MarkField(pair.XField, error);
+                MarkField(pair.YField, error);
+            }
             step = null;
             return false;
         }
@@ -168,27 +184,32 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
             if (field.IsVisible && CompositeInputEditors(field).Any(HasIncompleteReferenceSelection))
             {
                 error = Loc.Format("Ui.Step.Generated.Validation.Required", field.Label);
+                var incompleteFields = CompositeInputEditors(field).SelectMany(editor => editor.InputFields).Where(IsIncomplete).ToArray();
+                if (incompleteFields.Length == 0) MarkField(field, error);
+                foreach (var nested in incompleteFields) MarkField(nested, error);
                 step = null;
                 return false;
             }
             if (!field.TryWriteValue(draft, out var inputError) && field.IsVisible)
             {
                 error = inputError;
+                MarkField(field, error);
                 step = null;
                 return false;
             }
         }
 
         var unresolvedPaths = GetUnresolvedAuthoringPaths();
-        var issue = validate
-            ? _definition.ValidateDraft(
-                    draft,
-                    new StepValidationContext(StepValidationPhase.Authoring, unresolvedPaths))
-                .FirstOrDefault(candidate => candidate.Severity == StepValidationSeverity.Error)
-            : null;
-        if (issue is not null)
+        var issues = validate
+            ? _definition.ValidateDraft(draft, new StepValidationContext(StepValidationPhase.Authoring, unresolvedPaths))
+                .Where(candidate => candidate.Severity == StepValidationSeverity.Error).ToArray()
+            : [];
+        if (issues.Length > 0)
         {
-            error = FormatIssue(issue);
+            foreach (var issue in issues)
+                foreach (var field in presentationFields.Where(field => field.Descriptor.Id == issue.FieldId || issue.DependencyFieldIds?.Contains(field.Descriptor.Id) == true))
+                    MarkField(field, FormatIssue(issue));
+            error = FormatIssue(issues[0]);
             step = null;
             return false;
         }
@@ -689,6 +710,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    public GeneratedFieldValidationState Validation { get; } = new();
     public StepFieldDescriptor Descriptor { get; }
     public ObservableCollection<string> Suggestions { get; }
     public ObservableCollection<GeneratedStepChoiceOptionViewModel> Choices { get; }
@@ -1619,6 +1641,7 @@ public sealed class GeneratedScreenPointEditorViewModel : INotifyPropertyChanged
     public GeneratedStepFieldViewModel? XField { get; }
     public GeneratedStepFieldViewModel? YField { get; }
     public GeneratedWholeValueSourceViewModel WholeValueSource { get; }
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => NestedFields;
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { MonitorField, XField, YField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
@@ -1697,6 +1720,7 @@ public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueE
     }
 
     public event Action? Changed;
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => Options.SelectMany(option => new[] { option.LabelField, option.ValueField }).OfType<GeneratedStepFieldViewModel>();
     public ObservableCollection<UserChoiceOptionEditorViewModel> Options { get; } = [];
     public ICommand AddCommand { get; }
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => Options
@@ -1780,6 +1804,7 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
         _initializing = false;
     }
     public event Action? Changed;
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => Points.SelectMany(point => new[] { point.ManualXField, point.ManualYField }).OfType<GeneratedStepFieldViewModel>();
     public ObservableCollection<PointEntryViewModel> Points { get; } = [];
     public ICommand AddCommand { get; }
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => Points
@@ -1962,6 +1987,7 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
     public GeneratedStepFieldViewModel? YField { get; }
     public GeneratedStepFieldViewModel? WidthField { get; }
     public GeneratedStepFieldViewModel? HeightField { get; }
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => NestedFields;
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { EnabledField, XField, YField, WidthField, HeightField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields
@@ -2089,6 +2115,7 @@ public sealed class GeneratedYoloEditorViewModel : INotifyPropertyChanged, IGene
     public ObservableCollection<string> Classes { get; } = [];
     public GeneratedStepFieldViewModel? ModelField { get; }
     public GeneratedStepFieldViewModel? ClassField { get; }
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => NestedFields;
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { ModelField, ClassField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
@@ -2343,6 +2370,7 @@ public sealed class GeneratedWholeValueSourceViewModel : INotifyPropertyChanged
 public interface IGeneratedCompositeInputEditor
 {
     IReadOnlyDictionary<string, ResultBinding> InputBindings { get; }
+    IEnumerable<GeneratedStepFieldViewModel> InputFields { get; }
 }
 
 public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChanged, IGeneratedCompositeInputEditor
@@ -2410,6 +2438,7 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
     public GeneratedStepFieldViewModel? ProcessNameField { get; }
     public GeneratedStepFieldViewModel? ExecutablePathField { get; }
     public GeneratedStepFieldViewModel? WindowTitleField { get; }
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => NestedFields;
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { ProcessNameField, ExecutablePathField, WindowTitleField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
@@ -2873,6 +2902,8 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
             AddText(text);
     }
 
+    public IEnumerable<GeneratedStepFieldViewModel> InputFields => OverlayDetectionRows.Select(row => row.SourceField).OfType<GeneratedStepFieldViewModel>()
+        .Concat(OverlayTextRows.SelectMany(row => row.InputFields));
     public ObservableCollection<DetectionOverlayRowViewModel> OverlayDetectionRows { get; } = [];
     public ObservableCollection<TextOverlayRowViewModel> OverlayTextRows { get; } = [];
     public ICommand AddOverlayDetectionCommand { get; }

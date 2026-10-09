@@ -1,0 +1,1469 @@
+## Steps: Dynamischen Bildbereich erstellen
+
+ID: dynamic_roi
+Website: /doku/steps/dynamic_roi/
+
+Abbildung: [Detailansicht: Dynamischen Bildbereich erstellen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-dynamic-roi.detail.png)
+
+1. Erkennungsergebnis: Erkennung mit einem kompatiblen Rechteck als Quelle des dynamischen Suchbereichs.
+2. Rand (px): Ganzzahliger zusätzlicher Rand des dynamischen Suchbereichs in Pixeln; im Editor kann ein direkter Wert gewählt werden.
+3. Mindestkonfidenz (%): Mindestkonfidenz für die Übernahme eines Treffers in ROI/Vorhersage. Erkennungsergebnisse verwenden 0 bis 1; der Editor kann denselben Wert als Prozent darstellen.
+4. Durchläufe bis zur Vollbildsuche (0 = nie): Anzahl Durchläufe bis zur erneuten Vollsuche. 0 deaktiviert die regelmäßige Vollsuche.
+5. Fehlversuche bis zum Zurücksetzen (0 = nie): Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuchbereich. 0 deaktiviert dieses automatische Rücksetzen.
+### errors
+
+Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
+
+### example
+
+Erkennung → dynamischer ROI mit Rand 20 → denselben ROI im nächsten Erkennungsdurchlauf verwenden; regelmäßig eine Vollsuche einplanen.
+
+### field.bounds_source
+
+Erkennung mit einem kompatiblen Rechteck als Quelle des dynamischen Suchbereichs.
+
+### field.full_search_interval
+
+Anzahl Durchläufe bis zur erneuten Vollsuche. 0 deaktiviert die regelmäßige Vollsuche.
+
+### field.minimum_confidence
+
+Mindestkonfidenz für die Übernahme eines Treffers in ROI/Vorhersage. Erkennungsergebnisse verwenden 0 bis 1; der Editor kann denselben Wert als Prozent darstellen.
+
+### field.padding_source
+
+Ganzzahliger zusätzlicher Rand des dynamischen Suchbereichs in Pixeln; im Editor kann ein direkter Wert gewählt werden.
+
+### field.reset_after_misses
+
+Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuchbereich. 0 deaktiviert dieses automatische Rücksetzen.
+
+### input.bounds
+
+Rechteck eines Erkennungsergebnisses. Fehlende erforderliche Werte führen zum Fehler. Bei kompatiblen Listen wird der erste Wert verwendet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.
+
+### input.padding
+
+ganzzahliger ROI-Rand. Fehlende erforderliche Werte führen zum Fehler. Bei kompatiblen Listen wird der erste Wert verwendet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.
+
+### purpose
+
+Leite aus einem Erkennungstreffer den nächsten Suchbereich ab. Rand, Mindestkonfidenz, regelmäßige Vollsuche und Rücksetzen nach Fehlversuchen steuern, wie lange die Suche auf dem Ziel bleibt. Verbinde diesen Step mit dem dynamischen ROI-Eingang der Erkennung; im ersten Durchlauf dient deren ursprünglicher Bereich als Ausgangspunkt.
+
+### result.consecutive_misses
+
+Anzahl aufeinanderfolgender nicht verwertbarer Treffer seit der letzten gültigen Aktualisierung. Einzelwert dieses Ergebnisses.
+
+### result.full_search_interval
+
+Konfigurierter Abstand regelmäßiger Vollsuchen in Durchläufen; 0 bedeutet keine regelmäßige Vollsuche. Einzelwert dieses Ergebnisses.
+
+### result.global_bounds
+
+Suchrechteck in globalen Desktopkoordinaten. Für bildlokale Verbraucher muss dessen Quelle/Versatz berücksichtigt werden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.bottom
+
+Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.center
+
+Mittelpunkt einer einzelnen Erkennung in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.center.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.center.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.is_empty
+
+Ob die Zwischenablage im abgefragten Kontext leer ist. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.left
+
+Linke Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.location
+
+Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.location.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.location.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.right
+
+Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.top
+
+Obere Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.width
+
+Breite des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.global_bounds.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.roi_reset
+
+Ob der Suchbereich wegen der Rücksetzregel auf den Ausgangsbereich zurückgesetzt wurde. Einzelwert dieses Ergebnisses.
+
+### result.roi_updated
+
+Ob der dynamische Suchbereich in diesem Step neu aus einem verwertbaren Treffer aktualisiert wurde. Einzelwert dieses Ergebnisses.
+
+### schema.id
+
+Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.
+
+### schema.inputs
+
+Zuordnung von UI-Feld-ID zu typisierter Wertequelle. Bei vorhandenen inputs serialisiert der kanonische Job-Serializer settings nicht zusätzlich. Leere inputs mit settings bleiben als Legacy-/direkte Konfiguration lesbar.
+
+### schema.inputs.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.inputs.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.inputs.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.inputs.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.inputs.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.inputs.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.inputs.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.inputs.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.inputs.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.is_enabled
+
+true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.
+
+### schema.settings
+
+Direkte beziehungsweise ältere Step-Konfiguration. Für neue referenzbasierte Dateien inputs und localValues verwenden; die UI migriert gespeicherte Literalwerte in lokale Quellen.
+
+### schema.settings.bounds_source
+
+Erkennung mit einem kompatiblen Rechteck als Quelle des dynamischen Suchbereichs.
+
+### schema.settings.bounds_source.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.settings.bounds_source.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.settings.bounds_source.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.settings.bounds_source.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.settings.bounds_source.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.settings.bounds_source.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.settings.bounds_source.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.settings.bounds_source.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.settings.bounds_source.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.settings.full_search_interval
+
+Anzahl Durchläufe bis zur erneuten Vollsuche. 0 deaktiviert die regelmäßige Vollsuche.
+
+### schema.settings.minimum_confidence
+
+Mindestkonfidenz für die Übernahme eines Treffers in ROI/Vorhersage. Erkennungsergebnisse verwenden 0 bis 1; der Editor kann denselben Wert als Prozent darstellen.
+
+### schema.settings.padding
+
+Rand um das erkannte Rechteck in Pixeln; er erweitert den nächsten Suchbereich.
+
+### schema.settings.padding_source
+
+Ganzzahliger zusätzlicher Rand des dynamischen Suchbereichs in Pixeln; im Editor kann ein direkter Wert gewählt werden.
+
+### schema.settings.padding_source.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.settings.padding_source.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.settings.padding_source.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.settings.padding_source.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.settings.padding_source.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.settings.padding_source.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.settings.padding_source.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.settings.padding_source.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.settings.padding_source.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.settings.reset_after_misses
+
+Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuchbereich. 0 deaktiviert dieses automatische Rücksetzen.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "dynamic_roi",
+  "name": "Dynamischen Bildbereich erstellen",
+  "description": "Erstellt aus dem besten Erkennungstreffer einen Bildbereich für den nächsten Durchlauf.",
+  "category": "BildAuswerten",
+  "uiFieldIds": [
+    "bounds_source",
+    "padding_source",
+    "minimum_confidence",
+    "full_search_interval",
+    "reset_after_misses"
+  ],
+  "fields": [
+    {
+      "id": "bounds_source",
+      "name": "Erkennungsergebnis",
+      "descriptor": {
+        "Id": "bounds_source",
+        "LabelKey": "Ui.Step.DynamicRoi.Source",
+        "ValueKind": "ResultBinding",
+        "Required": true,
+        "DefaultValue": null,
+        "DescriptionKey": null,
+        "EditorHint": "value-reference-picker",
+        "Constraints": null,
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 0,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": "bounds",
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "padding_source",
+      "name": "Rand (px)",
+      "descriptor": {
+        "Id": "padding_source",
+        "LabelKey": "Ui.Step.DynamicRoi.Padding",
+        "ValueKind": "ResultBinding",
+        "Required": true,
+        "DefaultValue": 0,
+        "DescriptionKey": null,
+        "EditorHint": "value-reference-picker",
+        "Constraints": null,
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 1,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": "padding",
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": true,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "minimum_confidence",
+      "name": "Mindestkonfidenz (%)",
+      "descriptor": {
+        "Id": "minimum_confidence",
+        "LabelKey": "Ui.Step.DynamicRoi.MinimumConfidence",
+        "ValueKind": "Number",
+        "Required": false,
+        "DefaultValue": 0,
+        "DescriptionKey": null,
+        "EditorHint": "percentage",
+        "Constraints": {
+          "Minimum": 0,
+          "Maximum": 1,
+          "MinimumLength": null,
+          "MaximumLength": null,
+          "AllowedValues": null
+        },
+        "Width": "Full",
+        "Advanced": true,
+        "Order": 2,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "full_search_interval",
+      "name": "Durchläufe bis zur Vollbildsuche (0 = nie)",
+      "descriptor": {
+        "Id": "full_search_interval",
+        "LabelKey": "Ui.Step.DynamicRoi.FullSearchInterval",
+        "ValueKind": "Integer",
+        "Required": false,
+        "DefaultValue": 10,
+        "DescriptionKey": null,
+        "EditorHint": null,
+        "Constraints": {
+          "Minimum": 0,
+          "Maximum": null,
+          "MinimumLength": null,
+          "MaximumLength": null,
+          "AllowedValues": null
+        },
+        "Width": "Full",
+        "Advanced": true,
+        "Order": 3,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "reset_after_misses",
+      "name": "Fehlversuche bis zum Zurücksetzen (0 = nie)",
+      "descriptor": {
+        "Id": "reset_after_misses",
+        "LabelKey": "Ui.Step.DynamicRoi.ResetAfterMisses",
+        "ValueKind": "Integer",
+        "Required": false,
+        "DefaultValue": 3,
+        "DescriptionKey": null,
+        "EditorHint": null,
+        "Constraints": {
+          "Minimum": 0,
+          "Maximum": null,
+          "MinimumLength": null,
+          "MaximumLength": null,
+          "AllowedValues": null
+        },
+        "Width": "Full",
+        "Advanced": true,
+        "Order": 4,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    }
+  ],
+  "schema": [
+    {
+      "id": "id",
+      "name": "id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs",
+      "name": "inputs",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "is_enabled",
+      "name": "is_enabled",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    },
+    {
+      "id": "settings",
+      "name": "settings",
+      "type": "DynamicRoiSettings",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source",
+      "name": "bounds_source",
+      "type": "ResultBinding",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.bounds_source.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.bounds_source.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.bounds_source.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.full_search_interval",
+      "name": "full_search_interval",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 10
+    },
+    {
+      "id": "settings.minimum_confidence",
+      "name": "minimum_confidence",
+      "type": "Double",
+      "options": [],
+      "defaultValue": 0
+    },
+    {
+      "id": "settings.padding",
+      "name": "padding",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": -1
+    },
+    {
+      "id": "settings.padding_source",
+      "name": "padding_source",
+      "type": "ResultBinding",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.padding_source.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.padding_source.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.padding_source.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.reset_after_misses",
+      "name": "reset_after_misses",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 3
+    }
+  ],
+  "inputs": [
+    {
+      "Key": "bounds",
+      "Required": true,
+      "MissingValuePolicy": "FailStep",
+      "CollectionConsumption": "FirstValue",
+      "AcceptedShapes": [
+        {
+          "ValueKind": "Rectangle",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        }
+      ],
+      "AllowedProviderIds": [
+        "step_result"
+      ],
+      "LegacyAllowedProviderIds": [],
+      "AllowsDirectValue": false,
+      "LegacyAcceptedShapes": []
+    },
+    {
+      "Key": "padding",
+      "Required": true,
+      "MissingValuePolicy": "FailStep",
+      "CollectionConsumption": "FirstValue",
+      "AcceptedShapes": [
+        {
+          "ValueKind": "Integer",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle"
+          ]
+        }
+      ],
+      "AllowedProviderIds": [
+        "job_variable",
+        "step_result"
+      ],
+      "LegacyAllowedProviderIds": [],
+      "AllowsDirectValue": true,
+      "LegacyAcceptedShapes": []
+    }
+  ],
+  "result": {
+    "TypeName": "DynamicRoiResult",
+    "DisplayName": "DynamicRoiResult",
+    "Properties": [
+      {
+        "Name": "RoiUpdated",
+        "DisplayName": "Roi Updated",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "roi_updated",
+        "EnumDisplayNames": null,
+        "StableId": "roi_updated"
+      },
+      {
+        "Name": "RoiReset",
+        "DisplayName": "Roi Reset",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "roi_reset",
+        "EnumDisplayNames": null,
+        "StableId": "roi_reset"
+      },
+      {
+        "Name": "GlobalBounds",
+        "DisplayName": "Global Bounds",
+        "DataType": "Rectangle",
+        "Description": "Rectangle, kann leer sein",
+        "IsNullable": true,
+        "Example": "{X=10,Y=20,Width=300,Height=200}",
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds"
+      },
+      {
+        "Name": "GlobalBounds.X",
+        "DisplayName": "Global Bounds / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.x",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.x"
+      },
+      {
+        "Name": "GlobalBounds.Y",
+        "DisplayName": "Global Bounds / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.y",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.y"
+      },
+      {
+        "Name": "GlobalBounds.Width",
+        "DisplayName": "Global Bounds / Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.width",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.width"
+      },
+      {
+        "Name": "GlobalBounds.Height",
+        "DisplayName": "Global Bounds / Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.height",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.height"
+      },
+      {
+        "Name": "GlobalBounds.Left",
+        "DisplayName": "Global Bounds / Left",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.left",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.left"
+      },
+      {
+        "Name": "GlobalBounds.Top",
+        "DisplayName": "Global Bounds / Top",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.top",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.top"
+      },
+      {
+        "Name": "GlobalBounds.Right",
+        "DisplayName": "Global Bounds / Right",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.right",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.right"
+      },
+      {
+        "Name": "GlobalBounds.Bottom",
+        "DisplayName": "Global Bounds / Bottom",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.bottom",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.bottom"
+      },
+      {
+        "Name": "GlobalBounds.IsEmpty",
+        "DisplayName": "Global Bounds / Is Empty",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.is_empty",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.is_empty"
+      },
+      {
+        "Name": "GlobalBounds.Location",
+        "DisplayName": "Global Bounds / Location",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.location",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.location"
+      },
+      {
+        "Name": "GlobalBounds.Location.X",
+        "DisplayName": "Global Bounds / Location / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.location.x",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.location.x"
+      },
+      {
+        "Name": "GlobalBounds.Location.Y",
+        "DisplayName": "Global Bounds / Location / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.location.y",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.location.y"
+      },
+      {
+        "Name": "GlobalBounds.Center",
+        "DisplayName": "Global Bounds / Center",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.center",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.center"
+      },
+      {
+        "Name": "GlobalBounds.Center.X",
+        "DisplayName": "Global Bounds / Center / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.center.x",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.center.x"
+      },
+      {
+        "Name": "GlobalBounds.Center.Y",
+        "DisplayName": "Global Bounds / Center / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "global_bounds.center.y",
+        "EnumDisplayNames": null,
+        "StableId": "global_bounds.center.y"
+      },
+      {
+        "Name": "ConsecutiveMisses",
+        "DisplayName": "Consecutive Misses",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "consecutive_misses",
+        "EnumDisplayNames": null,
+        "StableId": "consecutive_misses"
+      },
+      {
+        "Name": "FullSearchInterval",
+        "DisplayName": "Full Search Interval",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "full_search_interval",
+        "EnumDisplayNames": null,
+        "StableId": "full_search_interval"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "RoiUpdated",
+        "DisplayName": "Roi Updated",
+        "Property": {
+          "Name": "RoiUpdated",
+          "DisplayName": "Roi Updated",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "roi_updated",
+          "EnumDisplayNames": null,
+          "StableId": "roi_updated"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "RoiReset",
+        "DisplayName": "Roi Reset",
+        "Property": {
+          "Name": "RoiReset",
+          "DisplayName": "Roi Reset",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "roi_reset",
+          "EnumDisplayNames": null,
+          "StableId": "roi_reset"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "GlobalBounds",
+        "DisplayName": "Global Bounds",
+        "Property": {
+          "Name": "GlobalBounds",
+          "DisplayName": "Global Bounds",
+          "DataType": "Rectangle",
+          "Description": "Rectangle, kann leer sein",
+          "IsNullable": true,
+          "Example": "{X=10,Y=20,Width=300,Height=200}",
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "global_bounds",
+          "EnumDisplayNames": null,
+          "StableId": "global_bounds"
+        },
+        "Children": [
+          {
+            "Segment": "X",
+            "DisplayName": "X",
+            "Property": {
+              "Name": "GlobalBounds.X",
+              "DisplayName": "Global Bounds / X",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.x",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.x"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Y",
+            "DisplayName": "Y",
+            "Property": {
+              "Name": "GlobalBounds.Y",
+              "DisplayName": "Global Bounds / Y",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.y",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.y"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Width",
+            "DisplayName": "Width",
+            "Property": {
+              "Name": "GlobalBounds.Width",
+              "DisplayName": "Global Bounds / Width",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.width",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.width"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Height",
+            "DisplayName": "Height",
+            "Property": {
+              "Name": "GlobalBounds.Height",
+              "DisplayName": "Global Bounds / Height",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.height",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.height"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Left",
+            "DisplayName": "Left",
+            "Property": {
+              "Name": "GlobalBounds.Left",
+              "DisplayName": "Global Bounds / Left",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.left",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.left"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Top",
+            "DisplayName": "Top",
+            "Property": {
+              "Name": "GlobalBounds.Top",
+              "DisplayName": "Global Bounds / Top",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.top",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.top"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Right",
+            "DisplayName": "Right",
+            "Property": {
+              "Name": "GlobalBounds.Right",
+              "DisplayName": "Global Bounds / Right",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.right",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.right"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Bottom",
+            "DisplayName": "Bottom",
+            "Property": {
+              "Name": "GlobalBounds.Bottom",
+              "DisplayName": "Global Bounds / Bottom",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.bottom",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.bottom"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "IsEmpty",
+            "DisplayName": "Is Empty",
+            "Property": {
+              "Name": "GlobalBounds.IsEmpty",
+              "DisplayName": "Global Bounds / Is Empty",
+              "DataType": "Boolean",
+              "Description": "Boolean",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.is_empty",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.is_empty"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Location",
+            "DisplayName": "Location",
+            "Property": {
+              "Name": "GlobalBounds.Location",
+              "DisplayName": "Global Bounds / Location",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.location",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.location"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "GlobalBounds.Location.X",
+                  "DisplayName": "Global Bounds / Location / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "global_bounds.location.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "global_bounds.location.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "GlobalBounds.Location.Y",
+                  "DisplayName": "Global Bounds / Location / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "global_bounds.location.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "global_bounds.location.y"
+                },
+                "Children": []
+              }
+            ]
+          },
+          {
+            "Segment": "Center",
+            "DisplayName": "Center",
+            "Property": {
+              "Name": "GlobalBounds.Center",
+              "DisplayName": "Global Bounds / Center",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "global_bounds.center",
+              "EnumDisplayNames": null,
+              "StableId": "global_bounds.center"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "GlobalBounds.Center.X",
+                  "DisplayName": "Global Bounds / Center / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "global_bounds.center.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "global_bounds.center.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "GlobalBounds.Center.Y",
+                  "DisplayName": "Global Bounds / Center / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "global_bounds.center.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "global_bounds.center.y"
+                },
+                "Children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Segment": "ConsecutiveMisses",
+        "DisplayName": "Consecutive Misses",
+        "Property": {
+          "Name": "ConsecutiveMisses",
+          "DisplayName": "Consecutive Misses",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "consecutive_misses",
+          "EnumDisplayNames": null,
+          "StableId": "consecutive_misses"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "FullSearchInterval",
+        "DisplayName": "Full Search Interval",
+        "Property": {
+          "Name": "FullSearchInterval",
+          "DisplayName": "Full Search Interval",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "full_search_interval",
+          "EnumDisplayNames": null,
+          "StableId": "full_search_interval"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+
+### Strukturelle Serializer-Vorlage
+```json
+{
+  "type": "dynamic_roi",
+  "settings": {
+    "bounds_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "padding": -1,
+    "padding_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "minimum_confidence": 0,
+    "full_search_interval": 10,
+    "reset_after_misses": 3
+  },
+  "id": "5daa1a25-95e8-a1e7-7645-817670fbad9a",
+  "inputs": {},
+  "is_enabled": true
+}
+```
+

@@ -21,7 +21,7 @@ public sealed class CollapsiblePanesRenderingTests
         catch { process.Kill(entireProcessTree: true); throw; }
         Assert.True(process.ExitCode == 0, await stdout + await stderr);
         foreach (var culture in new[] { "de-DE", "en-US" })
-            foreach (var theme in new[] { "Black", "Light" })
+            foreach (var theme in new[] { "Black", "Dark", "Light" })
                 foreach (var state in new[] { "expanded", "collapsed" })
                     Assert.True(File.Exists(Path.Combine(directory, $"{culture}-{theme}-{state}.png")));
     }

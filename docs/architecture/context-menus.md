@@ -68,7 +68,11 @@ this matrix, identify its canonical commands, decide whether multiple selection 
 and connect all entry points to one factory. Test clicked-row targeting, selection preservation,
 mixed eligibility, minimum/maximum counts and destructive confirmation. Render the changed
 popup and inspect light/dark, disabled, submenu and localized states. Complete repository
-verification through `eng/verify.ps1 -Mode Full`. A new page is incomplete until its menu coverage
+verification according to `.agents/instructions/testing.md`. A new page is incomplete until its menu coverage
 or explicit reason for omission is recorded here.
 
 The left library tree includes files and folders; its keyboard/right-click menus use the same factory as the right contents. The left tree deliberately has no row overflow buttons, as requested, leaving more room for names. Tree selection is single-target. The named root uses a normal folder row with a standard folder icon and expansion arrow; its selection navigates to direct root contents and its expansion hides/shows the left tree only; the pane resize grip has no context action.
+
+Step value-source actions use a chain icon revealed by hover or keyboard focus within the field (or the whole-value host). The open source menu keeps its action visible. Bindable scalar fields always reserve a fixed 32-DIP trailing slot (28-DIP action plus spacing), independent of hover, focus or menu state. Fields without a source action reserve no slot. Whole-value hosts retain a fixed action slot; ROI whole-value selection sits in its header. Existing source commands, native editor context menus, and single-value targeting are retained. The chain button remains a tab stop and exposes a localized automation name.
+
+Overlay rows use the same OverlayRows menu for their compact three-dot button, right click and keyboard. Selection, duplicate, move and remove rules remain owned by EditorCollectionMenus and CollectionSelectionRules. Overlay collection items share the generated compound-editor selection style and stretch within the inspector without a horizontal scrollbar.

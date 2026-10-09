@@ -1,0 +1,26 @@
+{
+  "type": "keypoint_matching",
+  "settings": {
+    "template_path": "",
+    "min_match_count": 10,
+    "lowes_ratio_threshold": 0.75,
+    "enable_roi": false,
+    "roi": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "dynamic_roi_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "4e14e928-862e-8c96-5024-1350f0969673",
+  "inputs": {},
+  "is_enabled": true
+}

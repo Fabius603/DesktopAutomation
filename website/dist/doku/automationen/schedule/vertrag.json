@@ -1,0 +1,117 @@
+{
+  "appVersion": "1.6.1",
+  "contract": {
+    "id": "schedule",
+    "name": "Zeitplan",
+    "fields": [
+      {
+        "id": "days",
+        "name": "days",
+        "type": "HashSet`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "kind",
+        "name": "kind",
+        "type": "AutomationTriggerKind",
+        "options": [
+          "Hotkey",
+          "OnceAt",
+          "Schedule",
+          "Interval",
+          "ProcessStarted",
+          "ProcessExited",
+          "WindowEvent",
+          "FileSystemEvent",
+          "SystemEvent",
+          "WindowsEvent",
+          "Webhook"
+        ],
+        "defaultValue": "Schedule"
+      },
+      {
+        "id": "time_of_day",
+        "name": "time_of_day",
+        "type": "TimeOnly",
+        "options": [],
+        "defaultValue": "08:00:00"
+      }
+    ]
+  },
+  "explanations": {
+    "purpose": "Startet das Ziel an ausgewählten Wochentagen zu time_of_day. Mindestens einen Tag wählen und die lokale Uhrzeit auf dem Zielrechner prüfen. Das tägliche Aktivitätsfenster der RunPolicy ist eine zusätzliche Einschränkung.",
+    "example": "Arbeitsplatzbeispiel: Schedule an Werktagen um 08:30 startet den Arbeitsplatz-Job.",
+    "errors": "Eine Triggerbeobachtung ist noch kein erfolgreicher Zielstart. Prüfe active, Ziel-ID, Pflichtparameter, aktives Zeitfenster, Cooldown und bereits laufendes Ziel. Für Webhooks zusätzlich Port, Netzwerkmodus und Authentifizierung prüfen; für Datei-Trigger muss der Ordner existieren. Diagnose und Startentscheidung stehen im Automationsverlauf.",
+    "field.days": "Menge erlaubter Wochentage. Eine leere Menge ist kein gültiger Zeitplan; JSON verwendet DayOfWeek-Namen im Automation-Serializer.",
+    "field.kind": "Abgeleitete Triggerart zur Anzeige. Für die polymorphe Deserialisierung ist $type maßgeblich; die kanonische Vorlage zeigt die zusätzlich geschriebenen Kind/kind-Werte.",
+    "field.time_of_day": "Uhrzeit des Zeitplans als TimeOnly-Text, zum Beispiel 08:30:00. Sie wird zusammen mit days ausgewertet.",
+    "field.kind.option.ProcessExited": "Start, wenn ein passender Prozess beendet wird.",
+    "field.kind.option.ProcessStarted": "Start, wenn ein passender Prozess neu erscheint.",
+    "field.kind.option.FileSystemEvent": "Start bei einem passenden Datei-/Ordnerereignis.",
+    "field.kind.option.WindowEvent": "Start bei einem passenden Fensterereignis.",
+    "field.kind.option.Schedule": "Start zu einer Uhrzeit an ausgewählten Wochentagen.",
+    "field.kind.option.SystemEvent": "Start bei einem unterstützten Sitzungs-/Energie-/Systemereignis.",
+    "field.kind.option.WindowsEvent": "Start über eine unterstützte Funktion des Windows-Ereigniskatalogs.",
+    "field.kind.option.Hotkey": "Start über Tastenkombination.",
+    "field.kind.option.Interval": "Start in einem positiven Wiederholungsintervall.",
+    "field.kind.option.Webhook": "Start durch einen authentifizierten HTTP-POST-Aufruf.",
+    "field.kind.option.OnceAt": "Einmaliger Start zu einem zukünftigen Zeitpunkt."
+  },
+  "template": {
+    "$type": "schedule",
+    "Kind": "Schedule",
+    "time_of_day": "08:00:00",
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "kind": "Schedule"
+  },
+  "screenshots": [
+    {
+      "id": "automationen",
+      "file": "automationen.detail.png",
+      "title": "Automation einrichten",
+      "caption": "Zeitplan und Ausführungsregeln einer Automation.",
+      "width": 1324,
+      "height": 630,
+      "pages": [
+        "/doku/automationen-einrichten/",
+        "/doku/automationen/schedule/",
+        "/doku/automationen/AutomationRunPolicy/"
+      ],
+      "markers": [
+        {
+          "number": 1,
+          "label": "Trigger-Typ",
+          "explanation": "Hier wählst du, welches Ereignis die Automation startet."
+        },
+        {
+          "number": 2,
+          "label": "Uhrzeit und Tage",
+          "explanation": "Legt die Uhrzeit und Wochentage der wiederkehrenden Ausführung fest."
+        },
+        {
+          "number": 3,
+          "label": "Job oder Makro",
+          "explanation": "Hier steht das Ziel, das bei einer passenden Auslösung gestartet wird."
+        },
+        {
+          "number": 4,
+          "label": "Wenn bereits aktiv",
+          "explanation": "Bestimmt die Startentscheidung, falls dieses Ziel bereits läuft."
+        },
+        {
+          "number": 5,
+          "label": "Cooldown",
+          "explanation": "Mindestabstand zwischen angenommenen Starts; die Einheit ist Sekunden."
+        }
+      ]
+    }
+  ],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

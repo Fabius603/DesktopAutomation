@@ -74,9 +74,14 @@ internal static class WindowsCapabilityStepDefinitionSupport
     {
         try
         {
-            return draft.Values.GetValueOrDefault(WindowsStateQueryStepDefinition.CapabilityFieldId)
+            var selection = draft.Values.GetValueOrDefault(WindowsStateQueryStepDefinition.CapabilityFieldId)
                        ?.Deserialize<StepWindowsCapabilitySelectionValue>()
                    ?? new StepWindowsCapabilitySelectionValue(string.Empty, new Dictionary<string, string?>());
+            return selection with
+            {
+                Parameters = WindowsCapabilitySelectionRules.WithParameterDefaults(
+                new WindowsCapabilityCatalog().Find(selection.CapabilityId), selection.Parameters)
+            };
         }
         catch (JsonException)
         {

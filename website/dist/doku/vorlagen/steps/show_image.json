@@ -1,0 +1,21 @@
+{
+  "type": "show_image",
+  "settings": {
+    "window_name": "MyWindow",
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "detections_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "overlay": {
+      "detection_results": [],
+      "text_results": []
+    }
+  },
+  "id": "e8080526-e62e-f27f-fe43-49586d257e39",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -5,7 +5,7 @@ namespace TaskAutomation.Tests.DesktopAutomationApp;
 public sealed class JobStepsViewResourceTests
 {
     [Fact]
-    public void WholeValueEditors_PlaceSourceActionAfterGroupedValue()
+    public void WholeValueEditors_GroupComponentsAndExposeWholeSourceCommands()
     {
         var root = RepositoryRoot();
         var selectorXaml = File.ReadAllText(Path.Combine(
@@ -55,14 +55,6 @@ public sealed class JobStepsViewResourceTests
             "Visibility=\"{Binding DataContext.WholeValueSource.UsesReference, ElementName=Root",
             pointEntryXaml);
 
-        var enableIndex = roiXaml.IndexOf("Ui.Step.Settings.EnableROI", StringComparison.Ordinal);
-        var valuesIndex = roiXaml.IndexOf("WholeValueSource.ShowsIndividualValues", StringComparison.Ordinal);
-        var pickerIndex = roiXaml.IndexOf("WholeValueSource.Picker", StringComparison.Ordinal);
-        var wholeSourceIndex = roiXaml.IndexOf("GeneratedWholeValueSourceSelector", StringComparison.Ordinal);
-        var captureIndex = roiXaml.IndexOf("Ui.Step.Settings.Capture", StringComparison.Ordinal);
-        Assert.True(enableIndex >= 0 && enableIndex < valuesIndex);
-        Assert.True(valuesIndex < pickerIndex && pickerIndex < wholeSourceIndex);
-        Assert.True(wholeSourceIndex < captureIndex);
         Assert.Contains("CompoundValueSourceGroup", roiXaml);
         Assert.Contains(
             "Visibility=\"{Binding DataContext.WholeValueSource.UsesReference, ElementName=Root",
@@ -466,7 +458,9 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("<controls:ResponsiveColumnsPanel x:Name=\"ConditionComparisonGrid\"", conditionXaml);
         Assert.Contains("<controls:ResponsiveColumnsPanel MinItemWidth=\"170\" MaxColumns=\"2\"", conditionXaml);
-        Assert.True(CountOccurrences(conditionXaml, "TextWrapping=\"Wrap\"") >= 3);
+        Assert.Contains("TextWrapping=\"Wrap\"", conditionXaml);
+        Assert.DoesNotContain("<TextBlock Text=\"{Binding ComparisonValueValidationError}\"", conditionXaml);
+        Assert.Contains("AutomationProperties.HelpText=\"{Binding ComparisonValueValidationError}\"", conditionXaml);
         Assert.DoesNotContain("MinWidth=\"150\"", conditionXaml);
         Assert.DoesNotContain("MinWidth=\"115\"", conditionXaml);
         Assert.Contains("ScrollViewer.HorizontalScrollBarVisibility=\"Disabled\"", conditionXaml);

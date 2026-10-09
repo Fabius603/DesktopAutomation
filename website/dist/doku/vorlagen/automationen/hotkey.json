@@ -1,0 +1,9 @@
+{
+  "$type": "hotkey",
+  "Kind": "Hotkey",
+  "modifiers": 0,
+  "virtual_key_code": 0,
+  "debounce": "00:00:00",
+  "delay_after_event": "00:00:00",
+  "kind": "Hotkey"
+}

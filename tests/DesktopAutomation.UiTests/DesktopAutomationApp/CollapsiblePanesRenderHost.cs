@@ -23,7 +23,7 @@ internal static class CollapsiblePanesRenderHost
             foreach (var culture in new[] { "de-DE", "en-US" })
             {
                 LocalizationService.Instance.SetCulture(culture);
-                foreach (var theme in new[] { "Black", "Light" })
+                foreach (var theme in new[] { "Black", "Dark", "Light" })
                 {
                     app.Resources.MergedDictionaries.Add(new ResourceDictionary
                     { Source = new Uri($"pack://application:,,,/DesktopAutomationApp;component/Styles/Themes/{theme}.xaml") });
@@ -52,6 +52,7 @@ internal static class CollapsiblePanesRenderHost
                     var pane = window.NavigationPane;
                     Assert.True(pane.IsExpanded);
                     Assert.True(vm.InspectorPane.IsExpanded);
+                    VerifyInspectorBackground(view);
                     var brand = (TextBlock)window.FindName("NavigationBrandTitle");
                     var navigationToggle = (Button)window.FindName("NavigationPaneToggle");
                     Assert.True(brand.IsVisible);
@@ -119,6 +120,7 @@ internal static class CollapsiblePanesRenderHost
                     Pump();
                     Assert.True(vm.InspectorPane.IsExpanded);
                     Assert.Equal(420, column.ActualWidth, 1);
+                    VerifyInspectorBackground(view);
                     Assert.Same(second, vm.SelectedStep);
 
                     window.Width = window.MinWidth;
@@ -146,6 +148,19 @@ internal static class CollapsiblePanesRenderHost
             return 0;
         }
         catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+    }
+
+    private static void VerifyInspectorBackground(JobStepsView view)
+    {
+        var inspector = (Border)view.FindName("InspectorSurface");
+        var inspectorColor = Assert.IsType<SolidColorBrush>(inspector.Background).Color;
+        var sections = Descendants<Expander>(view).Where(expander => expander.AllowDrop).ToArray();
+        Assert.Equal(3, sections.Length);
+        foreach (var section in sections)
+        {
+            var surface = Descendants<Border>(section).First();
+            Assert.Equal(Assert.IsType<SolidColorBrush>(surface.Background).Color, inspectorColor);
+        }
     }
 
     private static void Click(Button button)

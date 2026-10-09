@@ -1,0 +1,86 @@
+{
+  "appVersion": "1.6.1",
+  "contract": {
+    "id": "text_input",
+    "name": "Text eingeben",
+    "fields": [
+      {
+        "id": "delayBeforeUs",
+        "name": "delayBeforeUs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "durationUs",
+        "name": "durationUs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": 0
+      },
+      {
+        "id": "groupId",
+        "name": "groupId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "id",
+        "name": "id",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "text",
+        "name": "text",
+        "type": "String",
+        "options": [],
+        "defaultValue": ""
+      }
+    ]
+  },
+  "explanations": {
+    "purpose": "Sendet den angegebenen Unicode-Text an das aktive Eingabeziel. Dies ist keine OCR und keine garantierte Zwischenablagenoperation. Fokussiere vorher das gewünschte Textfeld.",
+    "example": "Das Makrobeispiel kombiniert text_input mit „Notiz aus dem Beispielmakro“ und anschließend timeout mit duration=200. Vor Ausführung einen leeren Editor fokussieren.",
+    "errors": "Ungültige Tasten-/Maustastenkennungen, doppelte IDs, fehlerhafte Gruppenreferenzen und negative/ungültige Zeitwerte vor Ausführung korrigieren. Eingaben wirken auf das aktive Fenster. Bei absoluten Bewegungen die Aufnahmeumgebung prüfen; ein Abbruch gibt die vom Executor gehaltenen Tasten/Maustasten frei, rekonstruiert aber keine bereits eingegebenen Texte.",
+    "field.delayBeforeUs": "Wartezeit vor diesem Makrobefehl in Mikrosekunden; 1000 µs sind 1 ms. null kennzeichnet ältere oder manuell angelegte Befehle ohne aufgezeichnete Vorverzögerung.",
+    "field.durationUs": "Haltedauer beziehungsweise zusätzliche Dauer dieses Makrobefehls in Mikrosekunden. Sie ist nicht die Millisekunden-Dauer des timeout-Befehls.",
+    "field.groupId": "Optionale Referenz auf groups[].id. Gruppen ordnen zusammengehörige aufgezeichnete Befehle, ändern aber nicht ihre Reihenfolge in commands. Jede Gruppe muss Befehle enthalten; Befehle derselben Gruppe müssen einen zusammenhängenden Block bilden.",
+    "field.id": "Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.",
+    "field.text": "Direkt angezeigter beziehungsweise eingegebener Text. Ein Makro schreibt ihn in das aktive Fenster; die Desktop-Anzeige stellt ihn nur dar."
+  },
+  "template": {
+    "type": "text_input",
+    "text": "",
+    "durationUs": 0,
+    "id": "8175bccd-480d-2892-ec75-d89f4337f976"
+  },
+  "screenshots": [
+    {
+      "id": "makro-text",
+      "file": "makro-text.detail.png",
+      "title": "Text im Makro",
+      "caption": "Der Textbefehl trägt die Beispielnummer RE-2026-042 ein; die Verzögerung davor wird separat eingestellt.",
+      "width": 364,
+      "height": 590,
+      "pages": [
+        "/doku/makros/text_input/"
+      ],
+      "markers": [
+        {
+          "number": 1,
+          "label": "Text",
+          "explanation": "Dieser Text wird in die aktive Anwendung eingegeben."
+        },
+        {
+          "number": 2,
+          "label": "Verzögerung davor",
+          "explanation": "Wartezeit seit dem vorherigen Befehl. Den Zahlenwert und die Einheit separat einstellen."
+        }
+      ]
+    }
+  ],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

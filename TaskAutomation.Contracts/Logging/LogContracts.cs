@@ -33,6 +33,7 @@ public static class LogCodes
     public const string StepBackgroundStarted = "step.background-started";
     public const string StepBackgroundCompleted = "step.background-completed";
     public const string StepBackgroundFailed = "step.background-failed";
+    public const string StepBackgroundCancelled = "step.background-cancelled";
     public const string Trigger = "automation.trigger";
     public const string AutomationDecision = "automation.decision";
     public const string StorageGap = "storage.gap";

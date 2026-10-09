@@ -1,0 +1,9 @@
+{
+  "type": "end_job",
+  "settings": {
+    "skip_end_steps": false
+  },
+  "id": "116e7ca0-813b-7273-8e1a-ca1f817c3ace",
+  "inputs": {},
+  "is_enabled": true
+}

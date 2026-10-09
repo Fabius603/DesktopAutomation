@@ -1,0 +1,19 @@
+{
+  "type": "focus_process",
+  "settings": {
+    "target": {
+      "process_source": {
+        "provider_id": "",
+        "source_id": ""
+      },
+      "process_name": "",
+      "executable_path": "",
+      "window_title_contains": ""
+    },
+    "action": "BringToFront",
+    "window_mode": "Normal"
+  },
+  "id": "57d5804e-5282-502f-0454-33619a4efedb",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -1,0 +1,40 @@
+## Werte und Ergebnisse: audio.master_volume
+
+ID: audio.master_volume
+Website: /doku/werte/audio.master_volume/
+
+### errors
+
+Verfügbarkeit und Ereignisevidenz hängen von Windows-Version, installiertem Gerät/Dienst und Rechten ab. Die Abfrage ist ein zeitlicher Snapshot. Nur die im Katalog gesetzten Unterstützungsmerkmale verwenden: eine reine Änderungsfunktion liefert keinen eigenen Abfragevertrag, eine reine Abfrage ist kein Ereignistrigger. Bei Windows-Einstellungen den Erfolg und Fehlercode im Step-Ergebnis prüfen.
+
+### example
+
+Wähle audio.master_volume im Step „Windows-Einstellung ändern“, wähle ein vorhandenes Systemziel und prüfe danach previous_value und applied_value.
+
+### field.value
+
+Neuer Hauptlautstärke-Wert als Prozentzahl von 0 bis 100.
+
+### purpose
+
+Ändert die Hauptlautstärke der Audioausgabe; value ist ein Prozentwert. Wähle die Funktion im Windows-Auswahldialog; die verfügbaren Parameter stehen unten. Der Katalog verlangt keine erhöhte Ausführung; einzelne Systemzugriffe können dennoch Rechte voraussetzen.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "audio.master_volume",
+  "name": "audio.master_volume",
+  "fields": [
+    {
+      "id": "value",
+      "name": "Lautstärke (0–100)",
+      "type": "Integer",
+      "Required": true,
+      "defaultValue": "50",
+      "options": []
+    }
+  ],
+  "result": null
+}
+```
+

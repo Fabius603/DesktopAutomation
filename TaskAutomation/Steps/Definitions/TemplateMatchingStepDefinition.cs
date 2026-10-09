@@ -14,7 +14,7 @@ public sealed class TemplateMatchingStepDefinition : StepDefinition<TemplateMatc
     public const string MatchModeFieldId = "template_match_mode";
     public const string MultiplePointsFieldId = "multiple_points";
 
-    private static readonly string[] MatchModes = Enum.GetNames<TemplateMatchModes>();
+    private static readonly string[] MatchModes = ImageDetection.Algorithms.TemplateMatching.TemplateMatching.SupportedModes.Select(mode => mode.ToString()).ToArray();
 
     public override StepDescriptor Descriptor { get; } = new(
         "template_matching", "BildAuswerten", "Step.Type.TemplateMatching", "Step.Description.TemplateMatching",
@@ -38,14 +38,14 @@ public sealed class TemplateMatchingStepDefinition : StepDefinition<TemplateMatc
         new StepPresentationDescriptor(
             [
                 new StepEditorSectionDescriptor("general", null,
-                    [ImageDetectionStepDefinitionSupport.ImageSourceFieldId, TemplatePathFieldId, ConfidenceFieldId]),
+                    [ImageDetectionStepDefinitionSupport.ImageSourceFieldId, TemplatePathFieldId, ConfidenceFieldId, MultiplePointsFieldId]),
                 new StepEditorSectionDescriptor("advanced", "Ui.Step.Settings.Advanced",
                     [ImageDetectionStepDefinitionSupport.RoiFieldId, MatchModeFieldId], 1, true, false)
             ],
             [new StepSummaryItemDescriptor(TemplatePathFieldId, StepSummaryValueFormat.FileName),
              new StepSummaryItemDescriptor(ConfidenceFieldId)],
             [ImageDetectionStepDefinitionSupport.ImageSourceFieldId, TemplatePathFieldId, ConfidenceFieldId,
-             ImageDetectionStepDefinitionSupport.RoiFieldId, MatchModeFieldId]));
+             ImageDetectionStepDefinitionSupport.RoiFieldId, MatchModeFieldId, MultiplePointsFieldId]));
 
     public override TemplateMatchingStep CreateDefaultStep() => new();
 

@@ -1,0 +1,305 @@
+## Steps: Job ausführen
+
+ID: job_execution
+Website: /doku/steps/job_execution/
+
+Abbildung: [Detailansicht: Job ausführen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-job-execution.detail.png)
+
+1. Job: Im Editor eine vorhandene Jobreferenz wählen. In JSON müssen deren stabile Job-ID und der erwartete Referenztyp zusammenpassen.
+2. Auf Beendigung warten: true wartet auf den Unterjob, bevor der nächste Step beginnt. false erlaubt parallele Hauptarbeit, löst aber nicht die Besitz- und Fehlerbeziehung.
+### errors
+
+Fehlende Job-IDs, direkte oder indirekte Abhängigkeitszyklen und ein fehlgeschlagener Unterjob sind Fehler. Auch ohne sofortiges Warten bleibt der Besitzer für die Unterarbeit verantwortlich.
+
+### example
+
+Ein Hauptjob startet einen zuvor getesteten Sicherungsjob per job_id und wartet mit wait_for_completion auf dessen Abschluss.
+
+### field.job
+
+Im Editor eine vorhandene Jobreferenz wählen. In JSON müssen deren stabile Job-ID und der erwartete Referenztyp zusammenpassen.
+
+### field.wait_for_completion
+
+true wartet auf den Unterjob, bevor der nächste Step beginnt. false erlaubt parallele Hauptarbeit, löst aber nicht die Besitz- und Fehlerbeziehung.
+
+### purpose
+
+Wähle einen vorhandenen Job per stabiler ID. Der aufrufende Job besitzt den gestarteten Unterjob. Ohne sofortiges Warten kann die Hauptphase weiterlaufen; vor der eigenen Endphase werden besessene Unterjobs zusammengeführt. Ein fehlgeschlagener Unterjob lässt den Besitzer fehlschlagen; zyklische Job-Abhängigkeiten sind unzulässig.
+
+### schema.id
+
+Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.
+
+### schema.inputs
+
+Zuordnung von UI-Feld-ID zu typisierter Wertequelle. Bei vorhandenen inputs serialisiert der kanonische Job-Serializer settings nicht zusätzlich. Leere inputs mit settings bleiben als Legacy-/direkte Konfiguration lesbar.
+
+### schema.inputs.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.inputs.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.inputs.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.inputs.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.inputs.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.inputs.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.inputs.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.inputs.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.inputs.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.is_enabled
+
+true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.
+
+### schema.settings
+
+Direkte beziehungsweise ältere Step-Konfiguration. Für neue referenzbasierte Dateien inputs und localValues verwenden; die UI migriert gespeicherte Literalwerte in lokale Quellen.
+
+### schema.settings.job_id
+
+GUID des auszuführenden Jobs. Ein Anzeigename alleine reicht für die Zuordnung nicht aus.
+
+### schema.settings.job_name
+
+Gespeicherter Anzeigename der ausgewählten Jobreferenz; die Ausführung richtet sich nach der Job-ID.
+
+### schema.settings.wait_for_completion
+
+true wartet auf den Unterjob, bevor der nächste Step beginnt. false erlaubt parallele Hauptarbeit, löst aber nicht die Besitz- und Fehlerbeziehung.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "job_execution",
+  "name": "Job ausführen",
+  "description": "Startet einen anderen Job und wartet optional auf dessen Abschluss.",
+  "category": "AblaufSteuern",
+  "uiFieldIds": [
+    "job",
+    "wait_for_completion"
+  ],
+  "fields": [
+    {
+      "id": "job",
+      "name": "Job",
+      "descriptor": {
+        "Id": "job",
+        "LabelKey": "Ui.Step.Settings.Job",
+        "ValueKind": "Object",
+        "Required": true,
+        "DefaultValue": null,
+        "DescriptionKey": null,
+        "EditorHint": "job-picker",
+        "Constraints": null,
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 0,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "wait_for_completion",
+      "name": "Auf Beendigung warten",
+      "descriptor": {
+        "Id": "wait_for_completion",
+        "LabelKey": "Ui.Step.Settings.WaitForCompletion",
+        "ValueKind": "Boolean",
+        "Required": false,
+        "DefaultValue": true,
+        "DescriptionKey": null,
+        "EditorHint": null,
+        "Constraints": null,
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 1,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    }
+  ],
+  "schema": [
+    {
+      "id": "id",
+      "name": "id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs",
+      "name": "inputs",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "is_enabled",
+      "name": "is_enabled",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    },
+    {
+      "id": "settings",
+      "name": "settings",
+      "type": "JobExecutionStepSettings",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.job_id",
+      "name": "job_id",
+      "type": "Guid",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.job_name",
+      "name": "job_name",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.wait_for_completion",
+      "name": "wait_for_completion",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    }
+  ],
+  "inputs": [],
+  "result": {
+    "TypeName": "JobExecutionResult",
+    "DisplayName": "JobExecutionResult",
+    "Properties": [],
+    "PropertyTree": []
+  }
+}
+```
+
+### Strukturelle Serializer-Vorlage
+```json
+{
+  "type": "job_execution",
+  "settings": {
+    "job_name": "",
+    "job_id": null,
+    "wait_for_completion": true
+  },
+  "id": "7deb7f0c-62e0-194e-3194-da75007c16ed",
+  "inputs": {},
+  "is_enabled": true
+}
+```
+

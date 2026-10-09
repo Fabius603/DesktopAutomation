@@ -1,0 +1,4007 @@
+## Steps: Text erkennen
+
+ID: ocr
+Website: /doku/steps/ocr/
+
+Abbildung: [Detailansicht: Text erkennen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-ocr.detail.png)
+
+1. Bildquelle: Bildobjekt eines Aufnahme-Steps. Ein Dateipfad als Text ist nicht automatisch eine kompatible Bildquelle.
+2. Sprache: OCR-Sprachdaten: deu für Deutsch, eng für Englisch oder deu+eng für beide. Die Daten müssen installiert sein.
+3. Textanordnung: Erwartete Textstruktur der OCR, zum Beispiel TextBlock oder SingleWord. Eine passende Struktur verbessert die Auswertung des gewählten Bildbereichs.
+4. Bildbereich (ROI): Suchrechteck in Pixeln relativ zur Bildquelle. x/y bestimmen die linke obere Ecke, width/height die Größe; es muss zur Quelle passen.
+### errors
+
+Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
+
+### example
+
+Ein Bildschirmbild mit deutschem Text aufnehmen; Sprache deu und TextBlock wählen; text in „Text auf Desktop anzeigen“ verwenden.
+
+### field.image_source
+
+Bildobjekt eines Aufnahme-Steps. Ein Dateipfad als Text ist nicht automatisch eine kompatible Bildquelle.
+
+### field.languages
+
+OCR-Sprachdaten: deu für Deutsch, eng für Englisch oder deu+eng für beide. Die Daten müssen installiert sein.
+
+### field.languages.option.deu
+
+Deutsche OCR-Sprachdaten verwenden.
+
+### field.languages.option.deu+eng
+
+Deutsche und englische OCR-Sprachdaten gemeinsam verwenden.
+
+### field.languages.option.eng
+
+Englische OCR-Sprachdaten verwenden.
+
+### field.page_layout
+
+Erwartete Textstruktur der OCR, zum Beispiel TextBlock oder SingleWord. Eine passende Struktur verbessert die Auswertung des gewählten Bildbereichs.
+
+### field.page_layout.option.Automatic
+
+Überlässt Kamera-/OCR-Moduswahl dem zuständigen Backend gemäß dieser Einstellung.
+
+### field.page_layout.option.SingleWord
+
+Ein einzelnes Wort erwarten.
+
+### field.page_layout.option.SparseText
+
+Verstreute kurze Textbereiche im Bild suchen.
+
+### field.page_layout.option.TextBlock
+
+Zusammenhängenden Textblock erwarten.
+
+### field.page_layout.option.TextLine
+
+Eine einzelne Textzeile erwarten.
+
+### field.roi
+
+Suchrechteck in Pixeln relativ zur Bildquelle. x/y bestimmen die linke obere Ecke, width/height die Größe; es muss zur Quelle passen.
+
+### input.dynamicRoi
+
+dynamischer Suchbereich. Eine gültige, aber noch nicht verfügbare optionale Step-Quelle kann den Verbraucher mit NoInput überspringen; malformed Referenzen bleiben Fehler. Bei kompatiblen Listen wird der erste Wert verwendet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.
+
+### input.image
+
+Bildobjekt einer Aufnahme. Fehlende erforderliche Werte führen zum Fehler. Es wird kein beliebiges Listenelement ausgewählt. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.
+
+### purpose
+
+Wähle Bildquelle, Sprache und Textanordnung. Die Erkennung liefert den gesamten Text, Zeilen und Wörter einschließlich Positionen und Konfidenzen. Verwende beispielsweise text für eine Anzeige und found als Bedingung. Die gewünschten Sprachdaten müssen installiert sein.
+
+### result.applied_roi
+
+Tatsächlich angewendeter Suchbereich. Damit lässt sich prüfen, ob eine direkte oder dynamische Eingrenzung aktiv war. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.bottom
+
+Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.center
+
+Mittelpunkt einer einzelnen Erkennung in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.center.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.center.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.is_empty
+
+Ob die Zwischenablage im abgefragten Kontext leer ist. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.left
+
+Linke Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.location
+
+Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.location.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.location.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.right
+
+Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.top
+
+Obere Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.width
+
+Breite des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.applied_roi.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box
+
+Begrenzendes Rechteck eines Treffers; bei fehlender Erkennung kann ein optionales Rechteck fehlen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.bottom
+
+Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.center
+
+Mittelpunkt einer einzelnen Erkennung in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.center.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.center.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.is_empty
+
+Ob die Zwischenablage im abgefragten Kontext leer ist. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.left
+
+Linke Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.location
+
+Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.location.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.location.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.right
+
+Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.top
+
+Obere Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.width
+
+Breite des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.bounding_box.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.confidence
+
+Normalisierte Trefferkonfidenz zwischen 0 und 1. 0.9 entspricht 90 %; mehrere Treffer können unterschiedliche Konfidenzen besitzen. Einzelwert dieses Ergebnisses.
+
+### result.found
+
+Ob die Erkennung/Suche in diesem Lauf einen passenden Treffer geliefert hat. false ist ein fachliches Ergebnis und nicht automatisch ein Step-Fehler. Einzelwert dieses Ergebnisses.
+
+### result.line_count
+
+Anzahl erkannter Textzeilen der OCR-Auswertung. Einzelwert dieses Ergebnisses.
+
+### result.lines.bounding_box
+
+Begrenzendes Rechteck eines Treffers; bei fehlender Erkennung kann ein optionales Rechteck fehlen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.bottom
+
+Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.center
+
+Mittelpunkt einer einzelnen Erkennung in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.center.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.center.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.is_empty
+
+Ob die Zwischenablage im abgefragten Kontext leer ist. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.left
+
+Linke Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.location
+
+Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.location.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.location.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.right
+
+Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.top
+
+Obere Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.width
+
+Breite des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.bounding_box.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.confidence
+
+Normalisierte Trefferkonfidenz zwischen 0 und 1. 0.9 entspricht 90 %; mehrere Treffer können unterschiedliche Konfidenzen besitzen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.count
+
+Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+
+### result.lines.position
+
+Position des Punktes/Fensters im Ergebnis-Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.lines.text
+
+Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfung vor einem nachfolgenden Vergleich beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.minimum_confidence
+
+Für diese Berechnung verwendete Mindestkonfidenz als Anteil von 0 bis 1. Einzelwert dieses Ergebnisses.
+
+### result.source_capture_is_fresh
+
+Frischezustand der verwendeten Aufnahme, unverändert in das Erkennungsergebnis übernommen. Einzelwert dieses Ergebnisses.
+
+### result.source_capture_timestamp_utc
+
+UTC-Aufnahmezeit der Bildquelle, aus der dieses Ergebnis berechnet wurde. Einzelwert dieses Ergebnisses.
+
+### result.source_frame_timestamp
+
+Monotoner Zeitstempel des zugrunde liegenden Frames. 0 bedeutet unbekannte zeitliche Herkunft. Einzelwert dieses Ergebnisses.
+
+### result.source_frame_version
+
+Frame-Identität der verwendeten Bildquelle; auch ein Erkennungsfehlschlag behält die Herkunftsinformation. Einzelwert dieses Ergebnisses.
+
+### result.text
+
+Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfung vor einem nachfolgenden Vergleich beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+
+### result.used_dynamic_roi
+
+Ob für diese Auswertung ein dynamischer Suchbereich verwendet wurde. Einzelwert dieses Ergebnisses.
+
+### result.word_count
+
+Anzahl erkannter Wörter im betrachteten Textbereich. Einzelwert dieses Ergebnisses.
+
+### result.words.bounding_box
+
+Begrenzendes Rechteck eines Treffers; bei fehlender Erkennung kann ein optionales Rechteck fehlen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.bottom
+
+Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.center
+
+Mittelpunkt einer einzelnen Erkennung in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.center.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.center.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.height
+
+Höhe des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.is_empty
+
+Ob die Zwischenablage im abgefragten Kontext leer ist. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.left
+
+Linke Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.location
+
+Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.location.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.location.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.right
+
+Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.top
+
+Obere Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.width
+
+Breite des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.x
+
+Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.bounding_box.y
+
+Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.confidence
+
+Normalisierte Trefferkonfidenz zwischen 0 und 1. 0.9 entspricht 90 %; mehrere Treffer können unterschiedliche Konfidenzen besitzen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.count
+
+Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+
+### result.words.line_position
+
+Position beziehungsweise Zuordnung des OCR-Treffers innerhalb seiner Zeile. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.position
+
+Position des Punktes/Fensters im Ergebnis-Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### result.words.text
+
+Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfung vor einem nachfolgenden Vergleich beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+
+### schema.id
+
+Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.
+
+### schema.inputs
+
+Zuordnung von UI-Feld-ID zu typisierter Wertequelle. Bei vorhandenen inputs serialisiert der kanonische Job-Serializer settings nicht zusätzlich. Leere inputs mit settings bleiben als Legacy-/direkte Konfiguration lesbar.
+
+### schema.inputs.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.inputs.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.inputs.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.inputs.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.inputs.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.inputs.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.inputs.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.inputs.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.inputs.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.is_enabled
+
+true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.
+
+### schema.settings
+
+Direkte beziehungsweise ältere Step-Konfiguration. Für neue referenzbasierte Dateien inputs und localValues verwenden; die UI migriert gespeicherte Literalwerte in lokale Quellen.
+
+### schema.settings.dynamic_roi_source
+
+Kompatible dynamische Rechteckquelle. Eine spätere DynamicRoi-Quelle darf Feedback für den nächsten Durchlauf liefern; dies ist eine besondere Ausnahme von normalen Vorwärtsreferenzen.
+
+### schema.settings.dynamic_roi_source.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.settings.dynamic_roi_source.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.settings.dynamic_roi_source.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.settings.dynamic_roi_source.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.settings.dynamic_roi_source.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.settings.dynamic_roi_source.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.settings.dynamic_roi_source.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.settings.dynamic_roi_source.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.settings.dynamic_roi_source.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.settings.enable_roi
+
+Aktiviert den direkt konfigurierten Suchbereich. Ohne Aktivierung wird der Standardbereich der Quelle verwendet, sofern keine dynamische ROI-Quelle greift.
+
+### schema.settings.image_source
+
+Bildobjekt eines Aufnahme-Steps. Ein Dateipfad als Text ist nicht automatisch eine kompatible Bildquelle.
+
+### schema.settings.image_source.items
+
+Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.
+
+### schema.settings.image_source.members
+
+Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.
+
+### schema.settings.image_source.property_id
+
+Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.
+
+### schema.settings.image_source.property_path
+
+Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.
+
+### schema.settings.image_source.provider_id
+
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+
+### schema.settings.image_source.schema_id
+
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+
+### schema.settings.image_source.source_id
+
+Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.
+
+### schema.settings.image_source.source_step_id
+
+Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.
+
+### schema.settings.image_source.value_path
+
+Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.
+
+### schema.settings.languages
+
+OCR-Sprachdaten: deu für Deutsch, eng für Englisch oder deu+eng für beide. Die Daten müssen installiert sein.
+
+### schema.settings.page_layout
+
+Erwartete Textstruktur der OCR, zum Beispiel TextBlock oder SingleWord. Eine passende Struktur verbessert die Auswertung des gewählten Bildbereichs.
+
+### schema.settings.page_layout.option.Automatic
+
+Überlässt Kamera-/OCR-Moduswahl dem zuständigen Backend gemäß dieser Einstellung.
+
+### schema.settings.page_layout.option.SingleWord
+
+Ein einzelnes Wort erwarten.
+
+### schema.settings.page_layout.option.SparseText
+
+Verstreute kurze Textbereiche im Bild suchen.
+
+### schema.settings.page_layout.option.TextBlock
+
+Zusammenhängenden Textblock erwarten.
+
+### schema.settings.page_layout.option.TextLine
+
+Eine einzelne Textzeile erwarten.
+
+### schema.settings.roi
+
+Suchrechteck in Pixeln relativ zur Bildquelle. x/y bestimmen die linke obere Ecke, width/height die Größe; es muss zur Quelle passen.
+
+### schema.settings.roi.Empty
+
+Vom serialisierten Geometrieobjekt angebotener Leerzustand. Kein eigener ROI-Schalter: den Suchbereich mit enable_roi beziehungsweise roi.enabled und den Koordinaten konfigurieren; dieses abgeleitete Mitglied nicht als Eingabequelle verwenden.
+
+### schema.settings.roi.height
+
+Höhe des Rechtecks oder Bildformats in Pixeln. Negative Größen sind kein gültiger Suchbereich.
+
+### schema.settings.roi.width
+
+Breite des Rechtecks oder Bildformats in Pixeln. Zusammen mit Höhe und Ursprung ergibt sie die räumliche Größe.
+
+### schema.settings.roi.x
+
+Horizontale Position der linken oberen Ecke des Suchrechtecks in Pixeln relativ zum Quellbild. Beispiel 100 startet den Bereich bei Bildkoordinate X = 100; Bildschirm- und Bildkoordinaten können voneinander abweichen.
+
+### schema.settings.roi.y
+
+Vertikale Position der linken oberen Ecke des Suchrechtecks in Pixeln relativ zum Quellbild. Beispiel 100 startet den Bereich bei Bildkoordinate Y = 100; Bildschirm- und Bildkoordinaten können voneinander abweichen.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "ocr",
+  "name": "Text erkennen",
+  "description": "Erkennt Text in einer Bildquelle und stellt Text sowie Wortpositionen bereit.",
+  "category": "BildAuswerten",
+  "uiFieldIds": [
+    "image_source",
+    "languages",
+    "page_layout",
+    "roi"
+  ],
+  "fields": [
+    {
+      "id": "image_source",
+      "name": "Bildquelle",
+      "descriptor": {
+        "Id": "image_source",
+        "LabelKey": "Ui.Step.Settings.ImageSource",
+        "ValueKind": "ResultBinding",
+        "Required": true,
+        "DefaultValue": null,
+        "DescriptionKey": null,
+        "EditorHint": "value-reference-picker",
+        "Constraints": null,
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 0,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": "image",
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "languages",
+      "name": "Sprache",
+      "descriptor": {
+        "Id": "languages",
+        "LabelKey": "Ui.Step.Settings.OcrLanguages",
+        "ValueKind": "Enum",
+        "Required": true,
+        "DefaultValue": "deu+eng",
+        "DescriptionKey": null,
+        "EditorHint": null,
+        "Constraints": {
+          "Minimum": null,
+          "Maximum": null,
+          "MinimumLength": null,
+          "MaximumLength": null,
+          "AllowedValues": [
+            "deu",
+            "eng",
+            "deu+eng"
+          ]
+        },
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 1,
+        "VisibleWhen": null,
+        "Options": [
+          {
+            "Value": "deu",
+            "LabelKey": "Enum.OcrLanguage.deu",
+            "DisplayName": null
+          },
+          {
+            "Value": "eng",
+            "LabelKey": "Enum.OcrLanguage.eng",
+            "DisplayName": null
+          },
+          {
+            "Value": "deu+eng",
+            "LabelKey": "Enum.OcrLanguage.deu+eng",
+            "DisplayName": null
+          }
+        ],
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "page_layout",
+      "name": "Textanordnung",
+      "descriptor": {
+        "Id": "page_layout",
+        "LabelKey": "Ui.Step.Settings.OcrLayout",
+        "ValueKind": "Enum",
+        "Required": true,
+        "DefaultValue": "Automatic",
+        "DescriptionKey": null,
+        "EditorHint": null,
+        "Constraints": {
+          "Minimum": null,
+          "Maximum": null,
+          "MinimumLength": null,
+          "MaximumLength": null,
+          "AllowedValues": [
+            "Automatic",
+            "TextBlock",
+            "TextLine",
+            "SingleWord",
+            "SparseText"
+          ]
+        },
+        "Width": "Full",
+        "Advanced": false,
+        "Order": 2,
+        "VisibleWhen": null,
+        "Options": [
+          {
+            "Value": "Automatic",
+            "LabelKey": "Enum.OcrPageLayout.Automatic",
+            "DisplayName": null
+          },
+          {
+            "Value": "TextBlock",
+            "LabelKey": "Enum.OcrPageLayout.TextBlock",
+            "DisplayName": null
+          },
+          {
+            "Value": "TextLine",
+            "LabelKey": "Enum.OcrPageLayout.TextLine",
+            "DisplayName": null
+          },
+          {
+            "Value": "SingleWord",
+            "LabelKey": "Enum.OcrPageLayout.SingleWord",
+            "DisplayName": null
+          },
+          {
+            "Value": "SparseText",
+            "LabelKey": "Enum.OcrPageLayout.SparseText",
+            "DisplayName": null
+          }
+        ],
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": null,
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    },
+    {
+      "id": "roi",
+      "name": "Bildbereich (ROI)",
+      "descriptor": {
+        "Id": "roi",
+        "LabelKey": "Ui.Step.Settings.ROI",
+        "ValueKind": "Object",
+        "Required": false,
+        "DefaultValue": {
+          "enabled": false,
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "dynamic_source": null
+        },
+        "DescriptionKey": null,
+        "EditorHint": "roi-picker",
+        "Constraints": null,
+        "Width": "Full",
+        "Advanced": true,
+        "Order": 3,
+        "VisibleWhen": null,
+        "Options": null,
+        "InputContractId": null,
+        "VisibleWhenAll": null,
+        "VisualOverlayOptions": null,
+        "DirectoryPickerOptions": null,
+        "FilePickerOptions": null,
+        "RoiPickerOptions": {
+          "DynamicInputContractId": "dynamicRoi"
+        },
+        "YoloPickerOptions": null,
+        "WindowsCapabilityPickerOptions": null,
+        "ScreenPointPickerOptions": null,
+        "AllowsDirectValue": null,
+        "MonitorDeviceNameFieldId": null
+      }
+    }
+  ],
+  "schema": [
+    {
+      "id": "id",
+      "name": "id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs",
+      "name": "inputs",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "inputs.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "is_enabled",
+      "name": "is_enabled",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": true
+    },
+    {
+      "id": "settings",
+      "name": "settings",
+      "type": "OcrSettings",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source",
+      "name": "dynamic_roi_source",
+      "type": "ResultBinding",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.dynamic_roi_source.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.dynamic_roi_source.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.dynamic_roi_source.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.enable_roi",
+      "name": "enable_roi",
+      "type": "Boolean",
+      "options": [],
+      "defaultValue": false
+    },
+    {
+      "id": "settings.image_source",
+      "name": "image_source",
+      "type": "ResultBinding",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.items",
+      "name": "items",
+      "type": "List`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.property_id",
+      "name": "property_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.property_path",
+      "name": "property_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.source_step_id",
+      "name": "source_step_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.members",
+      "name": "members",
+      "type": "Dictionary`2",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.provider_id",
+      "name": "provider_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.image_source.schema_id",
+      "name": "schema_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.image_source.source_id",
+      "name": "source_id",
+      "type": "String",
+      "options": [],
+      "defaultValue": ""
+    },
+    {
+      "id": "settings.image_source.value_path",
+      "name": "value_path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "settings.languages",
+      "name": "languages",
+      "type": "String",
+      "options": [],
+      "defaultValue": "deu+eng"
+    },
+    {
+      "id": "settings.page_layout",
+      "name": "page_layout",
+      "type": "OcrPageLayout",
+      "options": [
+        "Automatic",
+        "TextBlock",
+        "TextLine",
+        "SingleWord",
+        "SparseText"
+      ],
+      "defaultValue": "Automatic"
+    },
+    {
+      "id": "settings.roi",
+      "name": "roi",
+      "type": "PixelRegion",
+      "options": [],
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "id": "settings.roi.Empty",
+      "name": "Empty",
+      "type": "PixelRegion",
+      "options": [],
+      "defaultValue": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "id": "settings.roi.height",
+      "name": "height",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 0
+    },
+    {
+      "id": "settings.roi.width",
+      "name": "width",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 0
+    },
+    {
+      "id": "settings.roi.x",
+      "name": "x",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 0
+    },
+    {
+      "id": "settings.roi.y",
+      "name": "y",
+      "type": "Int32",
+      "options": [],
+      "defaultValue": 0
+    }
+  ],
+  "inputs": [
+    {
+      "Key": "image",
+      "Required": true,
+      "MissingValuePolicy": "FailStep",
+      "CollectionConsumption": "NotApplicable",
+      "AcceptedShapes": [
+        {
+          "ValueKind": "Image",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle"
+          ]
+        }
+      ],
+      "AllowedProviderIds": [
+        "step_result"
+      ],
+      "LegacyAllowedProviderIds": [],
+      "AllowsDirectValue": false,
+      "LegacyAcceptedShapes": []
+    },
+    {
+      "Key": "dynamicRoi",
+      "Required": false,
+      "MissingValuePolicy": "SkipStep",
+      "CollectionConsumption": "FirstValue",
+      "AcceptedShapes": [
+        {
+          "ValueKind": "Rectangle",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        }
+      ],
+      "AllowedProviderIds": [
+        "job_variable",
+        "step_result"
+      ],
+      "LegacyAllowedProviderIds": [],
+      "AllowsDirectValue": false,
+      "LegacyAcceptedShapes": []
+    }
+  ],
+  "result": {
+    "TypeName": "OcrResult",
+    "DisplayName": "OcrResult",
+    "Properties": [
+      {
+        "Name": "Found",
+        "DisplayName": "Found",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "found",
+        "EnumDisplayNames": null,
+        "StableId": "found"
+      },
+      {
+        "Name": "Text",
+        "DisplayName": "Text",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "text",
+        "EnumDisplayNames": null,
+        "StableId": "text"
+      },
+      {
+        "Name": "Confidence",
+        "DisplayName": "Confidence",
+        "DataType": "Number",
+        "Description": "Number",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "confidence",
+        "EnumDisplayNames": null,
+        "StableId": "confidence"
+      },
+      {
+        "Name": "MinimumConfidence",
+        "DisplayName": "Minimum Confidence",
+        "DataType": "Number",
+        "Description": "Number",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "minimum_confidence",
+        "EnumDisplayNames": null,
+        "StableId": "minimum_confidence"
+      },
+      {
+        "Name": "BoundingBox",
+        "DisplayName": "Bounding Box",
+        "DataType": "Rectangle",
+        "Description": "Rectangle, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box"
+      },
+      {
+        "Name": "BoundingBox.X",
+        "DisplayName": "Bounding Box / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.x",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.x"
+      },
+      {
+        "Name": "BoundingBox.Y",
+        "DisplayName": "Bounding Box / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.y",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.y"
+      },
+      {
+        "Name": "BoundingBox.Width",
+        "DisplayName": "Bounding Box / Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.width",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.width"
+      },
+      {
+        "Name": "BoundingBox.Height",
+        "DisplayName": "Bounding Box / Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.height",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.height"
+      },
+      {
+        "Name": "BoundingBox.Left",
+        "DisplayName": "Bounding Box / Left",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.left",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.left"
+      },
+      {
+        "Name": "BoundingBox.Top",
+        "DisplayName": "Bounding Box / Top",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.top",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.top"
+      },
+      {
+        "Name": "BoundingBox.Right",
+        "DisplayName": "Bounding Box / Right",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.right",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.right"
+      },
+      {
+        "Name": "BoundingBox.Bottom",
+        "DisplayName": "Bounding Box / Bottom",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.bottom",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.bottom"
+      },
+      {
+        "Name": "BoundingBox.IsEmpty",
+        "DisplayName": "Bounding Box / Is Empty",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.is_empty",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.is_empty"
+      },
+      {
+        "Name": "BoundingBox.Location",
+        "DisplayName": "Bounding Box / Location",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.location",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.location"
+      },
+      {
+        "Name": "BoundingBox.Location.X",
+        "DisplayName": "Bounding Box / Location / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.location.x",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.location.x"
+      },
+      {
+        "Name": "BoundingBox.Location.Y",
+        "DisplayName": "Bounding Box / Location / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.location.y",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.location.y"
+      },
+      {
+        "Name": "BoundingBox.Center",
+        "DisplayName": "Bounding Box / Center",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.center",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.center"
+      },
+      {
+        "Name": "BoundingBox.Center.X",
+        "DisplayName": "Bounding Box / Center / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.center.x",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.center.x"
+      },
+      {
+        "Name": "BoundingBox.Center.Y",
+        "DisplayName": "Bounding Box / Center / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "bounding_box.center.y",
+        "EnumDisplayNames": null,
+        "StableId": "bounding_box.center.y"
+      },
+      {
+        "Name": "LineCount",
+        "DisplayName": "Line Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "line_count",
+        "EnumDisplayNames": null,
+        "StableId": "line_count"
+      },
+      {
+        "Name": "WordCount",
+        "DisplayName": "Word Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "word_count",
+        "EnumDisplayNames": null,
+        "StableId": "word_count"
+      },
+      {
+        "Name": "Lines.Count",
+        "DisplayName": "Lines / Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.count",
+        "EnumDisplayNames": null,
+        "StableId": "lines.count"
+      },
+      {
+        "Name": "Lines[].Text",
+        "DisplayName": "Lines[] / Text",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.text",
+        "EnumDisplayNames": null,
+        "StableId": "lines.text"
+      },
+      {
+        "Name": "Lines[].Confidence",
+        "DisplayName": "Lines[] / Confidence",
+        "DataType": "Number",
+        "Description": "Number",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.confidence",
+        "EnumDisplayNames": null,
+        "StableId": "lines.confidence"
+      },
+      {
+        "Name": "Lines[].BoundingBox",
+        "DisplayName": "Lines[] / Bounding Box",
+        "DataType": "Rectangle",
+        "Description": "Rectangle",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box"
+      },
+      {
+        "Name": "Lines[].BoundingBox.X",
+        "DisplayName": "Lines[] / Bounding Box / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.x",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.x"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Y",
+        "DisplayName": "Lines[] / Bounding Box / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.y",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.y"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Width",
+        "DisplayName": "Lines[] / Bounding Box / Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.width",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.width"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Height",
+        "DisplayName": "Lines[] / Bounding Box / Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.height",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.height"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Left",
+        "DisplayName": "Lines[] / Bounding Box / Left",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.left",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.left"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Top",
+        "DisplayName": "Lines[] / Bounding Box / Top",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.top",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.top"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Right",
+        "DisplayName": "Lines[] / Bounding Box / Right",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.right",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.right"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Bottom",
+        "DisplayName": "Lines[] / Bounding Box / Bottom",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.bottom",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.bottom"
+      },
+      {
+        "Name": "Lines[].BoundingBox.IsEmpty",
+        "DisplayName": "Lines[] / Bounding Box / Is Empty",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.is_empty",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.is_empty"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Location",
+        "DisplayName": "Lines[] / Bounding Box / Location",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.location",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.location"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Location.X",
+        "DisplayName": "Lines[] / Bounding Box / Location / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.location.x",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.location.x"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Location.Y",
+        "DisplayName": "Lines[] / Bounding Box / Location / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.location.y",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.location.y"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Center",
+        "DisplayName": "Lines[] / Bounding Box / Center",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.center",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.center"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Center.X",
+        "DisplayName": "Lines[] / Bounding Box / Center / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.center.x",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.center.x"
+      },
+      {
+        "Name": "Lines[].BoundingBox.Center.Y",
+        "DisplayName": "Lines[] / Bounding Box / Center / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.bounding_box.center.y",
+        "EnumDisplayNames": null,
+        "StableId": "lines.bounding_box.center.y"
+      },
+      {
+        "Name": "Lines[].Position",
+        "DisplayName": "Lines[] / Position",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "lines.position",
+        "EnumDisplayNames": null,
+        "StableId": "lines.position"
+      },
+      {
+        "Name": "Words.Count",
+        "DisplayName": "Words / Count",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.count",
+        "EnumDisplayNames": null,
+        "StableId": "words.count"
+      },
+      {
+        "Name": "Words[].Text",
+        "DisplayName": "Words[] / Text",
+        "DataType": "Text",
+        "Description": "Text, kann leer sein",
+        "IsNullable": true,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.text",
+        "EnumDisplayNames": null,
+        "StableId": "words.text"
+      },
+      {
+        "Name": "Words[].Confidence",
+        "DisplayName": "Words[] / Confidence",
+        "DataType": "Number",
+        "Description": "Number",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.confidence",
+        "EnumDisplayNames": null,
+        "StableId": "words.confidence"
+      },
+      {
+        "Name": "Words[].BoundingBox",
+        "DisplayName": "Words[] / Bounding Box",
+        "DataType": "Rectangle",
+        "Description": "Rectangle",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box"
+      },
+      {
+        "Name": "Words[].BoundingBox.X",
+        "DisplayName": "Words[] / Bounding Box / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.x",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.x"
+      },
+      {
+        "Name": "Words[].BoundingBox.Y",
+        "DisplayName": "Words[] / Bounding Box / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.y",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.y"
+      },
+      {
+        "Name": "Words[].BoundingBox.Width",
+        "DisplayName": "Words[] / Bounding Box / Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.width",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.width"
+      },
+      {
+        "Name": "Words[].BoundingBox.Height",
+        "DisplayName": "Words[] / Bounding Box / Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.height",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.height"
+      },
+      {
+        "Name": "Words[].BoundingBox.Left",
+        "DisplayName": "Words[] / Bounding Box / Left",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.left",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.left"
+      },
+      {
+        "Name": "Words[].BoundingBox.Top",
+        "DisplayName": "Words[] / Bounding Box / Top",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.top",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.top"
+      },
+      {
+        "Name": "Words[].BoundingBox.Right",
+        "DisplayName": "Words[] / Bounding Box / Right",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.right",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.right"
+      },
+      {
+        "Name": "Words[].BoundingBox.Bottom",
+        "DisplayName": "Words[] / Bounding Box / Bottom",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.bottom",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.bottom"
+      },
+      {
+        "Name": "Words[].BoundingBox.IsEmpty",
+        "DisplayName": "Words[] / Bounding Box / Is Empty",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.is_empty",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.is_empty"
+      },
+      {
+        "Name": "Words[].BoundingBox.Location",
+        "DisplayName": "Words[] / Bounding Box / Location",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.location",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.location"
+      },
+      {
+        "Name": "Words[].BoundingBox.Location.X",
+        "DisplayName": "Words[] / Bounding Box / Location / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.location.x",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.location.x"
+      },
+      {
+        "Name": "Words[].BoundingBox.Location.Y",
+        "DisplayName": "Words[] / Bounding Box / Location / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.location.y",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.location.y"
+      },
+      {
+        "Name": "Words[].BoundingBox.Center",
+        "DisplayName": "Words[] / Bounding Box / Center",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.center",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.center"
+      },
+      {
+        "Name": "Words[].BoundingBox.Center.X",
+        "DisplayName": "Words[] / Bounding Box / Center / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.center.x",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.center.x"
+      },
+      {
+        "Name": "Words[].BoundingBox.Center.Y",
+        "DisplayName": "Words[] / Bounding Box / Center / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.bounding_box.center.y",
+        "EnumDisplayNames": null,
+        "StableId": "words.bounding_box.center.y"
+      },
+      {
+        "Name": "Words[].Position",
+        "DisplayName": "Words[] / Position",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.position",
+        "EnumDisplayNames": null,
+        "StableId": "words.position"
+      },
+      {
+        "Name": "Words[].LinePosition",
+        "DisplayName": "Words[] / Line Position",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Collection",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "words.line_position",
+        "EnumDisplayNames": null,
+        "StableId": "words.line_position"
+      },
+      {
+        "Name": "AppliedRoi",
+        "DisplayName": "Applied Roi",
+        "DataType": "Rectangle",
+        "Description": "Rectangle, kann leer sein",
+        "IsNullable": true,
+        "Example": "{X=10,Y=20,Width=300,Height=200}",
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi"
+      },
+      {
+        "Name": "AppliedRoi.X",
+        "DisplayName": "Applied Roi / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.x",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.x"
+      },
+      {
+        "Name": "AppliedRoi.Y",
+        "DisplayName": "Applied Roi / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.y",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.y"
+      },
+      {
+        "Name": "AppliedRoi.Width",
+        "DisplayName": "Applied Roi / Width",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.width",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.width"
+      },
+      {
+        "Name": "AppliedRoi.Height",
+        "DisplayName": "Applied Roi / Height",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.height",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.height"
+      },
+      {
+        "Name": "AppliedRoi.Left",
+        "DisplayName": "Applied Roi / Left",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.left",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.left"
+      },
+      {
+        "Name": "AppliedRoi.Top",
+        "DisplayName": "Applied Roi / Top",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.top",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.top"
+      },
+      {
+        "Name": "AppliedRoi.Right",
+        "DisplayName": "Applied Roi / Right",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.right",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.right"
+      },
+      {
+        "Name": "AppliedRoi.Bottom",
+        "DisplayName": "Applied Roi / Bottom",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.bottom",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.bottom"
+      },
+      {
+        "Name": "AppliedRoi.IsEmpty",
+        "DisplayName": "Applied Roi / Is Empty",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.is_empty",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.is_empty"
+      },
+      {
+        "Name": "AppliedRoi.Location",
+        "DisplayName": "Applied Roi / Location",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.location",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.location"
+      },
+      {
+        "Name": "AppliedRoi.Location.X",
+        "DisplayName": "Applied Roi / Location / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.location.x",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.location.x"
+      },
+      {
+        "Name": "AppliedRoi.Location.Y",
+        "DisplayName": "Applied Roi / Location / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.location.y",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.location.y"
+      },
+      {
+        "Name": "AppliedRoi.Center",
+        "DisplayName": "Applied Roi / Center",
+        "DataType": "Point",
+        "Description": "Point",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.center",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.center"
+      },
+      {
+        "Name": "AppliedRoi.Center.X",
+        "DisplayName": "Applied Roi / Center / X",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.center.x",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.center.x"
+      },
+      {
+        "Name": "AppliedRoi.Center.Y",
+        "DisplayName": "Applied Roi / Center / Y",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "OptionalSingle",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "applied_roi.center.y",
+        "EnumDisplayNames": null,
+        "StableId": "applied_roi.center.y"
+      },
+      {
+        "Name": "UsedDynamicRoi",
+        "DisplayName": "Used Dynamic Roi",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "used_dynamic_roi",
+        "EnumDisplayNames": null,
+        "StableId": "used_dynamic_roi"
+      },
+      {
+        "Name": "SourceCaptureIsFresh",
+        "DisplayName": "Source Capture Is Fresh",
+        "DataType": "Boolean",
+        "Description": "Boolean",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "source_capture_is_fresh",
+        "EnumDisplayNames": null,
+        "StableId": "source_capture_is_fresh"
+      },
+      {
+        "Name": "SourceCaptureTimestampUtc",
+        "DisplayName": "Source Capture Timestamp Utc",
+        "DataType": "DateTime",
+        "Description": "DateTime",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "source_capture_timestamp_utc",
+        "EnumDisplayNames": null,
+        "StableId": "source_capture_timestamp_utc"
+      },
+      {
+        "Name": "SourceFrameVersion",
+        "DisplayName": "Source Frame Version",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "source_frame_version",
+        "EnumDisplayNames": null,
+        "StableId": "source_frame_version"
+      },
+      {
+        "Name": "SourceFrameTimestamp",
+        "DisplayName": "Source Frame Timestamp",
+        "DataType": "Integer",
+        "Description": "Integer",
+        "IsNullable": false,
+        "Example": null,
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "source_frame_timestamp",
+        "EnumDisplayNames": null,
+        "StableId": "source_frame_timestamp"
+      }
+    ],
+    "PropertyTree": [
+      {
+        "Segment": "Found",
+        "DisplayName": "Found",
+        "Property": {
+          "Name": "Found",
+          "DisplayName": "Found",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "found",
+          "EnumDisplayNames": null,
+          "StableId": "found"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Text",
+        "DisplayName": "Text",
+        "Property": {
+          "Name": "Text",
+          "DisplayName": "Text",
+          "DataType": "Text",
+          "Description": "Text, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "text",
+          "EnumDisplayNames": null,
+          "StableId": "text"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Confidence",
+        "DisplayName": "Confidence",
+        "Property": {
+          "Name": "Confidence",
+          "DisplayName": "Confidence",
+          "DataType": "Number",
+          "Description": "Number",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "confidence",
+          "EnumDisplayNames": null,
+          "StableId": "confidence"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "MinimumConfidence",
+        "DisplayName": "Minimum Confidence",
+        "Property": {
+          "Name": "MinimumConfidence",
+          "DisplayName": "Minimum Confidence",
+          "DataType": "Number",
+          "Description": "Number",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "minimum_confidence",
+          "EnumDisplayNames": null,
+          "StableId": "minimum_confidence"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "BoundingBox",
+        "DisplayName": "Bounding Box",
+        "Property": {
+          "Name": "BoundingBox",
+          "DisplayName": "Bounding Box",
+          "DataType": "Rectangle",
+          "Description": "Rectangle, kann leer sein",
+          "IsNullable": true,
+          "Example": null,
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "bounding_box",
+          "EnumDisplayNames": null,
+          "StableId": "bounding_box"
+        },
+        "Children": [
+          {
+            "Segment": "X",
+            "DisplayName": "X",
+            "Property": {
+              "Name": "BoundingBox.X",
+              "DisplayName": "Bounding Box / X",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.x",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.x"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Y",
+            "DisplayName": "Y",
+            "Property": {
+              "Name": "BoundingBox.Y",
+              "DisplayName": "Bounding Box / Y",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.y",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.y"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Width",
+            "DisplayName": "Width",
+            "Property": {
+              "Name": "BoundingBox.Width",
+              "DisplayName": "Bounding Box / Width",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.width",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.width"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Height",
+            "DisplayName": "Height",
+            "Property": {
+              "Name": "BoundingBox.Height",
+              "DisplayName": "Bounding Box / Height",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.height",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.height"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Left",
+            "DisplayName": "Left",
+            "Property": {
+              "Name": "BoundingBox.Left",
+              "DisplayName": "Bounding Box / Left",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.left",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.left"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Top",
+            "DisplayName": "Top",
+            "Property": {
+              "Name": "BoundingBox.Top",
+              "DisplayName": "Bounding Box / Top",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.top",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.top"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Right",
+            "DisplayName": "Right",
+            "Property": {
+              "Name": "BoundingBox.Right",
+              "DisplayName": "Bounding Box / Right",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.right",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.right"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Bottom",
+            "DisplayName": "Bottom",
+            "Property": {
+              "Name": "BoundingBox.Bottom",
+              "DisplayName": "Bounding Box / Bottom",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.bottom",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.bottom"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "IsEmpty",
+            "DisplayName": "Is Empty",
+            "Property": {
+              "Name": "BoundingBox.IsEmpty",
+              "DisplayName": "Bounding Box / Is Empty",
+              "DataType": "Boolean",
+              "Description": "Boolean",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.is_empty",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.is_empty"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Location",
+            "DisplayName": "Location",
+            "Property": {
+              "Name": "BoundingBox.Location",
+              "DisplayName": "Bounding Box / Location",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.location",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.location"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "BoundingBox.Location.X",
+                  "DisplayName": "Bounding Box / Location / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounding_box.location.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounding_box.location.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "BoundingBox.Location.Y",
+                  "DisplayName": "Bounding Box / Location / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounding_box.location.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounding_box.location.y"
+                },
+                "Children": []
+              }
+            ]
+          },
+          {
+            "Segment": "Center",
+            "DisplayName": "Center",
+            "Property": {
+              "Name": "BoundingBox.Center",
+              "DisplayName": "Bounding Box / Center",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "bounding_box.center",
+              "EnumDisplayNames": null,
+              "StableId": "bounding_box.center"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "BoundingBox.Center.X",
+                  "DisplayName": "Bounding Box / Center / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounding_box.center.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounding_box.center.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "BoundingBox.Center.Y",
+                  "DisplayName": "Bounding Box / Center / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "bounding_box.center.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "bounding_box.center.y"
+                },
+                "Children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Segment": "LineCount",
+        "DisplayName": "Line Count",
+        "Property": {
+          "Name": "LineCount",
+          "DisplayName": "Line Count",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "line_count",
+          "EnumDisplayNames": null,
+          "StableId": "line_count"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "WordCount",
+        "DisplayName": "Word Count",
+        "Property": {
+          "Name": "WordCount",
+          "DisplayName": "Word Count",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "word_count",
+          "EnumDisplayNames": null,
+          "StableId": "word_count"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "Lines",
+        "DisplayName": "Lines",
+        "Property": null,
+        "Children": [
+          {
+            "Segment": "Count",
+            "DisplayName": "Count",
+            "Property": {
+              "Name": "Lines.Count",
+              "DisplayName": "Lines / Count",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "lines.count",
+              "EnumDisplayNames": null,
+              "StableId": "lines.count"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Text",
+            "DisplayName": "Text",
+            "Property": {
+              "Name": "Lines[].Text",
+              "DisplayName": "Lines[] / Text",
+              "DataType": "Text",
+              "Description": "Text, kann leer sein",
+              "IsNullable": true,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "lines.text",
+              "EnumDisplayNames": null,
+              "StableId": "lines.text"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Confidence",
+            "DisplayName": "Confidence",
+            "Property": {
+              "Name": "Lines[].Confidence",
+              "DisplayName": "Lines[] / Confidence",
+              "DataType": "Number",
+              "Description": "Number",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "lines.confidence",
+              "EnumDisplayNames": null,
+              "StableId": "lines.confidence"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "BoundingBox",
+            "DisplayName": "Bounding Box",
+            "Property": {
+              "Name": "Lines[].BoundingBox",
+              "DisplayName": "Lines[] / Bounding Box",
+              "DataType": "Rectangle",
+              "Description": "Rectangle",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "lines.bounding_box",
+              "EnumDisplayNames": null,
+              "StableId": "lines.bounding_box"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.X",
+                  "DisplayName": "Lines[] / Bounding Box / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Y",
+                  "DisplayName": "Lines[] / Bounding Box / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.y"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Width",
+                "DisplayName": "Width",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Width",
+                  "DisplayName": "Lines[] / Bounding Box / Width",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.width",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.width"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Height",
+                "DisplayName": "Height",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Height",
+                  "DisplayName": "Lines[] / Bounding Box / Height",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.height",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.height"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Left",
+                "DisplayName": "Left",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Left",
+                  "DisplayName": "Lines[] / Bounding Box / Left",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.left",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.left"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Top",
+                "DisplayName": "Top",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Top",
+                  "DisplayName": "Lines[] / Bounding Box / Top",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.top",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.top"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Right",
+                "DisplayName": "Right",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Right",
+                  "DisplayName": "Lines[] / Bounding Box / Right",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.right",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.right"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Bottom",
+                "DisplayName": "Bottom",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Bottom",
+                  "DisplayName": "Lines[] / Bounding Box / Bottom",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.bottom",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.bottom"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "IsEmpty",
+                "DisplayName": "Is Empty",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.IsEmpty",
+                  "DisplayName": "Lines[] / Bounding Box / Is Empty",
+                  "DataType": "Boolean",
+                  "Description": "Boolean",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.is_empty",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.is_empty"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Location",
+                "DisplayName": "Location",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Location",
+                  "DisplayName": "Lines[] / Bounding Box / Location",
+                  "DataType": "Point",
+                  "Description": "Point",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.location",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.location"
+                },
+                "Children": [
+                  {
+                    "Segment": "X",
+                    "DisplayName": "X",
+                    "Property": {
+                      "Name": "Lines[].BoundingBox.Location.X",
+                      "DisplayName": "Lines[] / Bounding Box / Location / X",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "lines.bounding_box.location.x",
+                      "EnumDisplayNames": null,
+                      "StableId": "lines.bounding_box.location.x"
+                    },
+                    "Children": []
+                  },
+                  {
+                    "Segment": "Y",
+                    "DisplayName": "Y",
+                    "Property": {
+                      "Name": "Lines[].BoundingBox.Location.Y",
+                      "DisplayName": "Lines[] / Bounding Box / Location / Y",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "lines.bounding_box.location.y",
+                      "EnumDisplayNames": null,
+                      "StableId": "lines.bounding_box.location.y"
+                    },
+                    "Children": []
+                  }
+                ]
+              },
+              {
+                "Segment": "Center",
+                "DisplayName": "Center",
+                "Property": {
+                  "Name": "Lines[].BoundingBox.Center",
+                  "DisplayName": "Lines[] / Bounding Box / Center",
+                  "DataType": "Point",
+                  "Description": "Point",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "lines.bounding_box.center",
+                  "EnumDisplayNames": null,
+                  "StableId": "lines.bounding_box.center"
+                },
+                "Children": [
+                  {
+                    "Segment": "X",
+                    "DisplayName": "X",
+                    "Property": {
+                      "Name": "Lines[].BoundingBox.Center.X",
+                      "DisplayName": "Lines[] / Bounding Box / Center / X",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "lines.bounding_box.center.x",
+                      "EnumDisplayNames": null,
+                      "StableId": "lines.bounding_box.center.x"
+                    },
+                    "Children": []
+                  },
+                  {
+                    "Segment": "Y",
+                    "DisplayName": "Y",
+                    "Property": {
+                      "Name": "Lines[].BoundingBox.Center.Y",
+                      "DisplayName": "Lines[] / Bounding Box / Center / Y",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "lines.bounding_box.center.y",
+                      "EnumDisplayNames": null,
+                      "StableId": "lines.bounding_box.center.y"
+                    },
+                    "Children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Segment": "Position",
+            "DisplayName": "Position",
+            "Property": {
+              "Name": "Lines[].Position",
+              "DisplayName": "Lines[] / Position",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "lines.position",
+              "EnumDisplayNames": null,
+              "StableId": "lines.position"
+            },
+            "Children": []
+          }
+        ]
+      },
+      {
+        "Segment": "Words",
+        "DisplayName": "Words",
+        "Property": null,
+        "Children": [
+          {
+            "Segment": "Count",
+            "DisplayName": "Count",
+            "Property": {
+              "Name": "Words.Count",
+              "DisplayName": "Words / Count",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Single",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "words.count",
+              "EnumDisplayNames": null,
+              "StableId": "words.count"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Text",
+            "DisplayName": "Text",
+            "Property": {
+              "Name": "Words[].Text",
+              "DisplayName": "Words[] / Text",
+              "DataType": "Text",
+              "Description": "Text, kann leer sein",
+              "IsNullable": true,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "words.text",
+              "EnumDisplayNames": null,
+              "StableId": "words.text"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Confidence",
+            "DisplayName": "Confidence",
+            "Property": {
+              "Name": "Words[].Confidence",
+              "DisplayName": "Words[] / Confidence",
+              "DataType": "Number",
+              "Description": "Number",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "words.confidence",
+              "EnumDisplayNames": null,
+              "StableId": "words.confidence"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "BoundingBox",
+            "DisplayName": "Bounding Box",
+            "Property": {
+              "Name": "Words[].BoundingBox",
+              "DisplayName": "Words[] / Bounding Box",
+              "DataType": "Rectangle",
+              "Description": "Rectangle",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "words.bounding_box",
+              "EnumDisplayNames": null,
+              "StableId": "words.bounding_box"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "Words[].BoundingBox.X",
+                  "DisplayName": "Words[] / Bounding Box / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Y",
+                  "DisplayName": "Words[] / Bounding Box / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.y"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Width",
+                "DisplayName": "Width",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Width",
+                  "DisplayName": "Words[] / Bounding Box / Width",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.width",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.width"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Height",
+                "DisplayName": "Height",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Height",
+                  "DisplayName": "Words[] / Bounding Box / Height",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.height",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.height"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Left",
+                "DisplayName": "Left",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Left",
+                  "DisplayName": "Words[] / Bounding Box / Left",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.left",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.left"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Top",
+                "DisplayName": "Top",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Top",
+                  "DisplayName": "Words[] / Bounding Box / Top",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.top",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.top"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Right",
+                "DisplayName": "Right",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Right",
+                  "DisplayName": "Words[] / Bounding Box / Right",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.right",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.right"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Bottom",
+                "DisplayName": "Bottom",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Bottom",
+                  "DisplayName": "Words[] / Bounding Box / Bottom",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.bottom",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.bottom"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "IsEmpty",
+                "DisplayName": "Is Empty",
+                "Property": {
+                  "Name": "Words[].BoundingBox.IsEmpty",
+                  "DisplayName": "Words[] / Bounding Box / Is Empty",
+                  "DataType": "Boolean",
+                  "Description": "Boolean",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.is_empty",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.is_empty"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Location",
+                "DisplayName": "Location",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Location",
+                  "DisplayName": "Words[] / Bounding Box / Location",
+                  "DataType": "Point",
+                  "Description": "Point",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.location",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.location"
+                },
+                "Children": [
+                  {
+                    "Segment": "X",
+                    "DisplayName": "X",
+                    "Property": {
+                      "Name": "Words[].BoundingBox.Location.X",
+                      "DisplayName": "Words[] / Bounding Box / Location / X",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "words.bounding_box.location.x",
+                      "EnumDisplayNames": null,
+                      "StableId": "words.bounding_box.location.x"
+                    },
+                    "Children": []
+                  },
+                  {
+                    "Segment": "Y",
+                    "DisplayName": "Y",
+                    "Property": {
+                      "Name": "Words[].BoundingBox.Location.Y",
+                      "DisplayName": "Words[] / Bounding Box / Location / Y",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "words.bounding_box.location.y",
+                      "EnumDisplayNames": null,
+                      "StableId": "words.bounding_box.location.y"
+                    },
+                    "Children": []
+                  }
+                ]
+              },
+              {
+                "Segment": "Center",
+                "DisplayName": "Center",
+                "Property": {
+                  "Name": "Words[].BoundingBox.Center",
+                  "DisplayName": "Words[] / Bounding Box / Center",
+                  "DataType": "Point",
+                  "Description": "Point",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "Collection",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "words.bounding_box.center",
+                  "EnumDisplayNames": null,
+                  "StableId": "words.bounding_box.center"
+                },
+                "Children": [
+                  {
+                    "Segment": "X",
+                    "DisplayName": "X",
+                    "Property": {
+                      "Name": "Words[].BoundingBox.Center.X",
+                      "DisplayName": "Words[] / Bounding Box / Center / X",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "words.bounding_box.center.x",
+                      "EnumDisplayNames": null,
+                      "StableId": "words.bounding_box.center.x"
+                    },
+                    "Children": []
+                  },
+                  {
+                    "Segment": "Y",
+                    "DisplayName": "Y",
+                    "Property": {
+                      "Name": "Words[].BoundingBox.Center.Y",
+                      "DisplayName": "Words[] / Bounding Box / Center / Y",
+                      "DataType": "Integer",
+                      "Description": "Integer",
+                      "IsNullable": false,
+                      "Example": null,
+                      "Cardinality": "Collection",
+                      "EnumTypeName": null,
+                      "EnumValues": null,
+                      "Id": "words.bounding_box.center.y",
+                      "EnumDisplayNames": null,
+                      "StableId": "words.bounding_box.center.y"
+                    },
+                    "Children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Segment": "Position",
+            "DisplayName": "Position",
+            "Property": {
+              "Name": "Words[].Position",
+              "DisplayName": "Words[] / Position",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "words.position",
+              "EnumDisplayNames": null,
+              "StableId": "words.position"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "LinePosition",
+            "DisplayName": "Line Position",
+            "Property": {
+              "Name": "Words[].LinePosition",
+              "DisplayName": "Words[] / Line Position",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "Collection",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "words.line_position",
+              "EnumDisplayNames": null,
+              "StableId": "words.line_position"
+            },
+            "Children": []
+          }
+        ]
+      },
+      {
+        "Segment": "AppliedRoi",
+        "DisplayName": "Applied Roi",
+        "Property": {
+          "Name": "AppliedRoi",
+          "DisplayName": "Applied Roi",
+          "DataType": "Rectangle",
+          "Description": "Rectangle, kann leer sein",
+          "IsNullable": true,
+          "Example": "{X=10,Y=20,Width=300,Height=200}",
+          "Cardinality": "OptionalSingle",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "applied_roi",
+          "EnumDisplayNames": null,
+          "StableId": "applied_roi"
+        },
+        "Children": [
+          {
+            "Segment": "X",
+            "DisplayName": "X",
+            "Property": {
+              "Name": "AppliedRoi.X",
+              "DisplayName": "Applied Roi / X",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.x",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.x"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Y",
+            "DisplayName": "Y",
+            "Property": {
+              "Name": "AppliedRoi.Y",
+              "DisplayName": "Applied Roi / Y",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.y",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.y"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Width",
+            "DisplayName": "Width",
+            "Property": {
+              "Name": "AppliedRoi.Width",
+              "DisplayName": "Applied Roi / Width",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.width",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.width"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Height",
+            "DisplayName": "Height",
+            "Property": {
+              "Name": "AppliedRoi.Height",
+              "DisplayName": "Applied Roi / Height",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.height",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.height"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Left",
+            "DisplayName": "Left",
+            "Property": {
+              "Name": "AppliedRoi.Left",
+              "DisplayName": "Applied Roi / Left",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.left",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.left"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Top",
+            "DisplayName": "Top",
+            "Property": {
+              "Name": "AppliedRoi.Top",
+              "DisplayName": "Applied Roi / Top",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.top",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.top"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Right",
+            "DisplayName": "Right",
+            "Property": {
+              "Name": "AppliedRoi.Right",
+              "DisplayName": "Applied Roi / Right",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.right",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.right"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Bottom",
+            "DisplayName": "Bottom",
+            "Property": {
+              "Name": "AppliedRoi.Bottom",
+              "DisplayName": "Applied Roi / Bottom",
+              "DataType": "Integer",
+              "Description": "Integer",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.bottom",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.bottom"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "IsEmpty",
+            "DisplayName": "Is Empty",
+            "Property": {
+              "Name": "AppliedRoi.IsEmpty",
+              "DisplayName": "Applied Roi / Is Empty",
+              "DataType": "Boolean",
+              "Description": "Boolean",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.is_empty",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.is_empty"
+            },
+            "Children": []
+          },
+          {
+            "Segment": "Location",
+            "DisplayName": "Location",
+            "Property": {
+              "Name": "AppliedRoi.Location",
+              "DisplayName": "Applied Roi / Location",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.location",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.location"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "AppliedRoi.Location.X",
+                  "DisplayName": "Applied Roi / Location / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "applied_roi.location.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "applied_roi.location.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "AppliedRoi.Location.Y",
+                  "DisplayName": "Applied Roi / Location / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "applied_roi.location.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "applied_roi.location.y"
+                },
+                "Children": []
+              }
+            ]
+          },
+          {
+            "Segment": "Center",
+            "DisplayName": "Center",
+            "Property": {
+              "Name": "AppliedRoi.Center",
+              "DisplayName": "Applied Roi / Center",
+              "DataType": "Point",
+              "Description": "Point",
+              "IsNullable": false,
+              "Example": null,
+              "Cardinality": "OptionalSingle",
+              "EnumTypeName": null,
+              "EnumValues": null,
+              "Id": "applied_roi.center",
+              "EnumDisplayNames": null,
+              "StableId": "applied_roi.center"
+            },
+            "Children": [
+              {
+                "Segment": "X",
+                "DisplayName": "X",
+                "Property": {
+                  "Name": "AppliedRoi.Center.X",
+                  "DisplayName": "Applied Roi / Center / X",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "applied_roi.center.x",
+                  "EnumDisplayNames": null,
+                  "StableId": "applied_roi.center.x"
+                },
+                "Children": []
+              },
+              {
+                "Segment": "Y",
+                "DisplayName": "Y",
+                "Property": {
+                  "Name": "AppliedRoi.Center.Y",
+                  "DisplayName": "Applied Roi / Center / Y",
+                  "DataType": "Integer",
+                  "Description": "Integer",
+                  "IsNullable": false,
+                  "Example": null,
+                  "Cardinality": "OptionalSingle",
+                  "EnumTypeName": null,
+                  "EnumValues": null,
+                  "Id": "applied_roi.center.y",
+                  "EnumDisplayNames": null,
+                  "StableId": "applied_roi.center.y"
+                },
+                "Children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Segment": "UsedDynamicRoi",
+        "DisplayName": "Used Dynamic Roi",
+        "Property": {
+          "Name": "UsedDynamicRoi",
+          "DisplayName": "Used Dynamic Roi",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "used_dynamic_roi",
+          "EnumDisplayNames": null,
+          "StableId": "used_dynamic_roi"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SourceCaptureIsFresh",
+        "DisplayName": "Source Capture Is Fresh",
+        "Property": {
+          "Name": "SourceCaptureIsFresh",
+          "DisplayName": "Source Capture Is Fresh",
+          "DataType": "Boolean",
+          "Description": "Boolean",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "source_capture_is_fresh",
+          "EnumDisplayNames": null,
+          "StableId": "source_capture_is_fresh"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SourceCaptureTimestampUtc",
+        "DisplayName": "Source Capture Timestamp Utc",
+        "Property": {
+          "Name": "SourceCaptureTimestampUtc",
+          "DisplayName": "Source Capture Timestamp Utc",
+          "DataType": "DateTime",
+          "Description": "DateTime",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "source_capture_timestamp_utc",
+          "EnumDisplayNames": null,
+          "StableId": "source_capture_timestamp_utc"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SourceFrameVersion",
+        "DisplayName": "Source Frame Version",
+        "Property": {
+          "Name": "SourceFrameVersion",
+          "DisplayName": "Source Frame Version",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "source_frame_version",
+          "EnumDisplayNames": null,
+          "StableId": "source_frame_version"
+        },
+        "Children": []
+      },
+      {
+        "Segment": "SourceFrameTimestamp",
+        "DisplayName": "Source Frame Timestamp",
+        "Property": {
+          "Name": "SourceFrameTimestamp",
+          "DisplayName": "Source Frame Timestamp",
+          "DataType": "Integer",
+          "Description": "Integer",
+          "IsNullable": false,
+          "Example": null,
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "source_frame_timestamp",
+          "EnumDisplayNames": null,
+          "StableId": "source_frame_timestamp"
+        },
+        "Children": []
+      }
+    ]
+  }
+}
+```
+
+### Strukturelle Serializer-Vorlage
+```json
+{
+  "type": "ocr",
+  "settings": {
+    "image_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "languages": "deu+eng",
+    "page_layout": "Automatic",
+    "roi": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "enable_roi": false,
+    "dynamic_roi_source": {
+      "provider_id": "",
+      "source_id": ""
+    }
+  },
+  "id": "4bfa512d-7ade-7be2-0978-97fc17f2f70d",
+  "inputs": {},
+  "is_enabled": true
+}
+```
+

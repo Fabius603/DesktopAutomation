@@ -27,6 +27,15 @@ namespace TaskAutomation.Orchestration
 
         /// <summary>Maximale Anzahl gleichzeitig laufender Job-Instanzen.</summary>
         public const int MaxJobCount = 100;
+        private int _reservedJobs;
+        private void ReserveJob(Job job)
+        {
+            if (Interlocked.Increment(ref _reservedJobs) <= MaxJobCount) return;
+            Interlocked.Decrement(ref _reservedJobs);
+            Rejected(job.Id, job.Name, "InstanceLimit");
+            throw new JobLimitExceededException(job.Name, MaxJobCount);
+        }
+
 
         private sealed record RunningMakroEntry(Guid MakroId, CancellationTokenSource Cts);
         private readonly ConcurrentDictionary<Guid, RunningMakroEntry> _makroInstances = new();
@@ -104,13 +113,8 @@ namespace TaskAutomation.Orchestration
                 return Guid.Empty;
             }
 
-            if (_jobInstances.Count >= MaxJobCount)
-            {
-                var ex = new JobLimitExceededException(job.Name, MaxJobCount);
-                _logger.LogWarning(ex.Message);
-                Rejected(job.Id, job.Name, "InstanceLimit");
-                throw ex;
-            }
+            job = JobStepsSnapshotService.CaptureExecution(job);
+            ReserveJob(job);
 
             var instanceId = Guid.NewGuid();
             var cancellation = new JobExecutionCancellation();
@@ -128,7 +132,7 @@ namespace TaskAutomation.Orchestration
             {
                 try
                 {
-                    await _executor.ExecuteJob(jobId, startContext with { InstanceId = instanceId }, cancellation, debugSession).ConfigureAwait(false);
+                    await _executor.ExecuteDefinitionAsync(job, startContext with { InstanceId = instanceId }, cancellation, debugSession).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -143,6 +147,7 @@ namespace TaskAutomation.Orchestration
                     if (debugSession != null && debugSession.State is not (JobDebugSessionState.Completed or JobDebugSessionState.Cancelled or JobDebugSessionState.Failed))
                         debugSession.Finish(cancellation.ExecutionToken.IsCancellationRequested ? JobDebugSessionState.Cancelled : JobDebugSessionState.Completed);
                     _jobInstances.TryRemove(instanceId, out _);
+                    Interlocked.Decrement(ref _reservedJobs);
                     cancellation.Dispose();
                     FireRunningJobsChanged();
                     if (debugSession != null) DebugSessionsChanged?.Invoke();
@@ -377,14 +382,17 @@ namespace TaskAutomation.Orchestration
         /// Registriert die Job-Instanz in RunningJobInstances, führt den Job inline aus (kein Task.Run)
         /// und wartet auf Abschluss. CancellationToken wird mit dem internen CTS verknüpft.
         /// </summary>
-        public async Task StartJobAsync(Guid id, CancellationToken ct, JobStartContext? startContext = null)
+        public Task StartJobAsync(Guid id, CancellationToken ct, JobStartContext? startContext = null)
+            => StartOwnedJobAsync(id, ct, default, startContext ?? JobStartContext.Manual);
+
+        public async Task StartOwnedJobAsync(Guid id, CancellationToken ct, CancellationToken forceToken, JobStartContext startContext)
         {
             var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == id);
             if (job == null)
             {
                 _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
                 Rejected(id, id.ToString(), "JobMissing");
-                return;
+                throw new InvalidOperationException("Child job start was rejected.");
             }
 
             if (job.ActiveStepCount == 0)
@@ -393,26 +401,22 @@ namespace TaskAutomation.Orchestration
                 _logger.LogWarning(ex.Message);
                 Rejected(job.Id, job.Name, "NoActiveSteps");
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
-                return;
+                throw new InvalidOperationException("Child job start was rejected.");
             }
 
-            if (_jobInstances.Count >= MaxJobCount)
-            {
-                var ex = new JobLimitExceededException(job.Name, MaxJobCount);
-                _logger.LogWarning(ex.Message);
-                Rejected(job.Id, job.Name, "InstanceLimit");
-                throw ex;
-            }
+            job = JobStepsSnapshotService.CaptureExecution(job);
+            ReserveJob(job);
 
             var instanceId = Guid.NewGuid();
-            using var cancellation = new JobExecutionCancellation(ct);
+            using var cancellation = new JobExecutionCancellation(ct, forceToken);
             cancellation.StateChanged += _ => FireRunningJobsChanged();
             _jobInstances[instanceId] = new RunningJobEntry(job.Id, job.Name, cancellation);
             FireRunningJobsChanged();
 
             try
             {
-                await _executor.ExecuteJob(job.Id, (startContext ?? JobStartContext.Manual) with { InstanceId = instanceId }, cancellation).ConfigureAwait(false);
+                var outcome = await _executor.ExecuteDefinitionAsync(job, startContext with { InstanceId = instanceId }, cancellation).ConfigureAwait(false);
+                outcome.EnsureSuccessful();
             }
             catch (OperationCanceledException)
             {
@@ -422,10 +426,12 @@ namespace TaskAutomation.Orchestration
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Fehler bei Job '{Name}' (Instanz {Id})", job.Name, instanceId);
+                throw;
             }
             finally
             {
                 _jobInstances.TryRemove(instanceId, out _);
+                Interlocked.Decrement(ref _reservedJobs);
                 FireRunningJobsChanged();
             }
         }

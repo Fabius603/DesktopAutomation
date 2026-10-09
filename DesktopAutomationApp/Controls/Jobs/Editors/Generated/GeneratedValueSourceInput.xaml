@@ -11,19 +11,18 @@
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged, Delay=250}"/>
         </DataTemplate>
     </UserControl.Resources>
-    <controls:ResponsiveActionPanel CanWrap="False" x:Name="InputValueHost"
-                                    MinPrimaryWidth="160"
-                                    HorizontalSpacing="5"
-                                    VerticalSpacing="6">
-        <Grid>
+    <Grid x:Name="InputValueHost" Background="Transparent">
+        <Grid Style="{StaticResource StepValueSourceContent}">
             <ContentControl Content="{Binding}"
                             ContentTemplateSelector="{DynamicResource InlineStepValueTemplateSelector}"
                             Visibility="{Binding ShowsDirectInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"
                                        Visibility="{Binding DataContext.ShowsInputSourcePicker, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <Border Style="{StaticResource StepFieldErrorOutline}" AutomationProperties.AutomationId="NestedStepFieldErrorOutline"/>
         </Grid>
-        <Button Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top"
-                Padding="0" Style="{StaticResource ButtonSecondary}"
+        <Button x:Name="SourceButton" HorizontalAlignment="Right" VerticalAlignment="Top"
+                AutomationProperties.AutomationId="StepValueSourceAction"
+                Style="{StaticResource StepValueSourceAction}"
                 Visibility="{Binding ShowsInputSourceSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                 ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"
                 Click="OpenValueSourceMenu_Click">
@@ -43,9 +42,9 @@
                               IsCheckable="True" IsChecked="{Binding InputReferenceEditor.Picker.IsSecretSource, Mode=OneWay}"/>
                 </ContextMenu>
             </Button.ContextMenu>
-            <iconPacks:PackIconMaterial Kind="RhombusOutline" Width="15" Height="15"
+            <iconPacks:PackIconMaterial Kind="LinkVariant" Width="15" Height="15"
                                         VerticalAlignment="Center" HorizontalAlignment="Center"
                                         Foreground="{DynamicResource App.Brush.Accent}"/>
         </Button>
-    </controls:ResponsiveActionPanel>
+    </Grid>
 </UserControl>

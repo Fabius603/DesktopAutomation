@@ -17,6 +17,8 @@ namespace ImageDetection.YOLO
 
         /// <summary> Prüft, ob für das Modell bereits eine Session existiert. </summary>
         bool HasSession(string modelKey);
+        Task<IDisposable> AcquireModelAsync(string modelKey, CancellationToken ct = default)
+            => ModelLifetime.AcquireAsync(this, modelKey, ct);
 
         List<string> GetAvailableModels();
         List<string> GetClassesForModel(string modelKey);

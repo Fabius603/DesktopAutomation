@@ -39,62 +39,12 @@ namespace TaskAutomation.Steps
                 throw new InvalidOperationException(
                     $"Cannot execute the same job '{ctx.CurrentJob.Name}' – preventing infinite recursion");
 
-            if (settings.WaitForCompletion)
-            {
-                logger.LogInformation(
-                    "JobExecutionStepHandler: Executing '{Name}' and waiting for completion", targetJob.Name);
-
-                if (ctx.StartJobViaDispatcherAsync != null)
-                {
-                    // Über den Dispatcher: sichtbar in RunningJobInstances, abbruchfähig
-                    await ctx.StartJobViaDispatcherAsync(targetJob.Id, ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Fallback (z.B. in Tests)
-                    await ctx.ExecuteJob(targetJob.Id, ct).ConfigureAwait(false);
-                }
-
-                logger.LogInformation("JobExecutionStepHandler: '{Name}' completed", targetJob.Name);
-            }
-            else
-            {
-                // Verknüpfter Token: wenn der Eltern-Job abgebrochen wird, wird auch dieser gestoppt.
-                logger.LogInformation(
-                    "JobExecutionStepHandler: Starting '{Name}' fire-and-forget (linked to parent)", targetJob.Name);
-                var id = targetJob.Id;
-
-                if (ctx.StartJobViaDispatcher != null)
-                {
-                    // Über den Dispatcher starten → in RunningJobInstances sichtbar und abbruchfähig.
-                    // Instanz-ID merken: JobExecutor.ExecuteJobAsync bereinigt sie beim Abbruch des Eltern-Jobs.
-                    var instanceId = ctx.StartJobViaDispatcher(id);
-                    if (instanceId == Guid.Empty) return new JobExecutionResult { WasExecuted = true, Success = false };
-                    ctx.ChildJobInstanceIds.Add(instanceId);
-                    logger.LogInformation(
-                        "JobExecutionStepHandler: '{Name}' started as dispatcher instance {InstanceId}",
-                        targetJob.Name, instanceId);
-                }
-                else
-                {
-                    // Fallback (z.B. in Tests): direkter Aufruf mit verknüpftem CancellationToken
-                    var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    var executeJob = ctx.ExecuteJob;
-                    var targetJobName = targetJob.Name;
-                    _ = Task.Run(async () =>
-                    {
-                        try { await executeJob(id, linkedCts.Token).ConfigureAwait(false); }
-                        catch (OperationCanceledException) { /* expected when parent stops */ }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex,
-                                "JobExecutionStepHandler: Fire-and-forget job '{Name}' failed", targetJobName);
-                        }
-                        finally { linkedCts.Dispose(); }
-                    });
-                }
-            }
-
+            var execute = ctx.StartJobViaDispatcherAsync ?? ctx.ExecuteJob;
+            var completion = ctx.OwnedExecutions is { } owned
+                ? await owned.StartAsync(token => execute(targetJob.Id, token), ct).ConfigureAwait(false)
+                : settings.WaitForCompletion ? execute(targetJob.Id, ct)
+                    : throw new InvalidOperationException("Parallel execution requires an owning job scope.");
+            if (settings.WaitForCompletion) await completion.ConfigureAwait(false);
             return new JobExecutionResult { WasExecuted = true, Success = true };
         }
 

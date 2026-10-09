@@ -1,0 +1,18 @@
+{
+  "name": "desktopautomation-website",
+  "private": true,
+  "scripts": {
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File Build.ps1",
+    "check": "powershell -NoProfile -ExecutionPolicy Bypass -File Build.ps1 -Check -Strict",
+    "check:complete": "powershell -NoProfile -ExecutionPolicy Bypass -File Build.ps1 -Check -Strict",
+    "predeploy": "npm run check",
+    "deploy": "wrangler pages deploy dist --project-name desktopautomation --branch main"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "workerd": true
+  },
+  "devDependencies": {
+    "wrangler": "^4.148.0"
+  }
+}

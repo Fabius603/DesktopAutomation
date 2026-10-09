@@ -181,7 +181,7 @@ public sealed class StepLoggingCompletenessTests
     }
 
     [Fact]
-    public async Task BackgroundScript_PreservesCorrelationAndReportsLateFailureWithoutLoggingOutput()
+    public async Task ParallelScript_PreservesCorrelationAndFailsItsOwnerWithoutLoggingOutput()
     {
         const string privateValue = "private-script-output-2387";
         using var directory = new TemporaryDirectory();
@@ -207,9 +207,12 @@ public sealed class StepLoggingCompletenessTests
         using var executor = await builder.BuildAsync();
         try
         {
-            await executor.ExecuteJob(job.Id);
+            var execution = executor.ExecuteJob(job.Id);
             await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
-            Assert.Equal(LogOutcome.Successful, Assert.Single(repository.ReadRuns()).Outcome);
+            Assert.False(execution.IsCompleted);
+            Assert.Null(Assert.Single(repository.ReadRuns()).EndedAt);
+            release.TrySetResult();
+            await execution.WaitAsync(TimeSpan.FromSeconds(10));
         }
         finally { release.TrySetResult(); }
         var failure = await observed.Task.WaitAsync(TimeSpan.FromSeconds(10));
@@ -228,7 +231,7 @@ public sealed class StepLoggingCompletenessTests
             Assert.Equal(privateValue.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), entry.Parameters["CharacterCount"]);
         });
         Assert.DoesNotContain(privateValue, JsonSerializer.Serialize(entries));
-        Assert.Equal(LogOutcome.WithErrors, Assert.Single(repository.ReadRuns()).Outcome);
+        Assert.Equal(LogOutcome.Failed, Assert.Single(repository.ReadRuns()).Outcome);
         AssertLifecycle(entries, [step.Id]);
     }
 

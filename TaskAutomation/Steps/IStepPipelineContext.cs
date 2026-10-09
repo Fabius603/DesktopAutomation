@@ -31,6 +31,10 @@ namespace TaskAutomation.Steps
         /// Gibt für nicht-ausgeführte Steps immer einen sinnvollen Default zurück.
         /// </summary>
         IJobResultStore Results { get; }
+        TaskAutomation.Orchestration.OwnedExecutionScope? OwnedExecutions => null;
+        Guid ResourceOwnerId => ExecutionLogSession?.Id ?? Guid.Empty;
+        string ResourceKey(string stepId) => ResourceOwnerId == Guid.Empty ? stepId : $"{ResourceOwnerId:N}:{stepId}";
+        Task AcquireYoloModelAsync(string model, CancellationToken ct) => YoloManager.EnsureModelAsync(model, ct);
         IDictionary<string, DynamicRoiState> DynamicRoiStates { get; }
 
         // ── Read-only Services ─────────────────────────────────────────────────
@@ -57,21 +61,10 @@ namespace TaskAutomation.Steps
         Func<Guid, CancellationToken, Task> ExecuteJob { get; }
 
         /// <summary>
-        /// Startet einen Sub-Job über den Dispatcher (erzeugt Instanz-ID, sichtbar in RunningJobInstances).
-        /// Gibt die Instanz-ID zurück. Null wenn kein Dispatcher verdrahtet ist (z.B. in Tests).
-        /// </summary>
-        Func<Guid, Guid>? StartJobViaDispatcher { get; }
-
-        /// <summary>
         /// Startet einen Sub-Job über den Dispatcher und wartet auf Abschluss.
         /// Null wenn kein Dispatcher verdrahtet ist (z.B. in Tests).
         /// </summary>
         Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; }
-
-        /// <summary>
-        /// Bricht eine Job-Instanz per Instanz-ID über den Dispatcher ab.
-        /// </summary>
-        Action<Guid>? CancelJobViaDispatcher { get; }
 
         // ── Per-Job-Ressourcen (lazy von Handlern gesetzt) ─────────────────────
 
@@ -89,12 +82,6 @@ namespace TaskAutomation.Steps
         /// </summary>
         ISet<string> OpenedWindowNames { get; }
 
-        /// <summary>
-        /// Instanz-IDs aller fire-and-forget Sub-Jobs die von JobExecutionStep (WaitForCompletion=false)
-        /// gestartet wurden. JobExecutor bricht diese bei Abbruch des Eltern-Jobs ab.
-        /// </summary>
-        IList<Guid> ChildJobInstanceIds { get; }
-
         TemplateMatching? TemplateMatcher { get; set; }
         ColorDetector? ColorDetector { get; set; }
         KeyPointMatcher? KeyPointMatcher { get; set; }
@@ -103,7 +90,7 @@ namespace TaskAutomation.Steps
 
         IVideoRecorder CreateVideoRecorder(int width, int height, int fps) => new StreamVideoRecorder(width, height, fps);
 
-        IVideoRecorder? VideoRecorder { get; set; }
+        IDictionary<string, IVideoRecorder> VideoRecorders { get; }
 
         /// <summary>Timeout-Tracking pro Step-ID (verhindert zu schnelle Wiederholungen).</summary>
         Dictionary<string, DateTime> StepTimeouts { get; }

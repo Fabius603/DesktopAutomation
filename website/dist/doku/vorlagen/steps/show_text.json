@@ -1,0 +1,22 @@
+{
+  "type": "show_text",
+  "settings": {
+    "text_source": "TaskResult",
+    "text": "",
+    "text_result": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "font_size": 24,
+    "font_color": "#FFFFFF",
+    "opacity": 1,
+    "desktop_index": 0,
+    "offset_x": 100,
+    "offset_y": 100,
+    "duration_ms": 5000,
+    "clear_on_job_end": false
+  },
+  "id": "53488c77-d339-7ac1-2fc2-7774b8ec431e",
+  "inputs": {},
+  "is_enabled": true
+}

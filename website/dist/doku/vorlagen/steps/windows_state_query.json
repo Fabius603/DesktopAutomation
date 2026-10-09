@@ -1,0 +1,10 @@
+{
+  "type": "windows_state_query",
+  "settings": {
+    "query_type": "network.connectivity",
+    "parameters": {}
+  },
+  "id": "6e1150cf-6454-7283-17b2-4a12a6c84fb9",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -1,0 +1,11 @@
+{
+  "type": "job_execution",
+  "settings": {
+    "job_name": "",
+    "job_id": null,
+    "wait_for_completion": true
+  },
+  "id": "7deb7f0c-62e0-194e-3194-da75007c16ed",
+  "inputs": {},
+  "is_enabled": true
+}

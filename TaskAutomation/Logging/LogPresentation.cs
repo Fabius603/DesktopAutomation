@@ -42,7 +42,7 @@ public static class LogPresentation
             LogCodes.StepStarted => "Log.Event.StepStarted",
             LogCodes.StepCompleted => "Log.Event.StepCompleted",
             LogCodes.StepFailed or LogCodes.StepBackgroundFailed => "Log.Event.StepFailed",
-            LogCodes.StepCancelled => "Log.Event.StepCancelled",
+            LogCodes.StepCancelled or LogCodes.StepBackgroundCancelled => "Log.Event.StepCancelled",
             LogCodes.StepSkipped => "Log.Event.StepSkipped",
             LogCodes.StepOutput => "Log.Event.ScriptOutput",
             LogCodes.Trigger => "Log.Event.Trigger",
@@ -57,7 +57,7 @@ public static class LogPresentation
     {
         var p = entry.Parameters;
         if (entry.Code == LogCodes.StepFailed || entry.Code == LogCodes.StepBackgroundFailed) return Text("Log.Summary.Failed");
-        if (entry.Code == LogCodes.StepCancelled) return Text(p.GetValueOrDefault("Reason") == "UserCancelled" ? "Log.Summary.UserCancelled" : "Log.Summary.Cancelled");
+        if (entry.Code is LogCodes.StepCancelled or LogCodes.StepBackgroundCancelled) return Text(p.GetValueOrDefault("Reason") == "UserCancelled" ? "Log.Summary.UserCancelled" : "Log.Summary.Cancelled");
         if (entry.Code == LogCodes.StepSkipped) return Text(p.GetValueOrDefault("Reason") switch
         {
             "Disabled" => "Log.Summary.Disabled",

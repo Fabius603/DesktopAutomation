@@ -15,10 +15,12 @@ using TaskAutomation.Jobs;
 namespace TaskAutomation.Steps;
 
 /// <summary>Serializes access to one reusable native Tesseract engine per language combination.</summary>
-public sealed class TesseractOcrService(ILogger<TesseractOcrService> logger) : IOcrService
+public sealed class TesseractOcrService(ILogger<TesseractOcrService> logger, Func<string, TesseractEngine>? engineFactory = null) : IOcrService
 {
-    private readonly ConcurrentDictionary<string, EngineEntry> _engines =
+    private readonly ConcurrentDictionary<string, Lazy<EngineEntry>> _engines =
         new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _lifetimeGate = new();
+    private int _activeOperations;
     private bool _disposed;
 
     public async Task<OcrRecognition> RecognizeAsync(
@@ -26,12 +28,32 @@ public sealed class TesseractOcrService(ILogger<TesseractOcrService> logger) : I
         OcrRecognitionOptions options,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        lock (_lifetimeGate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _activeOperations++;
+        }
+        try { return await RecognizeCoreAsync(image, options, cancellationToken).ConfigureAwait(false); }
+        finally
+        {
+            lock (_lifetimeGate) { _activeOperations--; Monitor.PulseAll(_lifetimeGate); }
+        }
+    }
+
+    private async Task<OcrRecognition> RecognizeCoreAsync(Bitmap image, OcrRecognitionOptions options, CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(image);
         cancellationToken.ThrowIfCancellationRequested();
 
         var languages = NormalizeLanguages(options.Languages);
-        var entry = _engines.GetOrAdd(languages, CreateEngine);
+        var lazy = _engines.GetOrAdd(languages, key => new Lazy<EngineEntry>(() => CreateEngine(key), LazyThreadSafetyMode.ExecutionAndPublication));
+        EngineEntry entry;
+        try { entry = lazy.Value; }
+        catch
+        {
+            ((ICollection<KeyValuePair<string, Lazy<EngineEntry>>>)_engines).Remove(new(languages, lazy));
+            throw;
+        }
         await entry.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -43,7 +65,7 @@ public sealed class TesseractOcrService(ILogger<TesseractOcrService> logger) : I
             var text = page.GetText().Trim();
             var lines = ReadLines(page);
             var words = ReadWords(page);
-            return new OcrRecognition(text, page.GetMeanConfidence() / 100d, lines, words);
+            return new OcrRecognition(text, page.GetMeanConfidence(), lines, words);
         }
         finally
         {
@@ -53,10 +75,16 @@ public sealed class TesseractOcrService(ILogger<TesseractOcrService> logger) : I
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        foreach (var entry in _engines.Values)
+        lock (_lifetimeGate)
         {
+            if (_disposed) return;
+            _disposed = true;
+            while (_activeOperations > 0) Monitor.Wait(_lifetimeGate);
+        }
+        foreach (var lazy in _engines.Values)
+        {
+            if (!lazy.IsValueCreated) continue;
+            var entry = lazy.Value;
             entry.Engine.Dispose();
             entry.Gate.Dispose();
         }
@@ -71,7 +99,7 @@ public sealed class TesseractOcrService(ILogger<TesseractOcrService> logger) : I
 
         logger.LogInformation("Initialisiere Tesseract OCR fuer {Languages}.", languages);
         return new EngineEntry(
-            new TesseractEngine(dataPath, languages, Tesseract.EngineMode.LstmOnly),
+            engineFactory?.Invoke(languages) ?? new TesseractEngine(dataPath, languages, Tesseract.EngineMode.LstmOnly),
             new SemaphoreSlim(1, 1));
     }
 

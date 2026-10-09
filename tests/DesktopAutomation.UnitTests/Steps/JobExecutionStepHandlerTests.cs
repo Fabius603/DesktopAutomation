@@ -40,37 +40,44 @@ public sealed class JobExecutionStepHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_FireAndForgetDispatcherStoresNonEmptyInstanceId()
+    public async Task ParallelChild_StepReturns_ButOwnerWaitsForChild()
     {
-        var parent = new Job { Name = "parent" };
-        var child = new Job { Name = "child" };
-        var instanceId = Guid.NewGuid();
+        var parent = new Job { Name = "parent" }; var child = new Job { Name = "child" };
+        using var owned = new TaskAutomation.Orchestration.OwnedExecutionScope();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var context = new PipelineContextStub
         {
             CurrentJob = parent,
             AllJobs = Jobs(parent, child),
-            StartJobViaDispatcher = id => id == child.Id ? instanceId : Guid.Empty
+            OwnedExecutions = owned,
+            StartJobViaDispatcherAsync = async (_, _) => { started.TrySetResult(); await release.Task; }
         };
-        var result = Assert.IsType<JobExecutionResult>(await new JobExecutionStepHandler().ExecuteAsync(
-            new JobExecutionStep { Settings = new() { JobId = child.Id, WaitForCompletion = false } }, context, default));
-        Assert.Equal([instanceId], context.ChildJobInstanceIds);
-        Assert.True(result.Success);
+        var result = await new JobExecutionStepHandler().ExecuteAsync(new JobExecutionStep
+        { Settings = new() { JobId = child.Id, WaitForCompletion = false } }, context, default);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(Assert.IsType<JobExecutionResult>(result).Success);
+        var drain = owned.DrainAsync();
+        Assert.False(drain.IsCompleted);
+        release.SetResult();
+        await drain.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     [Fact]
-    public async Task ExecuteAsync_FireAndForgetEmptyInstanceIdIsNotTracked()
+    public async Task ParallelChild_RejectedStart_FailsItsOwner()
     {
-        var parent = new Job { Name = "parent" };
-        var child = new Job { Name = "child" };
+        var parent = new Job { Name = "parent" }; var child = new Job { Name = "child" };
+        using var owned = new TaskAutomation.Orchestration.OwnedExecutionScope();
         var context = new PipelineContextStub
         {
             CurrentJob = parent,
             AllJobs = Jobs(parent, child),
-            StartJobViaDispatcher = _ => Guid.Empty
+            OwnedExecutions = owned,
+            StartJobViaDispatcherAsync = (_, _) => Task.FromException(new InvalidOperationException("Rejected"))
         };
         await new JobExecutionStepHandler().ExecuteAsync(new JobExecutionStep
         { Settings = new() { JobId = child.Id, WaitForCompletion = false } }, context, default);
-        Assert.Empty(context.ChildJobInstanceIds);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => owned.DrainAsync());
     }
 
     [Theory]

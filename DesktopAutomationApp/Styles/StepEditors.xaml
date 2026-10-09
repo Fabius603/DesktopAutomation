@@ -1,7 +1,62 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
                     xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf">
+    <Style x:Key="VirtualizedCompoundEditorItem" TargetType="ListBoxItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Focusable" Value="True"/>
+        <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="SelectionBorder" BorderBrush="Transparent" BorderThickness="2" CornerRadius="6"><ContentPresenter/></Border>
+            <ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="SelectionBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/></Trigger></ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="StepErrorOutline" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Danger}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Visibility" Value="Collapsed"/>
+    </Style>
+    <Style x:Key="StepFieldErrorOutline" TargetType="Border" BasedOn="{StaticResource StepErrorOutline}">
+        <Setter Property="AutomationProperties.HelpText" Value="{Binding Validation.Message}"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Validation.HasError}" Value="True">
+                <Setter Property="Visibility" Value="Visible"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <!-- Keep source actions keyboard reachable while visually quiet at rest. -->
+    <Style x:Key="StepValueSourceAction" TargetType="Button" BasedOn="{StaticResource ButtonIcon}">
+        <Setter Property="Width" Value="28"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="AutomationProperties.Name" Value="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type Panel}}}" Value="True">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="IsHitTestVisible" Value="True"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType={x:Type Panel}}}" Value="True">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="IsHitTestVisible" Value="True"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding ContextMenu.IsOpen, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="IsHitTestVisible" Value="True"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <!-- Reserve a stable action slot for bindable fields, independent of hover, focus or menu state. -->
+    <Style x:Key="StepValueSourceContent" TargetType="Grid">
+        <Setter Property="Margin" Value="0,0,32,0"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Visibility, ElementName=SourceButton}" Value="Collapsed">
+                <Setter Property="Margin" Value="0"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
     <Style x:Key="StepRadioButton" TargetType="RadioButton">
         <Setter Property="MinHeight" Value="34"/>
         <Setter Property="Padding" Value="10,6"/>
@@ -194,19 +249,9 @@
     <Style x:Key="StepInspectorScrollBarStyle"
            TargetType="{x:Type ScrollBar}"
            BasedOn="{StaticResource {x:Type ScrollBar}}">
-        <Setter Property="Width" Value="7"/>
-        <Setter Property="MinWidth" Value="7"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
-        <Setter Property="Opacity" Value="0.48"/>
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Opacity" Value="0.82"/>
-            </Trigger>
             <Trigger Property="Orientation" Value="Horizontal">
-                <Setter Property="Width" Value="Auto"/>
-                <Setter Property="MinWidth" Value="0"/>
-                <Setter Property="Height" Value="7"/>
-                <Setter Property="MinHeight" Value="7"/>
                 <Setter Property="Margin" Value="0,4,0,0"/>
             </Trigger>
         </Style.Triggers>

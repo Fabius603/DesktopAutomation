@@ -11,7 +11,8 @@ public enum JobExecutionState
     ForceStopRequested,
     Completed,
     Cancelled,
-    Failed
+    Failed,
+    WaitingForChildren
 }
 
 public static class JobExecutionStateExtensions
@@ -24,5 +25,6 @@ public static class JobExecutionStateExtensions
     public static bool CanRequestStop(this JobExecutionState state)
         => state is JobExecutionState.Starting
             or JobExecutionState.RunningStartSteps
-            or JobExecutionState.RunningSteps;
+            or JobExecutionState.RunningSteps
+            or JobExecutionState.WaitingForChildren;
 }

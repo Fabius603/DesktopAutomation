@@ -1,0 +1,21 @@
+{
+  "type": "predict_movement",
+  "settings": {
+    "points_source": {
+      "provider_id": "",
+      "source_id": ""
+    },
+    "min_samples": 3,
+    "prediction_ms": 0,
+    "reset_distance_threshold": 250,
+    "max_sample_age_ms": 500,
+    "prediction_model": "Automatic",
+    "time_basis": "Execution",
+    "max_prediction_distance": 500,
+    "max_fit_error": 75,
+    "minimum_confidence": 0.15
+  },
+  "id": "85d18ddf-cfef-1f36-8b83-b38783c5f34b",
+  "inputs": {},
+  "is_enabled": true
+}

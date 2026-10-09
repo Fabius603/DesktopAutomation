@@ -1,0 +1,1 @@
+{"width":464,"height":180,"mode":"fields","markers":[{"number":1,"label":"Job","bounds":[48,10,364,65],"inputs":[{"kind":"choice","value":"Unterlagen vorbereiten"}]},{"number":2,"label":"Auf Beendigung warten","bounds":[48,95,364,65],"inputs":[{"kind":"boolean","value":"An"}]}]}

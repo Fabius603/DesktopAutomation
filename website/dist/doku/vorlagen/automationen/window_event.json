@@ -1,0 +1,9 @@
+{
+  "$type": "window_event",
+  "Kind": "WindowEvent",
+  "event_kind": "Opened",
+  "process_name": "",
+  "window_title_contains": "",
+  "delay_after_event": "00:00:00",
+  "kind": "WindowEvent"
+}

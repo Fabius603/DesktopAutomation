@@ -1,0 +1,32 @@
+{
+  "formatVersion": 3,
+  "id": "429af44c-11d1-889a-2d50-41a6f0a80211",
+  "name": "Notiz eingeben",
+  "commands": [
+    {
+      "type": "text_input",
+      "text": "Notiz aus dem Beispielmakro",
+      "durationUs": 0,
+      "id": "notiz-0"
+    },
+    {
+      "type": "timeout",
+      "duration": 200,
+      "id": "notiz-1"
+    }
+  ],
+  "groups": [],
+  "recordingSettings": {
+    "mode": 1,
+    "minimumIntervalUs": 1000,
+    "minimumDistancePixels": 0,
+    "recordKeyboard": true,
+    "combineKeyboardInputs": false,
+    "recordMouseButtons": true,
+    "removeStopGesture": true,
+    "automaticMovementGroups": true,
+    "recordingHotkeyModifiers": 0,
+    "recordingHotkeyVirtualKey": 120
+  },
+  "recordedEnvironment": null
+}

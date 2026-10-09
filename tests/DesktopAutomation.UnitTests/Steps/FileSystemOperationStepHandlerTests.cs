@@ -6,6 +6,45 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class FileSystemOperationStepHandlerTests
 {
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Copy_TargetCreatedDuringCopyIsNeverRemoved(bool directory)
+    {
+        using var temp = new TempDirectory();
+        var source = directory ? Path.Combine(temp.Path, "source") : temp.File("source.txt", "ours");
+        if (directory) { Directory.CreateDirectory(source); File.WriteAllText(Path.Combine(source, "a"), "ours"); }
+        var target = Path.Combine(temp.Path, "target");
+        var handler = new FileSystemOperationStepHandler(null, path => File.WriteAllText(path, "theirs"), null);
+        await Assert.ThrowsAnyAsync<IOException>(() => handler.ExecuteAsync(
+            Step(FileSystemOperation.Copy, source, target), new PipelineContextStub(), default));
+        Assert.Equal("theirs", File.ReadAllText(target));
+        Assert.Empty(Directory.GetFileSystemEntries(temp.Path, "*.copy-*"));
+        Assert.True(File.Exists(source) || Directory.Exists(source));
+    }
+
+    [Fact]
+    public async Task CrossVolumeMove_PartialSourceDeletionKeepsCompleteDestination()
+    {
+        using var temp = new TempDirectory();
+        var source = Path.Combine(temp.Path, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "a"), "first");
+        File.WriteAllText(Path.Combine(source, "b"), "second");
+        var target = Path.Combine(temp.Path, "target");
+        var handler = new FileSystemOperationStepHandler((_, _) => false, null, path =>
+        {
+            File.Delete(Path.Combine(path, "a"));
+            throw new IOException("source entry locked");
+        });
+        await Assert.ThrowsAsync<IOException>(() => handler.ExecuteAsync(
+            Step(FileSystemOperation.Move, source, target), new PipelineContextStub(), default));
+        Assert.Equal("first", File.ReadAllText(Path.Combine(target, "a")));
+        Assert.Equal("second", File.ReadAllText(Path.Combine(target, "b")));
+        Assert.Equal("second", File.ReadAllText(Path.Combine(source, "b")));
+    }
+
     [Fact]
     public async Task CopyFile_CreatesMissingParentsAndReturnsAffectedTarget()
     {

@@ -126,6 +126,50 @@ public sealed class JobDispatcherTests
         Assert.Same(original, forwarded);
     }
 
+    [Fact]
+    public async Task ConcurrentStarts_RespectLimit_AndCapacityIsAvailableAgainAfterCompletion()
+    {
+        var job = ExecutableJob("limit");
+        var executor = new ControllableJobExecutor([job]);
+        using var dispatcher = new JobDispatcher(executor, NullLogger<JobDispatcher>.Instance);
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var requests = Enumerable.Range(0, 120).Select(_ => Task.Run(async () =>
+        {
+            await gate.Task;
+            try { return dispatcher.StartJob(job.Id); }
+            catch (JobLimitExceededException) { return Guid.Empty; }
+        })).ToArray();
+        gate.SetResult();
+        var ids = await Task.WhenAll(requests).WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(JobDispatcher.MaxJobCount, ids.Count(id => id != Guid.Empty));
+        Assert.Equal(JobDispatcher.MaxJobCount, dispatcher.RunningJobInstances.Count);
+        await WaitUntilAsync(() => executor.SnapshotInvocations().Length == JobDispatcher.MaxJobCount);
+        CompleteAll(executor);
+        await WaitUntilAsync(() => dispatcher.RunningJobInstances.Count == 0);
+        var next = dispatcher.StartJob(job.Id);
+        Assert.NotEqual(Guid.Empty, next);
+        await WaitUntilAsync(() => executor.SnapshotInvocations().Length == JobDispatcher.MaxJobCount + 1);
+        CompleteAll(executor);
+        await WaitUntilAsync(() => dispatcher.RunningJobInstances.Count == 0);
+    }
+
+    [Fact]
+    public async Task Start_UsesCapturedDefinition_EvenWhenCatalogDefinitionIsEdited()
+    {
+        var job = ExecutableJob("original");
+        var executor = new ControllableJobExecutor([job]);
+        using var dispatcher = new JobDispatcher(executor, NullLogger<JobDispatcher>.Instance);
+        dispatcher.StartJob(job.Id);
+        job.Name = "edited";
+        job.Steps.Clear();
+        await WaitUntilAsync(() => executor.SnapshotInvocations().Length == 1);
+        var definition = Assert.Single(executor.ExecutedDefinitions);
+        Assert.Equal("original", definition.Name);
+        Assert.Single(definition.Steps);
+        CompleteAll(executor);
+        await WaitUntilAsync(() => dispatcher.RunningJobInstances.Count == 0);
+    }
+
     private static Job ExecutableJob(string name) => new() { Name = name, Steps = [new TimeoutStep()] };
     private static void CompleteAll(ControllableJobExecutor executor)
     {

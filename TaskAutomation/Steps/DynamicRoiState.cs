@@ -22,16 +22,22 @@ internal static class DynamicRoiResolver
     {
         var resolvedBounds = ResultBindingResolver.Resolve<PixelRegion>(context.Results, dynamicRoiSource);
         var dynamicRoiStepId = dynamicRoiSource?.SourceStepId;
-        if (!resolvedBounds.IsSuccess
-            || string.IsNullOrWhiteSpace(dynamicRoiStepId))
+        DynamicRoiState? state = null;
+        if (!string.IsNullOrWhiteSpace(dynamicRoiStepId))
+            context.DynamicRoiStates.TryGetValue(dynamicRoiStepId, out state);
+        var feedback = dynamicRoiSource is not null
+            && context.Results.GetResultContract(dynamicRoiStepId ?? string.Empty) is { TypeName: nameof(DynamicRoiResult) } contract
+            && StepResultMetadata.TryGetProperty(contract, dynamicRoiSource, out var property)
+            && property.Name == nameof(DynamicRoiResult.GlobalBounds)
+            ? state?.GlobalBounds : null;
+        if (!resolvedBounds.IsSuccess && !feedback.HasValue)
         {
             if (dynamicRoiSource?.IsConfigured == true)
                 context.Logger.LogDebug("Dynamic ROI {StepId}: noch keine ROI vorhanden; Basis-Suchbereich wird verwendet.", dynamicRoiStepId);
             return null;
         }
 
-        var global = resolvedBounds.FirstOrDefault;
-        context.DynamicRoiStates.TryGetValue(dynamicRoiStepId, out var state);
+        var global = resolvedBounds.IsSuccess ? resolvedBounds.FirstOrDefault : feedback!.Value;
 
         if (state is not null
             && state.FullSearchInterval > 0

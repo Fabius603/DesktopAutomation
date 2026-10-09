@@ -1,8 +1,8 @@
 ---
 date: 2026-09-28
-status: accepted
+status: superseded
 supersedes:
-superseded_by:
+superseded_by: 2026-10-08-use-risk-based-local-validation.md
 ---
 
 # Use one deterministic completion gate

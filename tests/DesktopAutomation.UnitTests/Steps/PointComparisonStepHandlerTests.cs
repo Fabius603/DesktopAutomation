@@ -7,6 +7,37 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class PointComparisonStepHandlerTests
 {
+
+    [Theory]
+    [InlineData(int.MinValue, int.MaxValue)]
+    [InlineData(int.MaxValue, int.MinValue)]
+    [InlineData(int.MinValue, 0)]
+    public async Task Offset_LargeCoordinateDifferenceDoesNotOverflow(int coordinate, int reference)
+    {
+        Assert.False((await Execute(new PointComparisonSettings
+        {
+            Points = [Manual(coordinate, 0)],
+            OffsetSettings = new() { ReferenceX = reference, OffsetX = int.MaxValue, OffsetY = 1 }
+        })).Matches);
+    }
+
+    [Theory]
+    [InlineData(PointMatchRequirement.All, false)]
+    [InlineData(PointMatchRequirement.Any, true)]
+    public async Task MissingConfiguredPoint_IsNotIgnoredForAll(PointMatchRequirement requirement, bool expected)
+    {
+        var settings = new PointComparisonSettings
+        {
+            Points = [Manual(0, 0), new PointEntry { Source = PointEntrySource.JobResult,
+                PointsSource = new() { SourceStepId = "missing", PropertyPath = "Point" } }],
+            MatchRequirement = requirement,
+            OffsetSettings = new() { ReferenceX = 0, ReferenceY = 0, OffsetX = 1, OffsetY = 1 }
+        };
+        var context = new PipelineContextStub();
+        context.Results.Set<TemplateMatchingStep>(new TemplateMatchingResult { WasExecuted = true, Found = false }, "missing");
+        Assert.Equal(expected, (await Execute(settings, context)).Matches);
+    }
+
     [Fact]
     public async Task ExecuteAsync_NoResolvedPointsReturnsFalseWithZeroCounts()
     {

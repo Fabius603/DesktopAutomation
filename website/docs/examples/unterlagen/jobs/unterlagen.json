@@ -1,0 +1,1003 @@
+{
+  "formatVersion": 4,
+  "id": "efa2dab4-b839-74b6-3ae5-80de24796eac",
+  "name": "Arbeitsunterlagen vorbereiten",
+  "repeating": false,
+  "variables": [],
+  "localValues": [
+    {
+      "owner_step_id": "unterlagen-0",
+      "input_path": "title",
+      "id": "f3dd7116-f798-4987-1fb2-e766bd639c61",
+      "name": "user_choice_title",
+      "description": "user_choice.title",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Arbeitsunterlagen"
+    },
+    {
+      "owner_step_id": "unterlagen-0",
+      "input_path": "question",
+      "id": "a2aea27b-2ebf-78b9-cad2-5fe99b91500e",
+      "name": "user_choice_question",
+      "description": "user_choice.question",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "Was m\u00F6chtest du vorbereiten?"
+    },
+    {
+      "owner_step_id": "unterlagen-0",
+      "input_path": "description",
+      "id": "ef609fb8-d6fb-4b63-23fb-bbcd0097cbb1",
+      "name": "user_choice_description",
+      "description": "user_choice.description",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-0",
+      "input_path": "desktop_index",
+      "id": "a0a20959-d20f-4972-097b-a32db6b8a57e",
+      "name": "user_choice_desktop_index",
+      "description": "user_choice.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-0",
+      "input_path": "options",
+      "id": "f02689d2-f735-8258-530b-f427484b0177",
+      "name": "user_choice_options",
+      "description": "user_choice.options",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Collection",
+      "value": [
+        {
+          "id": "rechnung",
+          "label": "Rechnungen",
+          "value": "rechnung"
+        },
+        {
+          "id": "notiz",
+          "label": "Notizen",
+          "value": "notiz"
+        }
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-1",
+      "input_path": "conditions",
+      "id": "ae297d59-acd4-cfd2-16eb-71b740a62c3b",
+      "name": "if_conditions",
+      "description": "if.conditions",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "match_mode": "All",
+        "conditions": [
+          {
+            "operator": "Equals",
+            "comparison_value": "rechnung",
+            "provider_id": "step_result",
+            "source_id": "v1/unterlagen-0/selected_value"
+          }
+        ]
+      }
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "operation",
+      "id": "09499096-4099-731d-f980-fb5534167177",
+      "name": "file_system_operation_operation",
+      "description": "file_system_operation.operation",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Copy",
+      "enum_type_name": "file_system_operation.operation",
+      "enum_values": [
+        "Copy",
+        "Move",
+        "Rename",
+        "Delete"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "source_path",
+      "id": "bf049fa4-ea1a-d6f3-3b8a-8abcdea84c81",
+      "name": "file_system_operation_source_path",
+      "description": "file_system_operation.source_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Rechnungen"
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "target_path",
+      "id": "b261ffc6-8ae2-58b1-649b-0cc56c35f29a",
+      "name": "file_system_operation_target_path",
+      "description": "file_system_operation.target_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Arbeitsablage\\Rechnungen"
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "new_name",
+      "id": "887b2d22-36f8-dc97-bd56-4e647e59cf8f",
+      "name": "file_system_operation_new_name",
+      "description": "file_system_operation.new_name",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "filter",
+      "id": "e6e574c4-ee21-3be3-0209-d57f9a6b83b7",
+      "name": "file_system_operation_filter",
+      "description": "file_system_operation.filter",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "create_parent_directories",
+      "id": "ec680220-8820-67ad-8d36-eb15b9604d18",
+      "name": "file_system_operation_create_parent_directories",
+      "description": "file_system_operation.create_parent_directories",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "retry_locked_files",
+      "id": "83370bac-9605-d83b-39c6-59307a173404",
+      "name": "file_system_operation_retry_locked_files",
+      "description": "file_system_operation.retry_locked_files",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "retry_count",
+      "id": "38cb3d43-e22a-b1d4-f726-162667226930",
+      "name": "file_system_operation_retry_count",
+      "description": "file_system_operation.retry_count",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 3
+    },
+    {
+      "owner_step_id": "unterlagen-2",
+      "input_path": "retry_delay_ms",
+      "id": "bebcdbdb-dfe0-c986-3741-bee0e8ae354f",
+      "name": "file_system_operation_retry_delay_ms",
+      "description": "file_system_operation.retry_delay_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "action",
+      "id": "ec9f6b00-49e3-09c4-da98-f78c58f4eea4",
+      "name": "start_process_action",
+      "description": "start_process.action",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Start",
+      "enum_type_name": "start_process.action",
+      "enum_values": [
+        "Start",
+        "Terminate"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "process_target",
+      "id": "ff65532c-6016-5da0-600e-3b38729e1cd1",
+      "name": "start_process_process_target",
+      "description": "start_process.process_target",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "process_source": {
+          "provider_id": "",
+          "source_id": ""
+        },
+        "process_name": "",
+        "executable_path": "",
+        "window_title_contains": ""
+      }
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "executable_path",
+      "id": "f6c2730f-beae-946b-6efd-e6bb615be86e",
+      "name": "start_process_executable_path",
+      "description": "start_process.executable_path",
+      "scope": "StepValue",
+      "value_kind": "FilePath",
+      "cardinality": "Single",
+      "value": "C:\\Windows\\System32\\notepad.exe"
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "wait_for_exit",
+      "id": "b94b957f-2506-6876-d061-e5b7b8eecd87",
+      "name": "start_process_wait_for_exit",
+      "description": "start_process.wait_for_exit",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "arguments",
+      "id": "3e0a9d87-5f3b-c25b-edc1-1d841b621406",
+      "name": "start_process_arguments",
+      "description": "start_process.arguments",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "working_directory",
+      "id": "40655f20-670d-6dd4-e08c-6139dc7faa31",
+      "name": "start_process_working_directory",
+      "description": "start_process.working_directory",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "monitor_index",
+      "id": "2068677a-78d9-9e7e-71ae-2cdff6f3d281",
+      "name": "start_process_monitor_index",
+      "description": "start_process.monitor_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "window_mode",
+      "id": "911d82c7-5f38-8e13-5abb-4fc9e3e2f05b",
+      "name": "start_process_window_mode",
+      "description": "start_process.window_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "ApplicationDefault",
+      "enum_type_name": "start_process.window_mode",
+      "enum_values": [
+        "ApplicationDefault",
+        "Normal",
+        "Maximized"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "placement_mode",
+      "id": "ccba664e-abd4-7c28-b51b-fd47f41f0e85",
+      "name": "start_process_placement_mode",
+      "description": "start_process.placement_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Centered",
+      "enum_type_name": "start_process.placement_mode",
+      "enum_values": [
+        "Centered",
+        "Custom"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "offset_x",
+      "id": "cb57f709-f2bb-21e8-6a45-97f8f90872f6",
+      "name": "start_process_offset_x",
+      "description": "start_process.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-3",
+      "input_path": "offset_y",
+      "id": "6e474841-6db1-cbc7-2bad-8cc18bf1367f",
+      "name": "start_process_offset_y",
+      "description": "start_process.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "operation",
+      "id": "6bf1241d-fc4f-94ae-b614-ca41aeb74d0f",
+      "name": "file_system_operation_operation_2",
+      "description": "file_system_operation.operation",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Copy",
+      "enum_type_name": "file_system_operation.operation",
+      "enum_values": [
+        "Copy",
+        "Move",
+        "Rename",
+        "Delete"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "source_path",
+      "id": "311d9597-5b56-5884-3157-bf5448988d6d",
+      "name": "file_system_operation_source_path_2",
+      "description": "file_system_operation.source_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Notizen"
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "target_path",
+      "id": "347e3b53-a06d-6803-26a0-79397916786b",
+      "name": "file_system_operation_target_path_2",
+      "description": "file_system_operation.target_path",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": "C:\\DesktopAutomation-Beispiele\\Arbeitsablage\\Notizen"
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "new_name",
+      "id": "1c76375a-31bc-4381-d254-0f5d00a91c6e",
+      "name": "file_system_operation_new_name_2",
+      "description": "file_system_operation.new_name",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "filter",
+      "id": "8f34bf80-5c4d-e5a3-ba36-7ff78b2122c9",
+      "name": "file_system_operation_filter_2",
+      "description": "file_system_operation.filter",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "create_parent_directories",
+      "id": "22421e78-8f63-a7f6-5b7f-4f2b04cc3b1e",
+      "name": "file_system_operation_create_parent_directories_2",
+      "description": "file_system_operation.create_parent_directories",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "retry_locked_files",
+      "id": "8f1beb2a-e7a7-ffcf-1cb5-753e80e8ab83",
+      "name": "file_system_operation_retry_locked_files_2",
+      "description": "file_system_operation.retry_locked_files",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": true
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "retry_count",
+      "id": "a6a85a2d-d01f-f535-a350-51f351e46c1c",
+      "name": "file_system_operation_retry_count_2",
+      "description": "file_system_operation.retry_count",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 3
+    },
+    {
+      "owner_step_id": "unterlagen-5",
+      "input_path": "retry_delay_ms",
+      "id": "9133071b-df49-37fe-a7a1-5721cf8a1091",
+      "name": "file_system_operation_retry_delay_ms_2",
+      "description": "file_system_operation.retry_delay_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "action",
+      "id": "27da3c91-7ec4-ebaa-b333-f70e827e2e7d",
+      "name": "start_process_action_2",
+      "description": "start_process.action",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Start",
+      "enum_type_name": "start_process.action",
+      "enum_values": [
+        "Start",
+        "Terminate"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "process_target",
+      "id": "c836d9ce-52ee-5678-ad4f-49a9061b51f2",
+      "name": "start_process_process_target_2",
+      "description": "start_process.process_target",
+      "scope": "StepValue",
+      "value_kind": "ResultObject",
+      "cardinality": "Single",
+      "value": {
+        "process_source": {
+          "provider_id": "",
+          "source_id": ""
+        },
+        "process_name": "",
+        "executable_path": "",
+        "window_title_contains": ""
+      }
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "executable_path",
+      "id": "41f6ff19-4acb-c173-972b-86f28baf8a6c",
+      "name": "start_process_executable_path_2",
+      "description": "start_process.executable_path",
+      "scope": "StepValue",
+      "value_kind": "FilePath",
+      "cardinality": "Single",
+      "value": "C:\\Windows\\System32\\notepad.exe"
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "wait_for_exit",
+      "id": "c1955423-21dd-6f35-380e-5da591036584",
+      "name": "start_process_wait_for_exit_2",
+      "description": "start_process.wait_for_exit",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "arguments",
+      "id": "dd51822f-2f32-9f3a-435d-ad2e3d2de520",
+      "name": "start_process_arguments_2",
+      "description": "start_process.arguments",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "working_directory",
+      "id": "3362261b-2441-b667-31eb-c569003605cc",
+      "name": "start_process_working_directory_2",
+      "description": "start_process.working_directory",
+      "scope": "StepValue",
+      "value_kind": "Text",
+      "cardinality": "Single",
+      "value": ""
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "monitor_index",
+      "id": "bf90c818-14b9-8559-5bbf-d933f939d5dd",
+      "name": "start_process_monitor_index_2",
+      "description": "start_process.monitor_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "window_mode",
+      "id": "4fead095-5a63-302a-4572-1f85b7e3da7d",
+      "name": "start_process_window_mode_2",
+      "description": "start_process.window_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "ApplicationDefault",
+      "enum_type_name": "start_process.window_mode",
+      "enum_values": [
+        "ApplicationDefault",
+        "Normal",
+        "Maximized"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "placement_mode",
+      "id": "e9d2106f-450b-9488-bff3-e76f5eb23f9a",
+      "name": "start_process_placement_mode_2",
+      "description": "start_process.placement_mode",
+      "scope": "StepValue",
+      "value_kind": "Enum",
+      "cardinality": "Single",
+      "value": "Centered",
+      "enum_type_name": "start_process.placement_mode",
+      "enum_values": [
+        "Centered",
+        "Custom"
+      ]
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "offset_x",
+      "id": "d774f626-ac3c-e100-38e1-fded038b8be4",
+      "name": "start_process_offset_x_2",
+      "description": "start_process.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-6",
+      "input_path": "offset_y",
+      "id": "0695f4f8-3ce2-a0e3-d749-df62a2c0b06e",
+      "name": "start_process_offset_y_2",
+      "description": "start_process.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-8",
+      "input_path": "macro",
+      "id": "7b3dbbfa-fa98-f9c1-e1a5-9003a276de7a",
+      "name": "makro_execution_macro",
+      "description": "makro_execution.macro",
+      "scope": "StepValue",
+      "value_kind": "MacroReference",
+      "cardinality": "Single",
+      "value": {
+        "id": "429af44c-11d1-889a-2d50-41a6f0a80211",
+        "name": "Notiz eingeben"
+      }
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "desktop_index",
+      "id": "328b070d-e860-2208-2f37-6ae995f6289b",
+      "name": "show_text_desktop_index",
+      "description": "show_text.desktop_index",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 0
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "font_size",
+      "id": "8c1c271c-91f9-5cda-3377-1ecdd51c73f1",
+      "name": "show_text_font_size",
+      "description": "show_text.font_size",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 24
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "font_color",
+      "id": "0b0dc800-55af-5936-a269-216b666f6851",
+      "name": "show_text_font_color",
+      "description": "show_text.font_color",
+      "scope": "StepValue",
+      "value_kind": "Color",
+      "cardinality": "Single",
+      "value": "#243044"
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "opacity",
+      "id": "7e2604a9-5476-f0f8-fb28-c188f36fcfcb",
+      "name": "show_text_opacity",
+      "description": "show_text.opacity",
+      "scope": "StepValue",
+      "value_kind": "Number",
+      "cardinality": "Single",
+      "value": 1
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "duration_ms",
+      "id": "530712f4-5984-1d8a-0cb0-2e71c7901253",
+      "name": "show_text_duration_ms",
+      "description": "show_text.duration_ms",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 5000
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "clear_on_job_end",
+      "id": "9cc0c1f1-b59a-21ad-dbb1-14e946a49268",
+      "name": "show_text_clear_on_job_end",
+      "description": "show_text.clear_on_job_end",
+      "scope": "StepValue",
+      "value_kind": "Boolean",
+      "cardinality": "Single",
+      "value": false
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "offset_x",
+      "id": "aca6e951-f845-6c5d-e207-39ee6b1ed914",
+      "name": "show_text_offset_x",
+      "description": "show_text.offset_x",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    },
+    {
+      "owner_step_id": "unterlagen-9",
+      "input_path": "offset_y",
+      "id": "1a1c1abd-eb32-f6c3-7f29-6c548dc8cf9f",
+      "name": "show_text_offset_y",
+      "description": "show_text.offset_y",
+      "scope": "StepValue",
+      "value_kind": "Integer",
+      "cardinality": "Single",
+      "value": 100
+    }
+  ],
+  "startSteps": [],
+  "steps": [
+    {
+      "type": "user_choice",
+      "id": "unterlagen-0",
+      "inputs": {
+        "title": {
+          "provider_id": "local_value",
+          "source_id": "f3dd7116-f798-4987-1fb2-e766bd639c61"
+        },
+        "question": {
+          "provider_id": "local_value",
+          "source_id": "a2aea27b-2ebf-78b9-cad2-5fe99b91500e"
+        },
+        "description": {
+          "provider_id": "local_value",
+          "source_id": "ef609fb8-d6fb-4b63-23fb-bbcd0097cbb1"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "a0a20959-d20f-4972-097b-a32db6b8a57e"
+        },
+        "options": {
+          "schema_id": "desktopautomation.user-choice-options/v1",
+          "provider_id": "local_value",
+          "source_id": "f02689d2-f735-8258-530b-f427484b0177"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "if",
+      "CanBeDisabled": false,
+      "id": "unterlagen-1",
+      "inputs": {
+        "conditions": {
+          "provider_id": "local_value",
+          "source_id": "ae297d59-acd4-cfd2-16eb-71b740a62c3b"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "file_system_operation",
+      "id": "unterlagen-2",
+      "inputs": {
+        "operation": {
+          "provider_id": "local_value",
+          "source_id": "09499096-4099-731d-f980-fb5534167177"
+        },
+        "source_path": {
+          "provider_id": "local_value",
+          "source_id": "bf049fa4-ea1a-d6f3-3b8a-8abcdea84c81"
+        },
+        "target_path": {
+          "provider_id": "local_value",
+          "source_id": "b261ffc6-8ae2-58b1-649b-0cc56c35f29a"
+        },
+        "new_name": {
+          "provider_id": "local_value",
+          "source_id": "887b2d22-36f8-dc97-bd56-4e647e59cf8f"
+        },
+        "filter": {
+          "provider_id": "local_value",
+          "source_id": "e6e574c4-ee21-3be3-0209-d57f9a6b83b7"
+        },
+        "create_parent_directories": {
+          "provider_id": "local_value",
+          "source_id": "ec680220-8820-67ad-8d36-eb15b9604d18"
+        },
+        "retry_locked_files": {
+          "provider_id": "local_value",
+          "source_id": "83370bac-9605-d83b-39c6-59307a173404"
+        },
+        "retry_count": {
+          "provider_id": "local_value",
+          "source_id": "38cb3d43-e22a-b1d4-f726-162667226930"
+        },
+        "retry_delay_ms": {
+          "provider_id": "local_value",
+          "source_id": "bebcdbdb-dfe0-c986-3741-bee0e8ae354f"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "start_process",
+      "id": "unterlagen-3",
+      "inputs": {
+        "action": {
+          "provider_id": "local_value",
+          "source_id": "ec9f6b00-49e3-09c4-da98-f78c58f4eea4"
+        },
+        "process_target": {
+          "schema_id": "desktopautomation.process-target/v1",
+          "provider_id": "local_value",
+          "source_id": "ff65532c-6016-5da0-600e-3b38729e1cd1"
+        },
+        "executable_path": {
+          "provider_id": "local_value",
+          "source_id": "f6c2730f-beae-946b-6efd-e6bb615be86e"
+        },
+        "wait_for_exit": {
+          "provider_id": "local_value",
+          "source_id": "b94b957f-2506-6876-d061-e5b7b8eecd87"
+        },
+        "arguments": {
+          "provider_id": "local_value",
+          "source_id": "3e0a9d87-5f3b-c25b-edc1-1d841b621406"
+        },
+        "working_directory": {
+          "provider_id": "local_value",
+          "source_id": "40655f20-670d-6dd4-e08c-6139dc7faa31"
+        },
+        "monitor_index": {
+          "provider_id": "local_value",
+          "source_id": "2068677a-78d9-9e7e-71ae-2cdff6f3d281"
+        },
+        "window_mode": {
+          "provider_id": "local_value",
+          "source_id": "911d82c7-5f38-8e13-5abb-4fc9e3e2f05b"
+        },
+        "placement_mode": {
+          "provider_id": "local_value",
+          "source_id": "ccba664e-abd4-7c28-b51b-fd47f41f0e85"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "cb57f709-f2bb-21e8-6a45-97f8f90872f6"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "6e474841-6db1-cbc7-2bad-8cc18bf1367f"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "else",
+      "CanBeDisabled": false,
+      "id": "unterlagen-4",
+      "inputs": {},
+      "is_enabled": true
+    },
+    {
+      "type": "file_system_operation",
+      "id": "unterlagen-5",
+      "inputs": {
+        "operation": {
+          "provider_id": "local_value",
+          "source_id": "6bf1241d-fc4f-94ae-b614-ca41aeb74d0f"
+        },
+        "source_path": {
+          "provider_id": "local_value",
+          "source_id": "311d9597-5b56-5884-3157-bf5448988d6d"
+        },
+        "target_path": {
+          "provider_id": "local_value",
+          "source_id": "347e3b53-a06d-6803-26a0-79397916786b"
+        },
+        "new_name": {
+          "provider_id": "local_value",
+          "source_id": "1c76375a-31bc-4381-d254-0f5d00a91c6e"
+        },
+        "filter": {
+          "provider_id": "local_value",
+          "source_id": "8f34bf80-5c4d-e5a3-ba36-7ff78b2122c9"
+        },
+        "create_parent_directories": {
+          "provider_id": "local_value",
+          "source_id": "22421e78-8f63-a7f6-5b7f-4f2b04cc3b1e"
+        },
+        "retry_locked_files": {
+          "provider_id": "local_value",
+          "source_id": "8f1beb2a-e7a7-ffcf-1cb5-753e80e8ab83"
+        },
+        "retry_count": {
+          "provider_id": "local_value",
+          "source_id": "a6a85a2d-d01f-f535-a350-51f351e46c1c"
+        },
+        "retry_delay_ms": {
+          "provider_id": "local_value",
+          "source_id": "9133071b-df49-37fe-a7a1-5721cf8a1091"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "start_process",
+      "id": "unterlagen-6",
+      "inputs": {
+        "action": {
+          "provider_id": "local_value",
+          "source_id": "27da3c91-7ec4-ebaa-b333-f70e827e2e7d"
+        },
+        "process_target": {
+          "schema_id": "desktopautomation.process-target/v1",
+          "provider_id": "local_value",
+          "source_id": "c836d9ce-52ee-5678-ad4f-49a9061b51f2"
+        },
+        "executable_path": {
+          "provider_id": "local_value",
+          "source_id": "41f6ff19-4acb-c173-972b-86f28baf8a6c"
+        },
+        "wait_for_exit": {
+          "provider_id": "local_value",
+          "source_id": "c1955423-21dd-6f35-380e-5da591036584"
+        },
+        "arguments": {
+          "provider_id": "local_value",
+          "source_id": "dd51822f-2f32-9f3a-435d-ad2e3d2de520"
+        },
+        "working_directory": {
+          "provider_id": "local_value",
+          "source_id": "3362261b-2441-b667-31eb-c569003605cc"
+        },
+        "monitor_index": {
+          "provider_id": "local_value",
+          "source_id": "bf90c818-14b9-8559-5bbf-d933f939d5dd"
+        },
+        "window_mode": {
+          "provider_id": "local_value",
+          "source_id": "4fead095-5a63-302a-4572-1f85b7e3da7d"
+        },
+        "placement_mode": {
+          "provider_id": "local_value",
+          "source_id": "e9d2106f-450b-9488-bff3-e76f5eb23f9a"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "d774f626-ac3c-e100-38e1-fded038b8be4"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "0695f4f8-3ce2-a0e3-d749-df62a2c0b06e"
+        }
+      },
+      "is_enabled": true
+    },
+    {
+      "type": "end_if",
+      "CanBeDisabled": false,
+      "id": "unterlagen-7",
+      "inputs": {},
+      "is_enabled": true
+    },
+    {
+      "type": "makro_execution",
+      "id": "unterlagen-8",
+      "inputs": {
+        "macro": {
+          "provider_id": "local_value",
+          "source_id": "7b3dbbfa-fa98-f9c1-e1a5-9003a276de7a"
+        }
+      },
+      "is_enabled": false
+    },
+    {
+      "type": "show_text",
+      "id": "unterlagen-9",
+      "inputs": {
+        "text_result": {
+          "provider_id": "step_result",
+          "source_id": "v1/unterlagen-0/selected_label"
+        },
+        "desktop_index": {
+          "provider_id": "local_value",
+          "source_id": "328b070d-e860-2208-2f37-6ae995f6289b"
+        },
+        "font_size": {
+          "provider_id": "local_value",
+          "source_id": "8c1c271c-91f9-5cda-3377-1ecdd51c73f1"
+        },
+        "font_color": {
+          "provider_id": "local_value",
+          "source_id": "0b0dc800-55af-5936-a269-216b666f6851"
+        },
+        "opacity": {
+          "provider_id": "local_value",
+          "source_id": "7e2604a9-5476-f0f8-fb28-c188f36fcfcb"
+        },
+        "duration_ms": {
+          "provider_id": "local_value",
+          "source_id": "530712f4-5984-1d8a-0cb0-2e71c7901253"
+        },
+        "clear_on_job_end": {
+          "provider_id": "local_value",
+          "source_id": "9cc0c1f1-b59a-21ad-dbb1-14e946a49268"
+        },
+        "offset_x": {
+          "provider_id": "local_value",
+          "source_id": "aca6e951-f845-6c5d-e207-39ee6b1ed914"
+        },
+        "offset_y": {
+          "provider_id": "local_value",
+          "source_id": "1a1c1abd-eb32-f6c3-7f29-6c548dc8cf9f"
+        }
+      },
+      "is_enabled": true
+    }
+  ],
+  "endSteps": [],
+  "endPhaseTimeoutSeconds": 10
+}

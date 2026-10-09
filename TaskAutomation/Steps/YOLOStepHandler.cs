@@ -42,7 +42,7 @@ namespace TaskAutomation.Steps
                 return captureResult with { WasExecuted = true, Found = false };
             }
 
-            await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
+            await ctx.AcquireYoloModelAsync(step.Settings.Model, ct);
             ctx.RegisterYoloModel(step.Settings.Model);
 
             System.Drawing.Rectangle? roi = null;
@@ -98,7 +98,7 @@ namespace TaskAutomation.Steps
                     PixelRegion? bb = r.BoundingBox.HasValue
                         ? new PixelRegion(r.BoundingBox.Value.X + capture.Offset.X, r.BoundingBox.Value.Y + capture.Offset.Y, r.BoundingBox.Value.Width, r.BoundingBox.Value.Height)
                         : null;
-                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = rawResult.Confidence };
+                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = r.Confidence };
                 })
                 .ToList();
 

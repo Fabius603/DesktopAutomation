@@ -1,0 +1,6 @@
+{
+  "$type": "system_event",
+  "Kind": "SystemEvent",
+  "event_kind": "SessionLocked",
+  "kind": "SystemEvent"
+}

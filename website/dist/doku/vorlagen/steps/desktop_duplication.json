@@ -1,0 +1,14 @@
+{
+  "type": "desktop_duplication",
+  "settings": {
+    "desktop_idx": 0,
+    "capture_cursor": false,
+    "monitor_device_name": "",
+    "wait_for_new_frame": true,
+    "timeout_ms": 250,
+    "allow_cached_fallback": true
+  },
+  "id": "ffa47583-1458-1a09-c1e7-2592222fbe7b",
+  "inputs": {},
+  "is_enabled": true
+}

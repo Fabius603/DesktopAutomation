@@ -1,0 +1,9 @@
+{
+  "type": "timeout",
+  "settings": {
+    "delay_ms": 1000
+  },
+  "id": "f8468467-aabe-4960-2611-1a0bcd68497c",
+  "inputs": {},
+  "is_enabled": true
+}

@@ -5,9 +5,8 @@
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              VerticalAlignment="Top">
-    <Grid>
-        <Button Width="34" Height="34"
-                Padding="0" Style="{StaticResource ButtonSecondary}"
+        <Button AutomationProperties.AutomationId="WholeValueSourceAction"
+                Style="{StaticResource StepValueSourceAction}"
                 VerticalAlignment="Top"
                 ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.WholeValueToolTip}"
                 Click="OpenValueSourceMenu_Click">
@@ -26,9 +25,8 @@
                               Visibility="{Binding Picker.CanUseStepResults, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </ContextMenu>
             </Button.ContextMenu>
-            <iconPacks:PackIconMaterial Kind="RhombusOutline" Width="15" Height="15"
+            <iconPacks:PackIconMaterial Kind="LinkVariant" Width="15" Height="15"
                                         VerticalAlignment="Center" HorizontalAlignment="Center"
                                         Foreground="{DynamicResource App.Brush.Accent}"/>
         </Button>
-    </Grid>
 </UserControl>
