@@ -25,7 +25,7 @@ namespace TaskAutomation.Steps
                 var resolved = ResultBindingResolver.Resolve<object>(ctx.Results, s.TextResult);
                 if (!resolved.IsSuccess)
                     throw new InvalidOperationException(resolved.Error ?? "Das ausgewählte Task-Ergebnis konnte nicht gelesen werden.");
-                text = FormatDisplayValue(resolved.FirstOrDefault);
+                text = TextValueFormatter.Format(resolved.Values);
             }
 
             // Farbe parsen (#RRGGBB oder #AARRGGBB)
@@ -58,29 +58,6 @@ namespace TaskAutomation.Steps
         }
 
         protected override ShowTextResult CreateDefault() => ShowTextResult.Default;
-
-        private static string FormatDisplayValue(object? value) => value switch
-        {
-            PixelPoint point => PixelGeometryFormatter.Format(point),
-            PixelSize size => PixelGeometryFormatter.Format(size),
-            PixelRegion region => PixelGeometryFormatter.Format(region),
-            Point point => PixelGeometryFormatter.Format(new PixelPoint(point.X, point.Y)),
-            Rectangle rectangle => PixelGeometryFormatter.Format(
-                new PixelRegion(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height)),
-            DetectionItem detection => FormatDetection(detection),
-            RuntimeProcessReference process => string.IsNullOrWhiteSpace(process.ProcessName)
-                ? $"Prozess {process.ProcessId}"
-                : $"{process.ProcessName} (PID {process.ProcessId})",
-            _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty
-        };
-
-        private static string FormatDetection(DetectionItem detection)
-        {
-            var geometry = detection.BoundingBox is { } bounds
-                ? PixelGeometryFormatter.Format(bounds)
-                : PixelGeometryFormatter.Format(detection.Center);
-            return $"{detection.Confidence:P1}  ·  {geometry}";
-        }
 
         // ── Hilfsmethoden ──────────────────────────────────────────────────────
 

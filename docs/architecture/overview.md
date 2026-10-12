@@ -34,6 +34,12 @@ domain cloning/snapshots, and `UserPreferencesService` in the application layer 
 defaults and persistence. The current audit evidence is maintained in the
 [architecture conformance register](conformance-register.md).
 
+`InputContractRegistry` owns semantic input definitions and path resolution;
+`InputCompatibilityEvaluator` owns source compatibility and conversion plans.
+`InputBindingContractTraversal` checks shared binding structure, `InputValueConverter`
+executes approved conversions, and `JsonNumberRules` owns finite Number reading.
+Frontend-neutral models and value/property metadata live in `TaskAutomation.Contracts`.
+
 Detailed contracts:
 
 - [Distribution and installed application tests](distribution.md)

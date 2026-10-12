@@ -93,31 +93,31 @@ Wähle Zielpunkt und Ursprung für eine relative Mausbewegung mit getrennten Fak
 
 ### result.click_on_point_3d.applied_delta_x
 
-Tatsächlich angewendeter ganzzahliger horizontaler Mausversatz nach Skalierung und Rundung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.applied_delta_y
 
-Tatsächlich angewendeter ganzzahliger vertikaler Mausversatz nach Skalierung und Rundung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.delta_x
 
-Horizontale Abweichung beziehungsweise Bewegungsanteil in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.delta_y
 
-Vertikale Abweichung beziehungsweise Bewegungsanteil in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.movement_blocked
 
-Ob die 3D-Eingabe wegen Bewegungstoleranz oder nicht neuerem Quell-Frame unterdrückt wurde. Es wurde dabei keine neue Bewegung und kein Klick gesendet. Einzelwert dieses Ergebnisses.
+Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden. Beispiel: true.
 
 ### result.click_on_point_3d.movement_factor_x
 
-Horizontaler Skalierungsfaktor, der für diese Eingabe verwendet wurde. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen. Beispiel: 0.92.
 
 ### result.click_on_point_3d.movement_factor_y
 
-Vertikaler Skalierungsfaktor, der für diese Eingabe verwendet wurde. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen. Beispiel: 0.92.
 
 ### schema.id
 
@@ -145,11 +145,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -326,6 +326,8 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
     {
       "id": "points_source",
       "name": "Punktquelle",
+      "helpKey": "Ui.Step.Settings.PointSource.Help",
+      "help": "Quelle der Position, die dieser Step verarbeitet.",
       "descriptor": {
         "Id": "points_source",
         "LabelKey": "Ui.Step.Settings.PointSource",
@@ -350,12 +352,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "origin",
       "name": "Ursprung",
+      "helpKey": "Ui.Step.Settings.OriginLocalHelp",
+      "help": "X und Y beziehen sich auf die linke obere Ecke des ausgewählten Monitors.",
       "descriptor": {
         "Id": "origin",
         "LabelKey": "Ui.Step.Settings.Origin",
@@ -389,12 +396,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
           "WholeValueInputContractId": "origin"
         },
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": "desktopautomation.screen-point/v1",
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "click_type",
       "name": "Maustaste",
+      "helpKey": "Ui.Step.Settings.ClickType.Help",
+      "help": "Maustaste, mit der am Zielpunkt geklickt wird.",
       "descriptor": {
         "Id": "click_type",
         "LabelKey": "Ui.Step.Settings.ClickType",
@@ -451,12 +463,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "movement_factor_x",
       "name": "Bewegungsfaktor X",
+      "helpKey": "Ui.Step.Settings.MovementFactorHelp",
+      "help": "Multipliziert das jeweilige X- bzw. Y-Pixeldelta vor der relativen Mausbewegung (0,01 bis 100).",
       "descriptor": {
         "Id": "movement_factor_x",
         "LabelKey": "Ui.Step.Settings.MovementFactorX",
@@ -487,12 +504,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "movement_factor_y",
       "name": "Bewegungsfaktor Y",
+      "helpKey": "Ui.Step.Settings.MovementFactorHelp",
+      "help": "Multipliziert das jeweilige X- bzw. Y-Pixeldelta vor der relativen Mausbewegung (0,01 bis 100).",
       "descriptor": {
         "Id": "movement_factor_y",
         "LabelKey": "Ui.Step.Settings.MovementFactorY",
@@ -523,12 +545,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_x",
       "name": "Versatz X (px)",
+      "helpKey": "Ui.Step.Settings.XOffsetPixels.Help",
+      "help": "Horizontaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_x",
         "LabelKey": "Ui.Step.Settings.XOffsetPixels",
@@ -553,12 +580,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_y",
       "name": "Versatz Y (px)",
+      "helpKey": "Ui.Step.Settings.YOffsetPixels.Help",
+      "help": "Vertikaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_y",
         "LabelKey": "Ui.Step.Settings.YOffsetPixels",
@@ -583,12 +615,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "timeout_ms",
       "name": "Zeitlimit (ms)",
+      "helpKey": "Ui.Step.Settings.TimeoutMs.Help",
+      "help": "Zeitlimit der Operation in Millisekunden. 1000 ms entsprechen einer Sekunde.",
       "descriptor": {
         "Id": "timeout_ms",
         "LabelKey": "Ui.Step.Settings.TimeoutMs",
@@ -619,12 +656,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "double_click",
       "name": "Doppelklick",
+      "helpKey": "Ui.Step.Settings.DoubleClick.Help",
+      "help": "Führt am Zielpunkt einen Doppelklick statt eines einzelnen Klicks aus.",
       "descriptor": {
         "Id": "double_click",
         "LabelKey": "Ui.Step.Settings.DoubleClick",
@@ -649,12 +691,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "movement_threshold_px",
       "name": "Bewegungstoleranz (px)",
+      "helpKey": "Ui.Step.Settings.MovementThresholdHelp",
+      "help": "Blockiert Bewegung und Klick, wenn sich beide Achsen höchstens um diesen Wert vom zuletzt gesendeten Versatz unterscheiden. Verglichen wird nach Skalierung und Rundung. 0 blockiert nur exakt gleiche Versätze; Standard: 10 px.",
       "descriptor": {
         "Id": "movement_threshold_px",
         "LabelKey": "Ui.Step.Settings.MovementThresholdPixels",
@@ -685,7 +732,10 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -1069,233 +1119,247 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
     "Properties": [
       {
         "Name": "DeltaX",
-        "DisplayName": "Delta X",
+        "DisplayName": "Horizontaler Zielversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.delta_x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.delta_x"
       },
       {
         "Name": "DeltaY",
-        "DisplayName": "Delta Y",
+        "DisplayName": "Vertikaler Zielversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.delta_y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.delta_y"
       },
       {
         "Name": "MovementFactorX",
-        "DisplayName": "Movement Factor X",
+        "DisplayName": "Horizontaler Bewegungsfaktor",
         "DataType": "Number",
-        "Description": "Number, kann leer sein",
+        "Description": "Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "0.92",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.movement_factor_x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.movement_factor_x"
       },
       {
         "Name": "MovementFactorY",
-        "DisplayName": "Movement Factor Y",
+        "DisplayName": "Vertikaler Bewegungsfaktor",
         "DataType": "Number",
-        "Description": "Number, kann leer sein",
+        "Description": "Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "0.92",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.movement_factor_y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.movement_factor_y"
       },
       {
         "Name": "AppliedDeltaX",
-        "DisplayName": "Applied Delta X",
+        "DisplayName": "Horizontaler Mausversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.applied_delta_x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.applied_delta_x"
       },
       {
         "Name": "AppliedDeltaY",
-        "DisplayName": "Applied Delta Y",
+        "DisplayName": "Vertikaler Mausversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.applied_delta_y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.applied_delta_y"
       },
       {
         "Name": "MovementBlocked",
-        "DisplayName": "Movement Blocked",
+        "DisplayName": "Bewegung und Klick unterdrückt",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.movement_blocked",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.movement_blocked"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "DeltaX",
-        "DisplayName": "Delta X",
+        "DisplayName": "Horizontaler Zielversatz (px)",
         "Property": {
           "Name": "DeltaX",
-          "DisplayName": "Delta X",
+          "DisplayName": "Horizontaler Zielversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.delta_x",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.delta_x"
         },
         "Children": []
       },
       {
         "Segment": "DeltaY",
-        "DisplayName": "Delta Y",
+        "DisplayName": "Vertikaler Zielversatz (px)",
         "Property": {
           "Name": "DeltaY",
-          "DisplayName": "Delta Y",
+          "DisplayName": "Vertikaler Zielversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.delta_y",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.delta_y"
         },
         "Children": []
       },
       {
         "Segment": "MovementFactorX",
-        "DisplayName": "Movement Factor X",
+        "DisplayName": "Horizontaler Bewegungsfaktor",
         "Property": {
           "Name": "MovementFactorX",
-          "DisplayName": "Movement Factor X",
+          "DisplayName": "Horizontaler Bewegungsfaktor",
           "DataType": "Number",
-          "Description": "Number, kann leer sein",
+          "Description": "Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "0.92",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.movement_factor_x",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.movement_factor_x"
         },
         "Children": []
       },
       {
         "Segment": "MovementFactorY",
-        "DisplayName": "Movement Factor Y",
+        "DisplayName": "Vertikaler Bewegungsfaktor",
         "Property": {
           "Name": "MovementFactorY",
-          "DisplayName": "Movement Factor Y",
+          "DisplayName": "Vertikaler Bewegungsfaktor",
           "DataType": "Number",
-          "Description": "Number, kann leer sein",
+          "Description": "Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "0.92",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.movement_factor_y",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.movement_factor_y"
         },
         "Children": []
       },
       {
         "Segment": "AppliedDeltaX",
-        "DisplayName": "Applied Delta X",
+        "DisplayName": "Horizontaler Mausversatz (px)",
         "Property": {
           "Name": "AppliedDeltaX",
-          "DisplayName": "Applied Delta X",
+          "DisplayName": "Horizontaler Mausversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.applied_delta_x",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.applied_delta_x"
         },
         "Children": []
       },
       {
         "Segment": "AppliedDeltaY",
-        "DisplayName": "Applied Delta Y",
+        "DisplayName": "Vertikaler Mausversatz (px)",
         "Property": {
           "Name": "AppliedDeltaY",
-          "DisplayName": "Applied Delta Y",
+          "DisplayName": "Vertikaler Mausversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.applied_delta_y",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.applied_delta_y"
         },
         "Children": []
       },
       {
         "Segment": "MovementBlocked",
-        "DisplayName": "Movement Blocked",
+        "DisplayName": "Bewegung und Klick unterdrückt",
         "Property": {
           "Name": "MovementBlocked",
-          "DisplayName": "Movement Blocked",
+          "DisplayName": "Bewegung und Klick unterdrückt",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.movement_blocked",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.movement_blocked"
         },
         "Children": []

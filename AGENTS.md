@@ -36,6 +36,14 @@ Start at `.agents/README.md`. Load only instructions and repository skills relev
 - Maintain website/product documentation in the same task whenever steps, values, automations,
   macros or logs change; follow `.agents/instructions/website-documentation.md`.
 - Do not commit, stage, create branches, or push unless the user explicitly asks.
+- New and changed functionality must work with standard MSIX filesystem and registry
+  virtualization enabled, without `unvirtualizedResources`. Use documented, supported Windows
+  APIs and deployment mechanisms. Do not bypass virtualization or unsupported API restrictions
+  through helper executables, scripts, registry tricks, or UI automation. MSIX, Velopack and local
+  builds must expose the same function semantics; do not silently replace automatic actions with
+  manual actions or report success without applying the requested change. If no supported
+  equivalent exists, report the conflict before changing the feature contract. See
+  `.agents/instructions/architecture.md` for implementation and validation requirements.
 
 ## Validation
 

@@ -13,10 +13,10 @@ public sealed class MsixManifestTests
         var manifest = XDocument.Load(Path.Combine(directory.FullName, "packaging", "msix", "AppxManifest.xml"));
         XNamespace desktop6 = "http://schemas.microsoft.com/appx/manifest/desktop/windows10/6";
         XNamespace uap10 = "http://schemas.microsoft.com/appx/manifest/uap/windows10/10";
-        Assert.Equal("disabled", manifest.Descendants(desktop6 + "FileSystemWriteVirtualization").Single().Value);
-        Assert.Equal("disabled", manifest.Descendants(desktop6 + "RegistryWriteVirtualization").Single().Value);
+        Assert.Empty(manifest.Descendants(desktop6 + "FileSystemWriteVirtualization"));
+        Assert.Empty(manifest.Descendants(desktop6 + "RegistryWriteVirtualization"));
         var capabilities = manifest.Descendants().Where(element => element.Name.LocalName == "Capability").Select(element => (string?)element.Attribute("Name"));
-        Assert.Contains("unvirtualizedResources", capabilities);
+        Assert.DoesNotContain("unvirtualizedResources", capabilities);
         Assert.Contains("runFullTrust", capabilities);
         var runtime = manifest.Descendants().Single(element => element.Name.LocalName == "PackageDependency");
         Assert.Equal("Microsoft.VCLibs.140.00.UWPDesktop", (string?)runtime.Attribute("Name"));

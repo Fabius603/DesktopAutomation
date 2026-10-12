@@ -12,6 +12,8 @@
       {
         "id": "process_target",
         "name": "Prozessreferenz",
+        "helpKey": "Ui.Step.Settings.ProcessSource.Help",
+        "help": "Suchmerkmale oder Referenz auf eine konkrete Programminstanz. Eine Prozessreferenz identifiziert die gewählte Instanz.",
         "descriptor": {
           "Id": "process_target",
           "LabelKey": "Ui.Step.Settings.ProcessSource",
@@ -36,7 +38,10 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": "desktopautomation.process-target/v1",
+          "OwnsStructuredInputContract": true,
+          "InputValueKind": null
         }
       }
     ],
@@ -266,7 +271,7 @@
     "purpose": "Beende die gewählte Programminstanz beziehungsweise passende Instanzen der konfigurierten Suche. Prüfe Prozessreferenz und Titel sorgfältig: das Beenden eines Programms kann ungespeicherte Arbeit verlieren. Eine nicht mehr vorhandene Instanz ist von einem Berechtigungsfehler zu unterscheiden.",
     "example": "Eine zuvor über get_process ermittelte Testprogramm-Instanz beenden; keine ungesicherten Dokumente im Testprogramm offen lassen.",
     "errors": "Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.",
-    "field.process_target": "Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang.",
+    "field.process_target": "Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang. Ab dem kommenden Update 1.6.2 lassen sich vorhandene gemeinsame Prozessvariablen als gesamte Prozessreferenz auswählen; die Erstellung neuer Variablen bleibt auf direkt editierbare Typen begrenzt.",
     "schema.id": "Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.",
     "schema.inputs": "Zuordnung von UI-Feld-ID zu typisierter Wertequelle. Bei vorhandenen inputs serialisiert der kanonische Job-Serializer settings nicht zusätzlich. Leere inputs mit settings bleiben als Legacy-/direkte Konfiguration lesbar.",
     "schema.inputs.items": "Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.",
@@ -274,8 +279,8 @@
     "schema.inputs.property_path": "Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.",
     "schema.inputs.source_step_id": "Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.",
     "schema.inputs.members": "Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.",
-    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.",
-    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.",
+    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.",
+    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.",
     "schema.inputs.source_id": "Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.",
     "schema.inputs.value_path": "Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.",
     "schema.is_enabled": "true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.",
@@ -337,10 +342,10 @@
           "inputs": [
             {
               "kind": "reference",
-              "value": "Ergebnisvariablen → Schritt 3: Prozess starten  →  Prozess"
+              "value": "Ergebnisvariablen → Schritt 3: Prozess starten → Ermittelter Prozess"
             }
           ],
-          "explanation": "Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang."
+          "explanation": "Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang. Ab dem kommenden Update 1.6.2 lassen sich vorhandene gemeinsame Prozessvariablen als gesamte Prozessreferenz auswählen; die Erstellung neuer Variablen bleibt auf direkt editierbare Typen begrenzt."
         }
       ]
     }

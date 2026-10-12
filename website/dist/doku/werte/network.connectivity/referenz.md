@@ -17,11 +17,11 @@ Zustandsabfrage: Aktuelle Netzwerkverbindung. Liest den aktuellen vom System ang
 
 ### result.captured_at
 
-Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.connection_type
 
-Art der ermittelten Netzwerkverbindung, soweit vom System verfügbar. Einzelwert dieses Ergebnisses.
+Art der ermittelten Verbindung, beispielsweise WLAN oder Ethernet.
 
 ### result.connection_type.option.Ethernet
 
@@ -45,7 +45,7 @@ Drahtlose WLAN-Verbindung.
 
 ### result.connectivity
 
-Vom Netzwerkprovider gemeldete Verbindungsqualität beziehungsweise Konnektivität. Einzelwert dieses Ergebnisses.
+Von Windows gemeldeter Grad der Netzwerkverbindung, etwa lokal oder mit Internetzugriff.
 
 ### result.connectivity.option.Disconnected
 
@@ -65,35 +65,35 @@ Die vorhandenen Daten erlauben keinen eindeutigeren Zustand.
 
 ### result.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl aktiver Netzwerkschnittstellen ohne Loopback. Beispiel: 3.
 
 ### result.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.error_message
 
-Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.is_connected
 
-Ob die Verbindung zum Zeitpunkt der Abfrage hergestellt war. Einzelwert dieses Ergebnisses.
+Gibt an, ob die konfigurierte Verbindung oder das abgefragte Gerät verbunden ist. Beispiel: true.
 
 ### result.items
 
-Liste abgefragter Objekte, zum Beispiel Geräte, Monitore, Drucker oder Laufwerke. Mitglieder besitzen die in dieser Referenz aufgeführten Unterwerte. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Namen der aktiven Netzwerkschnittstellen ohne Loopback. Ohne Schnittstellen leer.
 
 ### result.items.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl der Elemente in „Gefundene Elemente“. Eine leere Liste hat die Anzahl 0. Beispiel: 3.
 
 ### result.name
 
-Lesbarer Name des abgefragten Geräts, Monitors, Laufwerks oder Objekts. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Name der ersten aktiven Netzwerkschnittstelle ohne Loopback; ohne Schnittstelle leer.
 
 ### result.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.
 
 ### result.status.option.AccessDenied
 
@@ -127,23 +127,24 @@ Funktion auf diesem Zielsystem nicht unterstützt.
     "Properties": [
       {
         "Name": "IsConnected",
-        "DisplayName": "Is Connected",
+        "DisplayName": "Verbindung vorhanden",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob die konfigurierte Verbindung oder das abgefragte Gerät verbunden ist.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "is_connected",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "is_connected"
       },
       {
         "Name": "Connectivity",
-        "DisplayName": "Connectivity",
+        "DisplayName": "Netzwerkzugriff",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Von Windows gemeldeter Grad der Netzwerkverbindung, etwa lokal oder mit Internetzugriff.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -156,13 +157,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "connectivity",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "connectivity"
       },
       {
         "Name": "ConnectionType",
-        "DisplayName": "Connection Type",
+        "DisplayName": "Verbindungsart",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Art der ermittelten Verbindung, beispielsweise WLAN oder Ethernet.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -176,13 +178,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "connection_type",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "connection_type"
       },
       {
         "Name": "Name",
-        "DisplayName": "Name",
+        "DisplayName": "Name der Netzwerkschnittstelle",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Name der ersten aktiven Netzwerkschnittstelle ohne Loopback; ohne Schnittstelle leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -190,27 +193,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "name",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "name"
       },
       {
         "Name": "Count",
-        "DisplayName": "Count",
+        "DisplayName": "Anzahl aktiver Netzwerkschnittstellen",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl aktiver Netzwerkschnittstellen ohne Loopback.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "count"
       },
       {
         "Name": "Items",
-        "DisplayName": "Items",
+        "DisplayName": "Aktive Netzwerkschnittstellen",
         "DataType": "Text",
-        "Description": "Text",
+        "Description": "Namen der aktiven Netzwerkschnittstellen ohne Loopback. Ohne Schnittstellen leer.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -218,27 +223,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "items",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "items"
       },
       {
         "Name": "Items.Count",
-        "DisplayName": "Items / Count",
+        "DisplayName": "Gefundene Elemente / Anzahl",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der Elemente in „Gefundene Elemente“. Eine leere Liste hat die Anzahl 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "items.count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "items.count"
       },
       {
         "Name": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -252,27 +259,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "status"
       },
       {
         "Name": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "captured_at",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "captured_at"
       },
       {
         "Name": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -280,51 +289,54 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_code"
       },
       {
         "Name": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
         "IsNullable": true,
-        "Example": "No detection point available",
+        "Example": null,
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "error_message",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_message"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "IsConnected",
-        "DisplayName": "Is Connected",
+        "DisplayName": "Verbindung vorhanden",
         "Property": {
           "Name": "IsConnected",
-          "DisplayName": "Is Connected",
+          "DisplayName": "Verbindung vorhanden",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob die konfigurierte Verbindung oder das abgefragte Gerät verbunden ist.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "is_connected",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "is_connected"
         },
         "Children": []
       },
       {
         "Segment": "Connectivity",
-        "DisplayName": "Connectivity",
+        "DisplayName": "Netzwerkzugriff",
         "Property": {
           "Name": "Connectivity",
-          "DisplayName": "Connectivity",
+          "DisplayName": "Netzwerkzugriff",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Von Windows gemeldeter Grad der Netzwerkverbindung, etwa lokal oder mit Internetzugriff.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -337,18 +349,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "connectivity",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "connectivity"
         },
         "Children": []
       },
       {
         "Segment": "ConnectionType",
-        "DisplayName": "Connection Type",
+        "DisplayName": "Verbindungsart",
         "Property": {
           "Name": "ConnectionType",
-          "DisplayName": "Connection Type",
+          "DisplayName": "Verbindungsart",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Art der ermittelten Verbindung, beispielsweise WLAN oder Ethernet.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -362,18 +375,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "connection_type",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "connection_type"
         },
         "Children": []
       },
       {
         "Segment": "Name",
-        "DisplayName": "Name",
+        "DisplayName": "Name der Netzwerkschnittstelle",
         "Property": {
           "Name": "Name",
-          "DisplayName": "Name",
+          "DisplayName": "Name der Netzwerkschnittstelle",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Name der ersten aktiven Netzwerkschnittstelle ohne Loopback; ohne Schnittstelle leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -381,37 +395,39 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "name",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "name"
         },
         "Children": []
       },
       {
         "Segment": "Count",
-        "DisplayName": "Count",
+        "DisplayName": "Anzahl aktiver Netzwerkschnittstellen",
         "Property": {
           "Name": "Count",
-          "DisplayName": "Count",
+          "DisplayName": "Anzahl aktiver Netzwerkschnittstellen",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl aktiver Netzwerkschnittstellen ohne Loopback.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "count"
         },
         "Children": []
       },
       {
         "Segment": "Items",
-        "DisplayName": "Items",
+        "DisplayName": "Aktive Netzwerkschnittstellen",
         "Property": {
           "Name": "Items",
-          "DisplayName": "Items",
+          "DisplayName": "Aktive Netzwerkschnittstellen",
           "DataType": "Text",
-          "Description": "Text",
+          "Description": "Namen der aktiven Netzwerkschnittstellen ohne Loopback. Ohne Schnittstellen leer.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Collection",
@@ -419,24 +435,26 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "items",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "items"
         },
         "Children": [
           {
             "Segment": "Count",
-            "DisplayName": "Count",
+            "DisplayName": "Anzahl",
             "Property": {
               "Name": "Items.Count",
-              "DisplayName": "Items / Count",
+              "DisplayName": "Gefundene Elemente / Anzahl",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Anzahl der Elemente in „Gefundene Elemente“. Eine leere Liste hat die Anzahl 0.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "items.count",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "items.count"
             },
             "Children": []
@@ -445,12 +463,12 @@ Funktion auf diesem Zielsystem nicht unterstützt.
       },
       {
         "Segment": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "Property": {
           "Name": "Status",
-          "DisplayName": "Status",
+          "DisplayName": "Ergebnis der Windows-Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -464,37 +482,39 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "status"
         },
         "Children": []
       },
       {
         "Segment": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "Property": {
           "Name": "CapturedAt",
-          "DisplayName": "Captured At",
+          "DisplayName": "Abfragezeit (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "captured_at",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "captured_at"
         },
         "Children": []
       },
       {
         "Segment": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "Property": {
           "Name": "ErrorCode",
-          "DisplayName": "Error Code",
+          "DisplayName": "Technischer Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -502,25 +522,27 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_code"
         },
         "Children": []
       },
       {
         "Segment": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "Property": {
           "Name": "ErrorMessage",
-          "DisplayName": "Error Message",
+          "DisplayName": "Fehlerbeschreibung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
           "IsNullable": true,
-          "Example": "No detection point available",
+          "Example": null,
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "error_message",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_message"
         },
         "Children": []

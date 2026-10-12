@@ -1232,22 +1232,6 @@
     "json": "/doku/werte/YOLODetectionResult/vertrag.json"
   },
   {
-    "id": "audio.default_input",
-    "group": "werte",
-    "title": "audio.default_input",
-    "url": "/doku/werte/audio.default_input/",
-    "markdown": "/doku/werte/audio.default_input/referenz.md",
-    "json": "/doku/werte/audio.default_input/vertrag.json"
-  },
-  {
-    "id": "audio.default_output",
-    "group": "werte",
-    "title": "audio.default_output",
-    "url": "/doku/werte/audio.default_output/",
-    "markdown": "/doku/werte/audio.default_output/referenz.md",
-    "json": "/doku/werte/audio.default_output/vertrag.json"
-  },
-  {
     "id": "audio.device.added",
     "group": "werte",
     "title": "Audiogerät hinzugefügt",
@@ -1902,22 +1886,6 @@
     "url": "/doku/werte/network.wifi.signal_quality_changed/",
     "markdown": "/doku/werte/network.wifi.signal_quality_changed/referenz.md",
     "json": "/doku/werte/network.wifi.signal_quality_changed/vertrag.json"
-  },
-  {
-    "id": "notifications.focus_mode",
-    "group": "werte",
-    "title": "notifications.focus_mode",
-    "url": "/doku/werte/notifications.focus_mode/",
-    "markdown": "/doku/werte/notifications.focus_mode/referenz.md",
-    "json": "/doku/werte/notifications.focus_mode/vertrag.json"
-  },
-  {
-    "id": "personalization.theme",
-    "group": "werte",
-    "title": "personalization.theme",
-    "url": "/doku/werte/personalization.theme/",
-    "markdown": "/doku/werte/personalization.theme/referenz.md",
-    "json": "/doku/werte/personalization.theme/vertrag.json"
   },
   {
     "id": "personalization.wallpaper",

@@ -240,7 +240,7 @@ Wenn ein Step ein Ergebnis eines vorherigen Steps konsumiert:
 
 1. Eine `ResultBinding`-Property in seinen Settings anlegen.
 2. Einen Backend-Vertrag in
-   `TaskAutomation/Steps/StepInputContractRegistry.cs` registrieren.
+   `TaskAutomation/Steps/InputContractRegistry.cs` registrieren.
 3. Im Handler ausschließlich über `ResultBindingResolver` auflösen.
 4. Im Frontend einen `ValueReferencePickerViewModel` mit demselben Contract-Key
    verwenden.
@@ -362,6 +362,17 @@ Allgemeine Wertreferenzen verwenden `ValueReferencePicker` zusammen mit einer
 stabilen `InputContractId`. Das Frontend ermittelt daraus den bereits im Backend
 registrierten Eingabevertrag und bietet ausschließlich kompatible Ergebnisse an.
 
+Zusammengesetzte Felder deklarieren ihre stabile `InputSchemaId` ausdrücklich in
+der Backenddefinition. Ein Spezialtyp wie JobReference oder MacroReference wird
+über `InputValueKind` benannt; er darf nicht aus einem `EditorHint` abgeleitet werden.
+Unterfelder verwenden `InputContractRegistry.ResolvePath`, und
+`InputCompatibilityEvaluator` entscheidet mit dem Profil `NewSelection` oder
+`ExistingBinding` über Quellen. `InputValueConverter` führt die freigegebene
+Umwandlung aus. Definitionen und Aufrufer verwenden ausschließlich
+`InputContractNode` und `InputContractSchema`; die früheren Vertragstypen und
+Registryfassaden sind entfernt. `InputSchemaIds` enthält stabile gespeicherte
+Schema-IDs. `ConditionRules` liefert die Verträge für Bedingungen.
+
 Ein einfacher Step erhält keine eigene `Show...`-Property, keine
 duplizierten ViewModel-Felder, keine Create-/Load-Switchzweige und kein eigenes
 WPF-Control. Ein spezialisierter Editor ist nur für zusammengesetzte Eingaben
@@ -396,6 +407,16 @@ C# `Loc.Get`, `Loc.Format` oder `StepLocalization`.
 
 Die stabile Result-ID und der Lokalisierungsschlüssel sind unterschiedliche
 Konzepte: Die ID wird persistiert, die Übersetzung darf geändert werden.
+
+Jeder auswählbare Ergebniswert einschließlich Unterfeldern benötigt eine fachliche
+Bezeichnung und Erklärung in beiden Sprachen: `Step.ResultProperty.<Pfad>` und
+`Step.ResultPropertyDescription.<Pfad>`. Wenn die Bedeutung vom Ergebnistyp abhängt,
+verwende `<Ergebnistyp>.<Pfad>` hinter dem jeweiligen Präfix. Beschreibe Einheit,
+Wertebereich, Koordinatenraum und fehlende beziehungsweise leere Werte. Ein Datentyp
+allein ist keine Erklärung. `ResultPropertyLocalization` projiziert diese Schlüssel
+gemeinsam für App und Website. Beispiele und Diagnoseklassifikation gehören nach
+`StepResultMetadata`; IDs und Pfade bleiben unverändert. `ResultHelpTests` prüft die
+vollständige deutsch-englische Abdeckung.
 
 ## 9. Release Notes
 

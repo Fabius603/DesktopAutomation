@@ -130,7 +130,7 @@ public static class JobVariableRuntimeValueReader
             {
                 ResultValueKind.Boolean => variable.Value.Deserialize<bool[]>(),
                 ResultValueKind.Integer => variable.Value.Deserialize<int[]>(),
-                ResultValueKind.Number => variable.Value.Deserialize<double[]>(),
+                ResultValueKind.Number => variable.Value.AsArray().Select(JsonNumberRules.ReadFiniteDouble).ToArray(),
                 ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath => variable.Value.Deserialize<string[]>(),
                 ResultValueKind.DateTime => variable.Value.Deserialize<DateTime[]>(),
                 ResultValueKind.Image => ReadImages(variable.Value.Deserialize<string[]>() ?? []),
@@ -158,7 +158,7 @@ public static class JobVariableRuntimeValueReader
     {
         ResultValueKind.Boolean => variable.Value?.GetValue<bool>(),
         ResultValueKind.Integer => variable.Value?.Deserialize<int>(),
-        ResultValueKind.Number => variable.Value?.Deserialize<double>(),
+        ResultValueKind.Number => JsonNumberRules.ReadFiniteDouble(variable.Value),
         ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath =>
             variable.Value?.GetValue<string>(),
         ResultValueKind.DateTime => variable.Value?.GetValue<DateTime>(),

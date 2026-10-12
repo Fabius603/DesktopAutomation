@@ -149,7 +149,7 @@ public sealed class StepValuesAuditTests
             Value = JsonNode.Parse("{\"id\":\"a\",\"label\":\"new\",\"value\":\"a\"}")
         };
         var binding = Reference(root);
-        binding.SchemaId = ValueBindingSchemaRegistry.UserChoiceOptions;
+        binding.SchemaId = InputSchemaIds.UserChoiceOptions;
         binding.Items = [Reference(item)];
         step.Inputs[UserChoiceStepDefinition.OptionsFieldId] = binding;
         var job = new Job { Steps = [step], Variables = [item], LocalValues = [root] };
@@ -170,12 +170,12 @@ public sealed class StepValuesAuditTests
         var step = new UserChoiceStep();
         step.Inputs[UserChoiceStepDefinition.OptionsFieldId] = new ResultBinding
         {
-            SchemaId = ValueBindingSchemaRegistry.Roi,
+            SchemaId = InputSchemaIds.Roi,
             Items = [new ResultBinding { ProviderId = ValueProviderIds.JobVariable, SourceId = Guid.NewGuid().ToString() }]
         };
         var job = new Job { Steps = [step] };
         JobVariableInputMigration.Migrate(job);
-        Assert.Equal(ValueBindingSchemaRegistry.Roi, step.Inputs[UserChoiceStepDefinition.OptionsFieldId].SchemaId);
+        Assert.Equal(InputSchemaIds.Roi, step.Inputs[UserChoiceStepDefinition.OptionsFieldId].SchemaId);
         Assert.False(JobValidation.ValidateJob(job).IsValid);
     }
 
@@ -264,10 +264,10 @@ public sealed class StepValuesAuditTests
         var job = new Job { Steps = [step] };
         JobVariableInputMigration.Migrate(job);
         Assert.True(JobValidation.ValidateCandidate([], step, providerSources: [descriptor], variables: job.LocalValues).IsValid);
-        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
+        var contract = InputContractRegistry.Find(typeof(ShowTextStep), "text")!;
         Assert.False(contract.AllowsProvider(ValueProviderIds.Secret));
-        Assert.True(contract.AcceptsSource(ValueProviderIds.Secret, descriptor.ToResultProperty()));
-        Assert.False(contract.AcceptsSource(ValueProviderIds.Secret, descriptor.ToResultProperty(), includeLegacy: false));
+        Assert.True(contract.EvaluateSource(ValueProviderIds.Secret, descriptor.ToResultProperty(), InputCompatibilityProfile.ExistingBinding).IsAccepted);
+        Assert.False(contract.EvaluateSource(ValueProviderIds.Secret, descriptor.ToResultProperty(), InputCompatibilityProfile.NewSelection).IsAccepted);
         var results = new JobResultStore(secrets: new Dictionary<Guid, (ValueProviderSourceDescriptor, string)>
         { [id] = (descriptor, "runtime token") }, localValues: job.LocalValues);
         var materialized = Assert.IsType<ShowTextStep>(StepInputMaterializer.Materialize(step, results));

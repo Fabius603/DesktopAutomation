@@ -22,6 +22,8 @@
       {
         "id": "mode",
         "name": "Modus",
+        "helpKey": "Ui.Step.Settings.Mode.Help",
+        "help": "Legt die Arbeitsweise des Steps fest. Die Auswahl bestimmt, welche weiteren Einstellungen verwendet werden.",
         "descriptor": {
           "Id": "mode",
           "LabelKey": "Ui.Step.Settings.Mode",
@@ -66,12 +68,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "match_requirement",
         "name": "Erforderliche Treffer",
+        "helpKey": "Ui.Step.Settings.RequiredMatches.Help",
+        "help": "Legt fest, ob alle Punktvergleiche oder mindestens einer erfüllt sein müssen.",
         "descriptor": {
           "Id": "match_requirement",
           "LabelKey": "Ui.Step.Settings.RequiredMatches",
@@ -116,12 +123,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "points",
         "name": "ZU PRÜFENDE PUNKTE",
+        "helpKey": "Ui.Step.Settings.PointsToCheck.Help",
+        "help": "Positionen oder Erkennungsergebnisse, die miteinander verglichen werden.",
         "descriptor": {
           "Id": "points",
           "LabelKey": "Ui.Step.Settings.PointsToCheck",
@@ -153,12 +165,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": "desktopautomation.point-entries/v1",
+          "OwnsStructuredInputContract": true,
+          "InputValueKind": null
         }
       },
       {
         "id": "reference_source",
         "name": "Referenzquelle",
+        "helpKey": "Ui.Step.Settings.ReferenceSource.Help",
+        "help": "Referenzergebnis, mit dem die anderen Positionen verglichen werden.",
         "descriptor": {
           "Id": "reference_source",
           "LabelKey": "Ui.Step.Settings.ReferenceSource",
@@ -207,12 +224,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "reference_x",
         "name": "X",
+        "helpKey": "Ui.Step.Settings.X.Help",
+        "help": "Horizontale Koordinate in Pixeln im Koordinatensystem der gewählten Quelle.",
         "descriptor": {
           "Id": "reference_x",
           "LabelKey": "Ui.Step.Settings.X",
@@ -241,12 +263,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "reference_y",
         "name": "Y",
+        "helpKey": "Ui.Step.Settings.Y.Help",
+        "help": "Vertikale Koordinate in Pixeln im Koordinatensystem der gewählten Quelle.",
         "descriptor": {
           "Id": "reference_y",
           "LabelKey": "Ui.Step.Settings.Y",
@@ -275,12 +302,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "reference_points_source",
         "name": "Punktquelle",
+        "helpKey": "Ui.Step.Settings.PointSource.Help",
+        "help": "Quelle der Position, die dieser Step verarbeitet.",
         "descriptor": {
           "Id": "reference_points_source",
           "LabelKey": "Ui.Step.Settings.PointSource",
@@ -309,19 +341,24 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "offset_x",
         "name": "Versatz X (px)",
+        "helpKey": "Ui.Step.PointComparison.XTolerance.Help",
+        "help": "Maximal erlaubter horizontaler Abstand zum Referenzpunkt in Pixeln.",
         "descriptor": {
           "Id": "offset_x",
           "LabelKey": "Ui.Step.Settings.XOffsetPixels",
           "ValueKind": "Integer",
           "Required": false,
           "DefaultValue": 10,
-          "DescriptionKey": null,
+          "DescriptionKey": "Ui.Step.PointComparison.XTolerance.Help",
           "EditorHint": null,
           "Constraints": {
             "Minimum": 0,
@@ -349,19 +386,24 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "offset_y",
         "name": "Versatz Y (px)",
+        "helpKey": "Ui.Step.PointComparison.YTolerance.Help",
+        "help": "Maximal erlaubter vertikaler Abstand zum Referenzpunkt in Pixeln.",
         "descriptor": {
           "Id": "offset_y",
           "LabelKey": "Ui.Step.Settings.YOffsetPixels",
           "ValueKind": "Integer",
           "Required": false,
           "DefaultValue": 10,
-          "DescriptionKey": null,
+          "DescriptionKey": "Ui.Step.PointComparison.YTolerance.Help",
           "EditorHint": null,
           "Constraints": {
             "Minimum": 0,
@@ -389,12 +431,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "combine_mode",
         "name": "Verknüpfung",
+        "helpKey": "Ui.Step.Settings.CombineWith.Help",
+        "help": "Legt fest, wie die einzelnen Prüfungen miteinander verknüpft werden.",
         "descriptor": {
           "Id": "combine_mode",
           "LabelKey": "Ui.Step.Settings.CombineWith",
@@ -443,12 +490,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "expressions",
         "name": "Achsenbedingungen",
+        "helpKey": "Ui.Step.Settings.AxisExpressions.Help",
+        "help": "Bedingungen für den Vergleich der Koordinaten. Jede Zeile prüft den angegebenen Ausdruck.",
         "descriptor": {
           "Id": "expressions",
           "LabelKey": "Ui.Step.Settings.AxisExpressions",
@@ -483,7 +535,10 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       }
     ],
@@ -899,101 +954,107 @@
       "Properties": [
         {
           "Name": "Matches",
-          "DisplayName": "Matches",
+          "DisplayName": "Punktvergleich erfüllt",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "matches",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "matches"
         },
         {
           "Name": "MatchCount",
-          "DisplayName": "Match Count",
+          "DisplayName": "Anzahl passender Punkte",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der Punkte, die den konfigurierten Vergleich erfüllen.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "match_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "match_count"
         },
         {
           "Name": "TotalCount",
-          "DisplayName": "Total Count",
+          "DisplayName": "Anzahl geprüfter Punkte",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Gesamtanzahl der in diesem Vergleich geprüften Punkte.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "total_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "total_count"
         }
       ],
       "PropertyTree": [
         {
           "Segment": "Matches",
-          "DisplayName": "Matches",
+          "DisplayName": "Punktvergleich erfüllt",
           "Property": {
             "Name": "Matches",
-            "DisplayName": "Matches",
+            "DisplayName": "Punktvergleich erfüllt",
             "DataType": "Boolean",
-            "Description": "Boolean",
+            "Description": "Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist.",
             "IsNullable": false,
-            "Example": null,
+            "Example": "true",
             "Cardinality": "Single",
             "EnumTypeName": null,
             "EnumValues": null,
             "Id": "matches",
             "EnumDisplayNames": null,
+            "IsDiagnostic": false,
             "StableId": "matches"
           },
           "Children": []
         },
         {
           "Segment": "MatchCount",
-          "DisplayName": "Match Count",
+          "DisplayName": "Anzahl passender Punkte",
           "Property": {
             "Name": "MatchCount",
-            "DisplayName": "Match Count",
+            "DisplayName": "Anzahl passender Punkte",
             "DataType": "Integer",
-            "Description": "Integer",
+            "Description": "Anzahl der Punkte, die den konfigurierten Vergleich erfüllen.",
             "IsNullable": false,
-            "Example": null,
+            "Example": "3",
             "Cardinality": "Single",
             "EnumTypeName": null,
             "EnumValues": null,
             "Id": "match_count",
             "EnumDisplayNames": null,
+            "IsDiagnostic": false,
             "StableId": "match_count"
           },
           "Children": []
         },
         {
           "Segment": "TotalCount",
-          "DisplayName": "Total Count",
+          "DisplayName": "Anzahl geprüfter Punkte",
           "Property": {
             "Name": "TotalCount",
-            "DisplayName": "Total Count",
+            "DisplayName": "Anzahl geprüfter Punkte",
             "DataType": "Integer",
-            "Description": "Integer",
+            "Description": "Gesamtanzahl der in diesem Vergleich geprüften Punkte.",
             "IsNullable": false,
-            "Example": null,
+            "Example": "3",
             "Cardinality": "Single",
             "EnumTypeName": null,
             "EnumValues": null,
             "Id": "total_count",
             "EnumDisplayNames": null,
+            "IsDiagnostic": false,
             "StableId": "total_count"
           },
           "Children": []
@@ -1023,8 +1084,8 @@
     "schema.inputs.property_path": "Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.",
     "schema.inputs.source_step_id": "Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.",
     "schema.inputs.members": "Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.",
-    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.",
-    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.",
+    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.",
+    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.",
     "schema.inputs.source_id": "Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.",
     "schema.inputs.value_path": "Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.",
     "schema.is_enabled": "true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.",
@@ -1067,9 +1128,9 @@
     "schema.settings.points.points_source.source_id": "Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.",
     "schema.settings.points.points_source.value_path": "Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.",
     "schema.settings.points.source": "Auswahl zwischen einem direkt angegebenen Wert und einem referenzierten Job-Ergebnis, soweit dieser Konfigurationstyp beide Varianten anbietet.",
-    "result.matches": "Einzelne OCR-/Punktvergleichstreffer mit ihren Detailwerten. Der Ergebnis-Typ bestimmt die Elementstruktur. Einzelwert dieses Ergebnisses.",
-    "result.match_count": "Anzahl passender Prozesse oder Merkmalszuordnungen im konkreten Ergebnis; der Ergebnis-Typ bestimmt, was gezählt wird. Einzelwert dieses Ergebnisses.",
-    "result.total_count": "Gesamtzahl der im konkreten Abfrageergebnis gelieferten Einträge. Einzelwert dieses Ergebnisses.",
+    "result.matches": "Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist. Beispiel: true.",
+    "result.match_count": "Anzahl der Punkte, die den konfigurierten Vergleich erfüllen. Beispiel: 3.",
+    "result.total_count": "Gesamtanzahl der in diesem Vergleich geprüften Punkte. Beispiel: 3.",
     "input.points": "Punkt-/Erkennungsergebnis. Eine gültige, aber noch nicht verfügbare optionale Step-Quelle kann den Verbraucher mit NoInput überspringen; malformed Referenzen bleiben Fehler. Alle kompatiblen Listeneinträge werden verarbeitet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.",
     "schema.settings.mode.option.Offset": "Punkte anhand einer Referenzposition und erlaubter Versätze vergleichen.",
     "field.mode.option.Expression": "Punkte anhand expliziter Achsenbedingungen vergleichen.",

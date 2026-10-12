@@ -5,9 +5,9 @@ Website: /doku/steps/get_process/
 
 Abbildung: [Detailansicht: Laufenden Prozess suchen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-get-process.detail.png)
 
-1. Prozessname: Name des gesuchten Prozesses, zum Beispiel notepad. Ein Name kann mehrere Instanzen treffen; eine konkrete Prozessreferenz grenzt gezielt ein.
+1. Prozessname: Name des gesuchten Prozesses, zum Beispiel notepad. Ein Name kann mehrere Instanzen treffen; eine konkrete Prozessreferenz grenzt gezielt ein. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 2. Programmpfad: Pfad zur ausführbaren Datei. Beim Start muss er zu einem startbaren Programm führen; bei einer Suche grenzt er die Programminstanz ein.
-3. Fenstertitel enthält: Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Text setzt diesen Filter nicht.
+3. Fenstertitel enthält: Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Text setzt diesen Filter nicht. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 ### errors
 
 Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
@@ -22,11 +22,11 @@ Pfad zur ausführbaren Datei. Beim Start muss er zu einem startbaren Programm f�
 
 ### field.process_name
 
-Name des gesuchten Prozesses, zum Beispiel notepad. Ein Name kann mehrere Instanzen treffen; eine konkrete Prozessreferenz grenzt gezielt ein.
+Name des gesuchten Prozesses, zum Beispiel notepad. Ein Name kann mehrere Instanzen treffen; eine konkrete Prozessreferenz grenzt gezielt ein. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.window_title_contains
 
-Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Text setzt diesen Filter nicht.
+Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Text setzt diesen Filter nicht. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### purpose
 
@@ -34,31 +34,31 @@ Suche eine laufende Programminstanz über Namen, ausführbare Datei und optional
 
 ### result.found
 
-Ob die Erkennung/Suche in diesem Lauf einen passenden Treffer geliefert hat. false ist ein fachliches Ergebnis und nicht automatisch ein Step-Fehler. Einzelwert dieses Ergebnisses.
+Gibt an, ob die Prozesssuche einen passenden Prozess gefunden hat. Beispiel: true.
 
 ### result.process
 
-Konkrete Prozessreferenz mit Identität und optionalen Programmdaten. Bei keinem Treffer kann sie fehlen; nicht nur process_name als Instanzidentität verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.
 
 ### result.process.executable_path
 
-Ermittelter Pfad des Programms. Bei fehlenden Rechten oder fehlender Information kann ein optionaler Wert leer sein. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten. Beispiel: C:\Data\example.png.
 
 ### result.process.process_id
 
-Windows-Prozess-ID. PIDs können später wiederverwendet werden; die Prozessreferenz ergänzt daher gegebenenfalls Startzeit und weitere Merkmale. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen. Beispiel: 3.
 
 ### result.process.process_name
 
-Vom System ermittelter Prozessname, nicht notwendigerweise der sichtbare Fenstertitel. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.
 
 ### result.process.start_time_utc
 
-UTC-Startzeit der Prozessinstanz zur Unterscheidung wiederverwendeter PIDs. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.process.window_handle
 
-Native Fensterkennung der Programminstanz. Sie gilt im laufenden System und ist kein stabiler Dateipfad oder dauerhafter Job-Bezeichner. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist. Beispiel: 3.
 
 ### schema.id
 
@@ -86,11 +86,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -184,6 +184,8 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
     {
       "id": "process_name",
       "name": "Prozessname",
+      "helpKey": "Ui.Step.Settings.ProcessName.Help",
+      "help": "Name des gesuchten Prozesses, beispielsweise notepad. Mehrere Instanzen können denselben Namen haben.",
       "descriptor": {
         "Id": "process_name",
         "LabelKey": "Ui.Step.Settings.ProcessName",
@@ -208,12 +210,17 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "executable_path",
       "name": "Programmpfad",
+      "helpKey": "Ui.Step.Settings.PathProgram.Help",
+      "help": "Pfad zur ausführbaren Programmdatei.",
       "descriptor": {
         "Id": "executable_path",
         "LabelKey": "Ui.Step.Settings.PathProgram",
@@ -238,12 +245,17 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "window_title_contains",
       "name": "Fenstertitel enthält",
+      "helpKey": "Ui.Step.Settings.WindowTitleContains.Help",
+      "help": "Optionaler Teil des Fenstertitels zum Eingrenzen der Suche. Leerer Text setzt diesen Filter nicht.",
       "descriptor": {
         "Id": "window_title_contains",
         "LabelKey": "Ui.Step.Settings.WindowTitleContains",
@@ -268,7 +280,10 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -470,23 +485,24 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
     "Properties": [
       {
         "Name": "Found",
-        "DisplayName": "Found",
+        "DisplayName": "Prozess gefunden",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob die Prozesssuche einen passenden Prozess gefunden hat.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "found",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "found"
       },
       {
         "Name": "Process",
-        "DisplayName": "Process",
+        "DisplayName": "Ermittelter Prozess",
         "DataType": "ProcessReference",
-        "Description": "ProcessReference, kann leer sein",
+        "Description": "Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -494,41 +510,44 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
         "EnumValues": null,
         "Id": "process",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process"
       },
       {
         "Name": "Process.ProcessId",
-        "DisplayName": "Process / Process Id",
+        "DisplayName": "Prozess / Prozess-ID",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.process_id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.process_id"
       },
       {
         "Name": "Process.StartTimeUtc",
-        "DisplayName": "Process / Start Time Utc",
+        "DisplayName": "Prozess / Startzeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.start_time_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.start_time_utc"
       },
       {
         "Name": "Process.ProcessName",
-        "DisplayName": "Process / Process Name",
+        "DisplayName": "Prozess / Prozessname",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -536,65 +555,69 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
         "EnumValues": null,
         "Id": "process.process_name",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.process_name"
       },
       {
         "Name": "Process.ExecutablePath",
-        "DisplayName": "Process / Executable Path",
+        "DisplayName": "Prozess / Programmpfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.executable_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.executable_path"
       },
       {
         "Name": "Process.WindowHandle",
-        "DisplayName": "Process / Window Handle",
+        "DisplayName": "Prozess / Fensterkennung",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.window_handle",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.window_handle"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Found",
-        "DisplayName": "Found",
+        "DisplayName": "Prozess gefunden",
         "Property": {
           "Name": "Found",
-          "DisplayName": "Found",
+          "DisplayName": "Prozess gefunden",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob die Prozesssuche einen passenden Prozess gefunden hat.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "found",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "found"
         },
         "Children": []
       },
       {
         "Segment": "Process",
-        "DisplayName": "Process",
+        "DisplayName": "Ermittelter Prozess",
         "Property": {
           "Name": "Process",
-          "DisplayName": "Process",
+          "DisplayName": "Ermittelter Prozess",
           "DataType": "ProcessReference",
-          "Description": "ProcessReference, kann leer sein",
+          "Description": "Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -602,55 +625,58 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
           "EnumValues": null,
           "Id": "process",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "process"
         },
         "Children": [
           {
             "Segment": "ProcessId",
-            "DisplayName": "Process Id",
+            "DisplayName": "Prozess-ID",
             "Property": {
               "Name": "Process.ProcessId",
-              "DisplayName": "Process / Process Id",
+              "DisplayName": "Prozess / Prozess-ID",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.process_id",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.process_id"
             },
             "Children": []
           },
           {
             "Segment": "StartTimeUtc",
-            "DisplayName": "Start Time Utc",
+            "DisplayName": "Startzeit (UTC)",
             "Property": {
               "Name": "Process.StartTimeUtc",
-              "DisplayName": "Process / Start Time Utc",
+              "DisplayName": "Prozess / Startzeit (UTC)",
               "DataType": "DateTime",
-              "Description": "DateTime",
+              "Description": "UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "2030-01-01T08:00:00Z",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.start_time_utc",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.start_time_utc"
             },
             "Children": []
           },
           {
             "Segment": "ProcessName",
-            "DisplayName": "Process Name",
+            "DisplayName": "Prozessname",
             "Property": {
               "Name": "Process.ProcessName",
-              "DisplayName": "Process / Process Name",
+              "DisplayName": "Prozess / Prozessname",
               "DataType": "Text",
-              "Description": "Text, kann leer sein",
+              "Description": "Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.",
               "IsNullable": true,
               "Example": null,
               "Cardinality": "OptionalSingle",
@@ -658,44 +684,47 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
               "EnumValues": null,
               "Id": "process.process_name",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.process_name"
             },
             "Children": []
           },
           {
             "Segment": "ExecutablePath",
-            "DisplayName": "Executable Path",
+            "DisplayName": "Programmpfad",
             "Property": {
               "Name": "Process.ExecutablePath",
-              "DisplayName": "Process / Executable Path",
+              "DisplayName": "Prozess / Programmpfad",
               "DataType": "Text",
-              "Description": "Text, kann leer sein",
+              "Description": "Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten.",
               "IsNullable": true,
-              "Example": null,
+              "Example": "C:\\Data\\example.png",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.executable_path",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.executable_path"
             },
             "Children": []
           },
           {
             "Segment": "WindowHandle",
-            "DisplayName": "Window Handle",
+            "DisplayName": "Fensterkennung",
             "Property": {
               "Name": "Process.WindowHandle",
-              "DisplayName": "Process / Window Handle",
+              "DisplayName": "Prozess / Fensterkennung",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.window_handle",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.window_handle"
             },
             "Children": []

@@ -17,7 +17,7 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
     public DetectionOverlayRowViewModel(
         ObservableCollection<DetectionOverlayRowViewModel> owner,
         IReadOnlyList<SourceStepItem> sources,
-        StepInputDescriptor inputContract,
+        InputContractNode inputContract,
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         ResultBinding? binding = null,
@@ -80,7 +80,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     public TextOverlayRowViewModel(
         ObservableCollection<TextOverlayRowViewModel> owner,
         IReadOnlyList<SourceStepItem> sources,
-        StepInputDescriptor inputContract,
+        InputContractNode inputContract,
         Action<TextOverlayRowViewModel>? chooseMonitor,
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,

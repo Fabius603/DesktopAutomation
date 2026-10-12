@@ -17,27 +17,27 @@ Typisierter Ergebnisvertrag WindowsSettingChangeResult. Wird von Windows-Einstel
 
 ### result.windows_setting.applied_value
 
-Vom Windows-Provider gemeldeter angewendeter Wert nach der Änderung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Der tatsächlich angewendete Wert.
 
 ### result.windows_setting.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.windows_setting.previous_value
 
-Vor der Windows-Änderung beobachteter Wert. Für eine Wiederherstellung nur mit derselben Funktion und kompatibler Darstellung verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Der vor der Ausführung ermittelte Wert, sofern Windows ihn bereitstellt.
 
 ### result.windows_setting.restart_required
 
-Ob die abgefragte Funktion beziehungsweise Windows Update einen Neustartbedarf meldet. Einzelwert dieses Ergebnisses.
+Zeigt, ob Windows für die vollständige Übernahme einen Neustart verlangt. Beispiel: true.
 
 ### result.windows_setting.setting_id
 
-Kennung der geänderten Windows-Funktion. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Stabile Kennung der angeforderten Windows-Einstellung.
 
 ### result.windows_setting.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Ausführungsfehler.
 
 ### result.windows_setting.status.option.AccessDenied
 
@@ -72,7 +72,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "Name": "Status",
         "DisplayName": "Status",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Ausführungsfehler.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -86,13 +86,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "windows_setting.status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.status"
       },
       {
         "Name": "SettingId",
         "DisplayName": "Einstellung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Stabile Kennung der angeforderten Windows-Einstellung.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -100,13 +101,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "windows_setting.setting_id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.setting_id"
       },
       {
         "Name": "PreviousValue",
         "DisplayName": "Vorheriger Wert",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Der vor der Ausführung ermittelte Wert, sofern Windows ihn bereitstellt.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -114,13 +116,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "windows_setting.previous_value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.previous_value"
       },
       {
         "Name": "AppliedValue",
         "DisplayName": "Angewendeter Wert",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Der tatsächlich angewendete Wert.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -128,27 +131,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "windows_setting.applied_value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.applied_value"
       },
       {
         "Name": "RestartRequired",
         "DisplayName": "Neustart erforderlich",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Zeigt, ob Windows für die vollständige Übernahme einen Neustart verlangt.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "windows_setting.restart_required",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.restart_required"
       },
       {
         "Name": "ErrorCode",
         "DisplayName": "Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -156,6 +161,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "windows_setting.error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "windows_setting.error_code"
       }
     ],
@@ -167,7 +173,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "Name": "Status",
           "DisplayName": "Status",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Ausführungsfehler.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -181,6 +187,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "windows_setting.status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.status"
         },
         "Children": []
@@ -192,7 +199,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "Name": "SettingId",
           "DisplayName": "Einstellung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Stabile Kennung der angeforderten Windows-Einstellung.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -200,6 +207,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "windows_setting.setting_id",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.setting_id"
         },
         "Children": []
@@ -211,7 +219,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "Name": "PreviousValue",
           "DisplayName": "Vorheriger Wert",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Der vor der Ausführung ermittelte Wert, sofern Windows ihn bereitstellt.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -219,6 +227,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "windows_setting.previous_value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.previous_value"
         },
         "Children": []
@@ -230,7 +239,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "Name": "AppliedValue",
           "DisplayName": "Angewendeter Wert",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Der tatsächlich angewendete Wert.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -238,6 +247,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "windows_setting.applied_value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.applied_value"
         },
         "Children": []
@@ -249,14 +259,15 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "Name": "RestartRequired",
           "DisplayName": "Neustart erforderlich",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Zeigt, ob Windows für die vollständige Übernahme einen Neustart verlangt.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "windows_setting.restart_required",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.restart_required"
         },
         "Children": []
@@ -268,7 +279,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "Name": "ErrorCode",
           "DisplayName": "Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -276,6 +287,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "windows_setting.error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "windows_setting.error_code"
         },
         "Children": []

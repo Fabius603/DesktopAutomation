@@ -20,7 +20,6 @@ public class StreamVideoRecorder : IVideoRecorder
     }
 
     private readonly int width, height, fps;
-    private static readonly Lazy<Task> SharedInitialization = new(() => FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official));
     private readonly Task? ffmpegInitTask;
     private readonly Func<ProcessStartInfo, Process?> _startProcess;
 
@@ -65,7 +64,7 @@ public class StreamVideoRecorder : IVideoRecorder
         }
     }
 
-    public StreamVideoRecorder(int width, int height, int fps, string ffmpegPath = "ffmpeg", Task? initialization = null,
+    public StreamVideoRecorder(int width, int height, int fps, string? ffmpegPath = null, Task? initialization = null,
         Func<ProcessStartInfo, Process?>? startProcess = null)
     {
         if (width <= 0)
@@ -78,8 +77,8 @@ public class StreamVideoRecorder : IVideoRecorder
         this.width = width;
         this.height = height;
         this.fps = fps;
-        this.ffmpegPath = ffmpegPath;
-        ffmpegInitTask = initialization ?? (File.Exists(ffmpegPath) ? Task.CompletedTask : null);
+        this.ffmpegPath = ffmpegPath ?? FFmpegRuntime.ExecutablePath;
+        ffmpegInitTask = initialization ?? (ffmpegPath is not null ? Task.CompletedTask : null);
         _startProcess = startProcess ?? Process.Start;
         string bilderPfad = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
         this.OutputDirectory = bilderPfad + "\\ImageCapture";
@@ -93,7 +92,7 @@ public class StreamVideoRecorder : IVideoRecorder
     {
         // Warte auf ffmpeg-Pfad
         token.ThrowIfCancellationRequested();
-        await (ffmpegInitTask ?? SharedInitialization.Value).WaitAsync(token).ConfigureAwait(false);
+        await (ffmpegInitTask ?? FFmpegRuntime.EnsureAvailableAsync()).WaitAsync(token).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
         if (isStarted) throw new InvalidOperationException("Recording has already started.");
 

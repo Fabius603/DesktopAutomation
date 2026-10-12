@@ -1,6 +1,7 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Roi.RoiEditor"
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:hover="clr-namespace:DesktopAutomationApp.Behaviors"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
@@ -23,19 +24,19 @@
                         <geometry:ResponsiveGeometryPanel MinItemWidth="150" MaxColumns="2"
                                                           HorizontalSpacing="10" VerticalSpacing="10">
                             <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryFieldLabel}"/>
+                                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Common.XCoordinate.Help}" Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryFieldLabel}"/>
                                 <generated:GeneratedValueSourceInput DataContext="{Binding XField}"/>
                             </StackPanel>
                             <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryFieldLabel}"/>
+                                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Common.YCoordinate.Help}" Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryFieldLabel}"/>
                                 <generated:GeneratedValueSourceInput DataContext="{Binding YField}"/>
                             </StackPanel>
                             <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Style="{StaticResource GeometryFieldLabel}"/>
+                                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Step.Settings.Width.Help}" Text="{loc:Translate Key=Ui.Step.Settings.Width}" Style="{StaticResource GeometryFieldLabel}"/>
                                 <generated:GeneratedValueSourceInput DataContext="{Binding WidthField}"/>
                             </StackPanel>
                             <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Style="{StaticResource GeometryFieldLabel}"/>
+                                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Step.Settings.Height.Help}" Text="{loc:Translate Key=Ui.Step.Settings.Height}" Style="{StaticResource GeometryFieldLabel}"/>
                                 <generated:GeneratedValueSourceInput DataContext="{Binding HeightField}"/>
                             </StackPanel>
                         </geometry:ResponsiveGeometryPanel>

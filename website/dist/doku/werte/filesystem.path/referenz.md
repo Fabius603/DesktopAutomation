@@ -21,31 +21,31 @@ Zustandsabfrage: Datei- oder Ordnerzustand. Liest den aktuellen vom System angeb
 
 ### result.captured_at
 
-Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Bei Ordnern Anzahl direkter Einträge; bei einer Datei 1; bei fehlendem Pfad 0. Beispiel: 3.
 
 ### result.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.error_message
 
-Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.exists
 
-Ob der abgefragte Datei-/Ordnerpfad zum Beobachtungszeitpunkt existiert. Einzelwert dieses Ergebnisses.
+Gibt an, ob am abgefragten Pfad eine Datei oder ein Ordner existiert. Beispiel: true.
 
 ### result.path
 
-Pfad des abgefragten Dateisystemobjekts. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Datei- oder Ordnerpfad, auf den sich die Windows-Abfrage bezieht. Beispiel: C:\Data\example.png.
 
 ### result.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.
 
 ### result.status.option.AccessDenied
 
@@ -69,7 +69,7 @@ Funktion auf diesem Zielsystem nicht unterstützt.
 
 ### result.value
 
-Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinalitätsspalten beschreiben seine Darstellung. Einzelwert dieses Ergebnisses.
+Größe der abgefragten Datei in Bytes. Bei Ordnern oder fehlendem Pfad 0; ist keine rekursive Ordnergröße. Beispiel: 3.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -92,65 +92,69 @@ Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinali
     "Properties": [
       {
         "Name": "Exists",
-        "DisplayName": "Exists",
+        "DisplayName": "Datei oder Ordner vorhanden",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob am abgefragten Pfad eine Datei oder ein Ordner existiert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "exists",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "exists"
       },
       {
         "Name": "Path",
-        "DisplayName": "Path",
+        "DisplayName": "Abgefragter Pfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Datei- oder Ordnerpfad, auf den sich die Windows-Abfrage bezieht.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "path"
       },
       {
         "Name": "Count",
-        "DisplayName": "Count",
+        "DisplayName": "Anzahl Pfadeinträge",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Bei Ordnern Anzahl direkter Einträge; bei einer Datei 1; bei fehlendem Pfad 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "count"
       },
       {
         "Name": "Value",
-        "DisplayName": "Value",
+        "DisplayName": "Dateigröße (Bytes)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Größe der abgefragten Datei in Bytes. Bei Ordnern oder fehlendem Pfad 0; ist keine rekursive Ordnergröße.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "value"
       },
       {
         "Name": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -164,27 +168,29 @@ Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinali
         ],
         "Id": "status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "status"
       },
       {
         "Name": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "captured_at",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "captured_at"
       },
       {
         "Name": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -192,108 +198,114 @@ Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinali
         "EnumValues": null,
         "Id": "error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_code"
       },
       {
         "Name": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
         "IsNullable": true,
-        "Example": "No detection point available",
+        "Example": null,
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "error_message",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_message"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Exists",
-        "DisplayName": "Exists",
+        "DisplayName": "Datei oder Ordner vorhanden",
         "Property": {
           "Name": "Exists",
-          "DisplayName": "Exists",
+          "DisplayName": "Datei oder Ordner vorhanden",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob am abgefragten Pfad eine Datei oder ein Ordner existiert.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "exists",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "exists"
         },
         "Children": []
       },
       {
         "Segment": "Path",
-        "DisplayName": "Path",
+        "DisplayName": "Abgefragter Pfad",
         "Property": {
           "Name": "Path",
-          "DisplayName": "Path",
+          "DisplayName": "Abgefragter Pfad",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Datei- oder Ordnerpfad, auf den sich die Windows-Abfrage bezieht.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "C:\\Data\\example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "path",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "path"
         },
         "Children": []
       },
       {
         "Segment": "Count",
-        "DisplayName": "Count",
+        "DisplayName": "Anzahl Pfadeinträge",
         "Property": {
           "Name": "Count",
-          "DisplayName": "Count",
+          "DisplayName": "Anzahl Pfadeinträge",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Bei Ordnern Anzahl direkter Einträge; bei einer Datei 1; bei fehlendem Pfad 0.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "count"
         },
         "Children": []
       },
       {
         "Segment": "Value",
-        "DisplayName": "Value",
+        "DisplayName": "Dateigröße (Bytes)",
         "Property": {
           "Name": "Value",
-          "DisplayName": "Value",
+          "DisplayName": "Dateigröße (Bytes)",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Größe der abgefragten Datei in Bytes. Bei Ordnern oder fehlendem Pfad 0; ist keine rekursive Ordnergröße.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "value"
         },
         "Children": []
       },
       {
         "Segment": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "Property": {
           "Name": "Status",
-          "DisplayName": "Status",
+          "DisplayName": "Ergebnis der Windows-Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -307,37 +319,39 @@ Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinali
           ],
           "Id": "status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "status"
         },
         "Children": []
       },
       {
         "Segment": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "Property": {
           "Name": "CapturedAt",
-          "DisplayName": "Captured At",
+          "DisplayName": "Abfragezeit (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "captured_at",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "captured_at"
         },
         "Children": []
       },
       {
         "Segment": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "Property": {
           "Name": "ErrorCode",
-          "DisplayName": "Error Code",
+          "DisplayName": "Technischer Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -345,25 +359,27 @@ Der von dieser Windows-Abfrage gelieferte fachliche Wert; die Typ- und Kardinali
           "EnumValues": null,
           "Id": "error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_code"
         },
         "Children": []
       },
       {
         "Segment": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "Property": {
           "Name": "ErrorMessage",
-          "DisplayName": "Error Message",
+          "DisplayName": "Fehlerbeschreibung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
           "IsNullable": true,
-          "Example": "No detection point available",
+          "Example": null,
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "error_message",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_message"
         },
         "Children": []

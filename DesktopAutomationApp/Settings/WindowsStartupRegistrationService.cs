@@ -47,7 +47,6 @@ public sealed class WindowsStartupRegistrationService(InstallationContext instal
                 StartupTaskState.DisabledByUser or StartupTaskState.DisabledByPolicy => StartupRegistrationStatus.DisabledByUser,
                 _ => StartupRegistrationStatus.Disabled
             };
-            if (Status == StartupRegistrationStatus.Enabled) RemoveLegacyRegistration();
             return;
         }
 

@@ -13,7 +13,7 @@ public sealed class ShowOnDesktopStepDefinition : StepDefinition<ShowOnDesktopSt
         "Step.Description.ShowOnDesktop", "desktop-overlay",
         [new(OverlayFieldId, "Ui.Step.Settings.Overlays", StepValueKind.Object, true,
             JsonSerializer.SerializeToNode(new VisualOverlaySettings()),
-            EditorHint: StepEditorHints.VisualOverlay,
+            EditorHint: StepEditorHints.VisualOverlay, InputSchemaId: InputSchemaIds.VisualOverlay,
             VisualOverlayOptions: new("detections", "text", SupportsDesktopPlacement: true))],
         new(
             [new("overlay", null, [OverlayFieldId])],

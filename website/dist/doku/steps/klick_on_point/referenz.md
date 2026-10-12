@@ -93,11 +93,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -198,6 +198,8 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
     {
       "id": "points_source",
       "name": "Punktquelle",
+      "helpKey": "Ui.Step.Settings.PointSource.Help",
+      "help": "Quelle der Position, die dieser Step verarbeitet.",
       "descriptor": {
         "Id": "points_source",
         "LabelKey": "Ui.Step.Settings.PointSource",
@@ -222,12 +224,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "click_type",
       "name": "Maustaste",
+      "helpKey": "Ui.Step.Settings.ClickType.Help",
+      "help": "Maustaste, mit der am Zielpunkt geklickt wird.",
       "descriptor": {
         "Id": "click_type",
         "LabelKey": "Ui.Step.Settings.ClickType",
@@ -284,12 +291,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_x",
       "name": "Versatz X (px)",
+      "helpKey": "Ui.Step.Settings.XOffsetPixels.Help",
+      "help": "Horizontaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_x",
         "LabelKey": "Ui.Step.Settings.XOffsetPixels",
@@ -314,12 +326,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_y",
       "name": "Versatz Y (px)",
+      "helpKey": "Ui.Step.Settings.YOffsetPixels.Help",
+      "help": "Vertikaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_y",
         "LabelKey": "Ui.Step.Settings.YOffsetPixels",
@@ -344,12 +361,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "timeout_ms",
       "name": "Zeitlimit (ms)",
+      "helpKey": "Ui.Step.Settings.TimeoutMs.Help",
+      "help": "Zeitlimit der Operation in Millisekunden. 1000 ms entsprechen einer Sekunde.",
       "descriptor": {
         "Id": "timeout_ms",
         "LabelKey": "Ui.Step.Settings.TimeoutMs",
@@ -380,12 +402,17 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "double_click",
       "name": "Doppelklick",
+      "helpKey": "Ui.Step.Settings.DoubleClick.Help",
+      "help": "Führt am Zielpunkt einen Doppelklick statt eines einzelnen Klicks aus.",
       "descriptor": {
         "Id": "double_click",
         "LabelKey": "Ui.Step.Settings.DoubleClick",
@@ -410,7 +437,10 @@ Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],

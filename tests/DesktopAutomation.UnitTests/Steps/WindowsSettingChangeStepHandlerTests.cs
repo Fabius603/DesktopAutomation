@@ -7,6 +7,73 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class WindowsSettingChangeStepHandlerTests
 {
+    [Theory]
+    [InlineData("internal", DisplayTopologyKind.Internal)]
+    [InlineData("duplicate", DisplayTopologyKind.Duplicate)]
+    [InlineData("extend", DisplayTopologyKind.Extend)]
+    [InlineData("external", DisplayTopologyKind.External)]
+    public async Task DisplayMode_UsesSupportedTopologyAndReportsNativeFailure(string mode, DisplayTopologyKind expected)
+    {
+        var controller = new RecordingDisplayTopology();
+        var provider = new DefaultWindowsSettingProvider(controller);
+        var change = new WindowsSettingChange { SettingId = "display.mode", Parameters = new() { ["mode"] = mode } };
+        var success = await provider.ChangeAsync(change, CancellationToken.None);
+        Assert.True(success.Success);
+        Assert.Equal(expected, controller.Applied);
+        Assert.Equal(mode, success.AppliedValue);
+        controller.Error = new UnauthorizedAccessException();
+        var failure = await provider.ChangeAsync(change, CancellationToken.None);
+        Assert.False(failure.Success);
+        Assert.Equal(WindowsCapabilityStatus.AccessDenied, failure.Status);
+    }
+
+    private sealed class RecordingDisplayTopology : IDisplayTopologyController
+    {
+        public DisplayTopologyKind Applied { get; private set; }
+        public Exception? Error { get; set; }
+        public void Apply(DisplayTopologyKind topology)
+        {
+            if (Error is not null) throw Error;
+            Applied = topology;
+        }
+    }
+
+    [Theory]
+    [InlineData("audio.default_output")]
+    [InlineData("audio.default_input")]
+    [InlineData("personalization.theme")]
+    [InlineData("notifications.focus_mode")]
+    public async Task RetiredSettings_AreReadableButNeverOfferedOrExecuted(string id)
+    {
+        var original = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = id,
+                Parameters = new() { ["saved"] = "unchanged" }
+            }
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(original);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize<WindowsSettingChangeStep>(json)!;
+        Assert.Equal(id, loaded.Settings.SettingId);
+        Assert.Equal("unchanged", loaded.Settings.Parameters["saved"]);
+        var definition = new TaskAutomation.Steps.Definitions.WindowsSettingChangeStepDefinition();
+        Assert.Contains(definition.ValidateDraft(definition.CreateDraft(loaded)),
+            issue => issue.Code == "StepValidation.WindowsSettingRemoved");
+        var catalog = new WindowsCapabilityCatalog();
+        Assert.Null(catalog.Find(id));
+        var provider = new RecordingSettingProvider();
+        var service = new WindowsSystemSettingService(catalog, provider);
+        var result = await service.ChangeAsync(new() { SettingId = id }, CancellationToken.None);
+        Assert.False(result.Success);
+        Assert.Equal(WindowsCapabilityStatus.Unsupported, result.Status);
+        Assert.Equal("setting.removed", result.ErrorCode);
+        Assert.Empty(provider.Changes);
+        var direct = await new DefaultWindowsSettingProvider().ChangeAsync(new() { SettingId = id }, CancellationToken.None);
+        Assert.False(direct.Success);
+        Assert.Equal("setting.removed", direct.ErrorCode);
+    }
+
     [Fact]
     public async Task ExecuteAsync_ForwardsStableIdAndParametersAndStoresSuccess()
     {
@@ -99,13 +166,15 @@ public sealed class WindowsSettingChangeStepHandlerTests
     }
 
     [Fact]
-    public void Catalog_ExposesExactlyTheFirstFifteenSettingCapabilities()
+    public void Catalog_ExposesOnlySupportedAutomaticSettingCapabilities()
     {
         var settings = new WindowsCapabilityCatalog().Capabilities
             .Where(capability => capability.SupportsSettingChange)
             .ToArray();
 
-        Assert.Equal(15, settings.Length);
+        Assert.Equal(new[] { "audio.master_volume", "audio.mute", "display.mode", "display.primary",
+            "network.vpn_connection", "network.wifi_connection", "personalization.wallpaper", "power.display_timeout",
+            "power.scheme", "power.sleep_timeout", "printer.default" }, settings.Select(x => x.Id).Order().ToArray());
         Assert.All(settings, setting =>
         {
             Assert.False(string.IsNullOrWhiteSpace(setting.Id));
@@ -119,10 +188,6 @@ public sealed class WindowsSettingChangeStepHandlerTests
     {
         var catalog = new WindowsCapabilityCatalog();
 
-        Assert.Equal(WindowsDynamicOptionSource.AudioRenderDevices,
-            Parameter(catalog, "audio.default_output", "device_name").DynamicOptionSource);
-        Assert.Equal(WindowsDynamicOptionSource.AudioCaptureDevices,
-            Parameter(catalog, "audio.default_input", "device_name").DynamicOptionSource);
         Assert.Equal(WindowsDynamicOptionSource.WlanProfiles,
             Parameter(catalog, "network.wifi_connection", "profile").DynamicOptionSource);
         Assert.Equal(WindowsDynamicOptionSource.Displays,

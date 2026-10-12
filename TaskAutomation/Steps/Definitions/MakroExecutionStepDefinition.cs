@@ -20,7 +20,7 @@ public sealed class MakroExecutionStepDefinition : StepDefinition<MakroExecution
                 "Ui.Step.Settings.Macro",
                 StepValueKind.Object,
                 Required: true,
-                EditorHint: StepEditorHints.MacroPicker)
+                InputValueKind: ResultValueKind.MacroReference, EditorHint: StepEditorHints.MacroPicker)
         ],
         Presentation: new StepPresentationDescriptor(
             EditorSections:

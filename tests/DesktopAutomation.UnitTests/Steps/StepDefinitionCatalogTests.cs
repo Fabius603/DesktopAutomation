@@ -50,7 +50,7 @@ public sealed class StepDefinitionCatalogTests
             Value = JsonSerializer.SerializeToNode(new TaskAutomation.Contracts.Geometry.PixelRegion(0, 0, 10, 10))
         };
         parent.AddVariable(variable);
-        var picker = new ValueReferencePickerViewModel(child, StepInputContractRegistry.Get(typeof(OcrStep), "dynamicRoi")!, false);
+        var picker = new ValueReferencePickerViewModel(child, InputContractRegistry.Find(typeof(OcrStep), "dynamicRoi")!, false);
         picker.Load(new ResultBinding { ProviderId = ValueProviderIds.JobVariable, SourceId = variable.Id.ToString("D") });
         Assert.False(picker.HasMissingReference);
         Assert.Same(variable, picker.SelectedJobVariable);
@@ -376,7 +376,7 @@ public sealed class StepDefinitionCatalogTests
     {
         var field = Assert.Single(new ShowTextStepDefinition().Descriptor.Fields,
             candidate => candidate.Id == ShowTextStepDefinition.TextResultFieldId);
-        var contract = StepInputContractRegistry.Resolve(typeof(ShowTextStep), field);
+        var contract = InputContractRegistry.Resolve(typeof(ShowTextStep), field);
 
         Assert.True(field.Required);
         Assert.True(field.AllowsDirectValue);
@@ -804,7 +804,7 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Rectangle,
             Value = new JsonObject { ["x"] = 1, ["y"] = 2, ["width"] = 3, ["height"] = 4 }
         };
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "bounds")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "bounds")!;
         var picker = new ValueReferencePickerViewModel(
             [], contract, false, [legacyDirectValue], context: new ValueReferencePickerContext(
                 "Dynamic region", "Detection result", CreateStepValue: () => legacyDirectValue));
@@ -2735,7 +2735,7 @@ public sealed class StepDefinitionCatalogTests
             Value = JsonValue.Create("removed")
         };
         var picker = new ValueReferencePickerViewModel(
-            [], StepInputContractRegistry.ForField(descriptor), false, [stored]);
+            [], InputContractRegistry.ForField(descriptor), false, [stored]);
         var input = new GeneratedResultBindingEditorViewModel(
             JsonSerializer.SerializeToNode(new ResultBinding
             {
@@ -2780,7 +2780,7 @@ public sealed class StepDefinitionCatalogTests
             Value = JsonValue.Create("known")
         };
         var picker = new ValueReferencePickerViewModel(
-            [], StepInputContractRegistry.ForField(descriptor), false, [legacy],
+            [], InputContractRegistry.ForField(descriptor), false, [legacy],
             context: new ValueReferencePickerContext(
                 "If", "Comparison", null, null, null,
                 () => new LocalValue
@@ -2876,7 +2876,7 @@ public sealed class StepDefinitionCatalogTests
             {
                 var descriptor = new StepFieldDescriptor(key, string.Empty, kind, DefaultValue: literal);
                 var picker = new ValueReferencePickerViewModel(
-                    [], StepInputContractRegistry.ForField(descriptor), false, [expected]);
+                    [], InputContractRegistry.ForField(descriptor), false, [expected]);
                 return new GeneratedResultBindingEditorViewModel(
                     JsonSerializer.SerializeToNode(new ResultBinding
                     {
@@ -2911,7 +2911,7 @@ public sealed class StepDefinitionCatalogTests
         };
         var descriptor = new StepFieldDescriptor(key, string.Empty, kind, DefaultValue: literal);
         var picker = new ValueReferencePickerViewModel(
-            [], StepInputContractRegistry.ForField(descriptor), false, [value]);
+            [], InputContractRegistry.ForField(descriptor), false, [value]);
         return new GeneratedResultBindingEditorViewModel(
             JsonSerializer.SerializeToNode(new ResultBinding
             {
@@ -3033,7 +3033,7 @@ public sealed class StepDefinitionCatalogTests
                     var descriptor = new StepFieldDescriptor(
                         "comparison", string.Empty, kind, DefaultValue: literal);
                     var picker = new ValueReferencePickerViewModel(
-                        [], StepInputContractRegistry.ForField(descriptor), false, [storedValue]);
+                        [], InputContractRegistry.ForField(descriptor), false, [storedValue]);
                     return new GeneratedResultBindingEditorViewModel(
                         JsonSerializer.SerializeToNode(new ResultBinding
                         {
@@ -3098,7 +3098,7 @@ public sealed class StepDefinitionCatalogTests
                 var descriptor = new StepFieldDescriptor(
                     "comparison", string.Empty, kind, DefaultValue: literal);
                 var picker = new ValueReferencePickerViewModel(
-                    [], StepInputContractRegistry.ForField(descriptor), false, [storedValue]);
+                    [], InputContractRegistry.ForField(descriptor), false, [storedValue]);
                 return new GeneratedResultBindingEditorViewModel(
                     JsonSerializer.SerializeToNode(settings.Conditions[0].Comparison), picker);
             });
@@ -3184,7 +3184,7 @@ public sealed class StepDefinitionCatalogTests
                 var descriptor = new StepFieldDescriptor(
                     "comparison", string.Empty, kind, DefaultValue: literal);
                 var picker = new ValueReferencePickerViewModel(
-                    [], StepInputContractRegistry.ForField(descriptor), false, [first, second]);
+                    [], InputContractRegistry.ForField(descriptor), false, [first, second]);
                 return new GeneratedResultBindingEditorViewModel(
                     JsonSerializer.SerializeToNode(new ResultBinding
                     {
@@ -3240,7 +3240,7 @@ public sealed class StepDefinitionCatalogTests
                         var descriptor = new StepFieldDescriptor(
                             "comparison", string.Empty, kind, DefaultValue: literal);
                         var picker = new ValueReferencePickerViewModel(
-                            [], StepInputContractRegistry.ForField(descriptor), false, [comparisonValue]);
+                            [], InputContractRegistry.ForField(descriptor), false, [comparisonValue]);
                         return new GeneratedResultBindingEditorViewModel(
                             JsonSerializer.SerializeToNode(new ResultBinding
                             {
@@ -3257,7 +3257,7 @@ public sealed class StepDefinitionCatalogTests
                     SourceId = storedValue.Id.ToString("D")
                 };
                 var picker = new ValueReferencePickerViewModel(
-                    [], StepInputContractRegistry.ForField(field), false, [storedValue]);
+                    [], InputContractRegistry.ForField(field), false, [storedValue]);
                 return new GeneratedResultBindingEditorViewModel(
                     JsonSerializer.SerializeToNode(binding), picker);
             });
@@ -3919,7 +3919,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void GeneratedEditor_UsesProcessTargetAdapterAndCreatesActiveProcess()
     {
-        var contract = StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process");
+        var contract = InputContractRegistry.Find(typeof(ActiveProcessStep), "process");
         Assert.NotNull(contract);
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value: null,
@@ -3941,7 +3941,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void ProcessTargetEditor_UsesDistinctContentForEachSourceMode()
     {
-        var contract = StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process");
+        var contract = InputContractRegistry.Find(typeof(ActiveProcessStep), "process");
         Assert.NotNull(contract);
         var editor = new GeneratedProcessTargetEditorViewModel(
             value: null,
@@ -3968,7 +3968,7 @@ public sealed class StepDefinitionCatalogTests
             ProviderId = ValueProviderIds.JobVariable,
             SourceId = Guid.NewGuid().ToString("D")
         };
-        var contract = StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!;
+        var contract = InputContractRegistry.Find(typeof(ActiveProcessStep), "process")!;
         var editor = new GeneratedProcessTargetEditorViewModel(
             value: null,
             new ValueReferencePickerViewModel([], contract, false),
@@ -4005,7 +4005,7 @@ public sealed class StepDefinitionCatalogTests
             value,
             new ValueReferencePickerViewModel(
                 [],
-                StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
+                InputContractRegistry.Find(typeof(ActiveProcessStep), "process")!,
                 false),
             ["notepad"]);
         var editor = new GeneratedStepEditorViewModel(
@@ -4036,7 +4036,7 @@ public sealed class StepDefinitionCatalogTests
             value,
             new ValueReferencePickerViewModel(
                 [],
-                StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
+                InputContractRegistry.Find(typeof(ActiveProcessStep), "process")!,
                 false),
             ["notepad"]);
 
@@ -4051,7 +4051,7 @@ public sealed class StepDefinitionCatalogTests
             value: null,
             new ValueReferencePickerViewModel(
                 [],
-                StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
+                InputContractRegistry.Find(typeof(ActiveProcessStep), "process")!,
                 false),
             []);
         editor.ProcessName = "notepad";
@@ -4106,7 +4106,7 @@ public sealed class StepDefinitionCatalogTests
         var definition = new FocusProcessStepDefinition();
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value: null,
-            new ValueReferencePickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
+            new ValueReferencePickerViewModel([], InputContractRegistry.Find(typeof(FocusProcessStep), "process")!, false),
             []);
         var existing = new FocusProcessStep
         {
@@ -4156,7 +4156,7 @@ public sealed class StepDefinitionCatalogTests
         var value = definition.CreateDraft(existing).Values[FocusProcessStepDefinition.ProcessTargetFieldId];
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value,
-            new ValueReferencePickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
+            new ValueReferencePickerViewModel([], InputContractRegistry.Find(typeof(FocusProcessStep), "process")!, false),
             []);
         var editor = new GeneratedStepEditorViewModel(
             definition,
@@ -4222,7 +4222,7 @@ public sealed class StepDefinitionCatalogTests
             resultBindingResolver: (field, value) =>
             {
                 if (field.ValueKind != StepValueKind.ResultBinding) return null;
-                var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), field.InputContractId!)!;
+                var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), field.InputContractId!)!;
                 return new GeneratedResultBindingEditorViewModel(
                     value,
                     new ValueReferencePickerViewModel(
@@ -4259,9 +4259,8 @@ public sealed class StepDefinitionCatalogTests
             Cardinality = ResultCardinality.Single,
             Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
         };
-        var contract = new StepInputDescriptor(
-            "point", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.FirstValue,
-            new AcceptedResultShape(ResultValueKind.Point, ResultCardinality.Single))
+        var contract = new InputContractNode("point", ResultValueKind.Point, [new AcceptedResultShape(ResultValueKind.Point, ResultCardinality.Single)],
+            required: true, missingValuePolicy: MissingValuePolicy.FailStep, collectionConsumption: CollectionConsumptionMode.FirstValue)
         {
             AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
         };
@@ -4302,9 +4301,8 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Point,
             Value = new JsonObject { ["x"] = 10, ["y"] = 20 }
         };
-        var contract = new StepInputDescriptor(
-            "coordinate", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.FirstValue,
-            new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single))
+        var contract = new InputContractNode("coordinate", ResultValueKind.Integer, [new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single)],
+            required: true, missingValuePolicy: MissingValuePolicy.FailStep, collectionConsumption: CollectionConsumptionMode.FirstValue)
         {
             AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
         };
@@ -4350,9 +4348,8 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Rectangle,
             Value = new JsonObject { ["x"] = 120, ["y"] = 80, ["width"] = 640, ["height"] = 480 }
         };
-        var contract = new StepInputDescriptor(
-            "coordinate", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.FirstValue,
-            new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single))
+        var contract = new InputContractNode("coordinate", ResultValueKind.Integer, [new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single)],
+            required: true, missingValuePolicy: MissingValuePolicy.FailStep, collectionConsumption: CollectionConsumptionMode.FirstValue)
         {
             AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
         };
@@ -4378,7 +4375,7 @@ public sealed class StepDefinitionCatalogTests
         var resultType = StepResultMetadata.ResultTypes.Single(type =>
             type.TypeName == nameof(TemplateMatchingResult));
         var source = new SourceStepItem("detection", "Detection", resultType);
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "bounds")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "bounds")!;
 
         var picker = new ValueReferencePickerViewModel([source], contract, selectDefault: false);
         picker.UseStepResultCommand.Execute(null);
@@ -4398,7 +4395,7 @@ public sealed class StepDefinitionCatalogTests
             ResultValueKind.Text,
             ResultCardinality.Single,
             IsSensitive: true);
-        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
+        var contract = InputContractRegistry.Find(typeof(ShowTextStep), "text")!;
         var picker = new ValueReferencePickerViewModel(
             [], contract, selectDefault: false, providerSources: [secret],
             context: new ValueReferencePickerContext("Show text", "Text", CreateSecret: () => secret));
@@ -4430,7 +4427,7 @@ public sealed class StepDefinitionCatalogTests
                 Value = JsonValue.Create(3)
             }
         };
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
         var picker = new ValueReferencePickerViewModel([], contract, false, variables);
         picker.UseJobVariableCommand.Execute(null);
 
@@ -4461,7 +4458,7 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Text,
             Value = JsonValue.Create("Hello world")
         };
-        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
+        var contract = InputContractRegistry.Find(typeof(ShowTextStep), "text")!;
         var picker = new ValueReferencePickerViewModel([], contract, false, [variable]);
         picker.UseJobVariableCommand.Execute(null);
 
@@ -4478,7 +4475,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void ValueReferencePicker_CreatesAndSelectsCompatibleJobVariable()
     {
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
         var created = new JobVariable
         {
             Name = "dynamischen_bildbereich_erstellen_rand_px",
@@ -4508,7 +4505,7 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Integer,
             Value = JsonValue.Create(1000)
         };
-        var contract = StepInputContractRegistry.ForField(
+        var contract = InputContractRegistry.ForField(
             new TimeoutStepDefinition().Descriptor.Fields.Single());
         var picker = new ValueReferencePickerViewModel(
             [], contract, false, [variable], context: new ValueReferencePickerContext(
@@ -4539,7 +4536,7 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Integer,
             Value = JsonValue.Create(3)
         };
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
         var picker = new ValueReferencePickerViewModel([], contract, false, [variable]);
         picker.UseJobVariableCommand.Execute(null);
         var editor = new GeneratedResultBindingEditorViewModel(null, picker);
@@ -4562,7 +4559,7 @@ public sealed class StepDefinitionCatalogTests
             Value = JsonValue.Create(1000)
         };
         var usageChecks = 0;
-        var contract = StepInputContractRegistry.ForField(
+        var contract = InputContractRegistry.ForField(
             new TimeoutStepDefinition().Descriptor.Fields.Single());
         var picker = new ValueReferencePickerViewModel(
             [], contract, false, [variable], context: new ValueReferencePickerContext(
@@ -4607,7 +4604,7 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.Integer,
             Value = JsonValue.Create(2)
         };
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
         var picker = new ValueReferencePickerViewModel([], contract, false, [first, second]);
         picker.UseJobVariableCommand.Execute(null);
         var tree = picker.SelectionTree;
@@ -4628,13 +4625,13 @@ public sealed class StepDefinitionCatalogTests
         var variable = new JobVariable
         {
             Scope = JobVariableScope.StepValue,
-            Name = "Timeout Â· Duration",
+            Name = "Timeout · Duration",
             ValueKind = ResultValueKind.Integer,
             Value = JsonValue.Create(1000)
         };
         var descriptor = new TimeoutStepDefinition().Descriptor.Fields.Single();
         var picker = new ValueReferencePickerViewModel(
-            [], StepInputContractRegistry.ForField(descriptor), false, [variable],
+            [], InputContractRegistry.ForField(descriptor), false, [variable],
             context: new ValueReferencePickerContext(
                 "Timeout", "Duration", GetVariableUsageCount: _ => 2));
         picker.Load(new ResultBinding
@@ -4658,7 +4655,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void WholeValueSource_IgnoresRepeatedIndividualModeSelection()
     {
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
         var picker = new ValueReferencePickerViewModel([], contract, false);
         var source = new GeneratedWholeValueSourceViewModel(picker, usesReference: false);
         var sourceChanges = 0;
@@ -4676,7 +4673,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void RoiEnabled_DoesNotChangeValuesOrWholeValueSource()
     {
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
         var picker = new ValueReferencePickerViewModel([], contract, false);
         var editor = new GeneratedRoiEditorViewModel(
             JsonSerializer.SerializeToNode(new StepRoiSelectionValue(false, 10, 20, 300, 200, null)),
@@ -4724,7 +4721,7 @@ public sealed class StepDefinitionCatalogTests
             inputReferenceResolver: (field, binding) =>
             {
                 var picker = new ValueReferencePickerViewModel(
-                    [], StepInputContractRegistry.ForField(field), false, [first, second]);
+                    [], InputContractRegistry.ForField(field), false, [first, second]);
                 return new GeneratedResultBindingEditorViewModel(
                     JsonSerializer.SerializeToNode(binding), picker);
             });
@@ -4750,7 +4747,7 @@ public sealed class StepDefinitionCatalogTests
             Value = JsonValue.Create(1000)
         };
         JobVariable? detached = null;
-        var contract = StepInputContractRegistry.ForField(
+        var contract = InputContractRegistry.ForField(
             new TimeoutStepDefinition().Descriptor.Fields.Single());
         var picker = new ValueReferencePickerViewModel(
             [], contract, false, [variable], context: new ValueReferencePickerContext(
@@ -4783,7 +4780,7 @@ public sealed class StepDefinitionCatalogTests
         {
             new JobVariable { Name = "bildschirm_duplizieren_desktop" }
         };
-        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var contract = InputContractRegistry.Find(typeof(DynamicRoiStep), "padding")!;
 
         var viewModel = new QuickCreateJobVariableViewModel(
             contract, "Bildschirm duplizieren", "Desktop", existing);
@@ -4847,7 +4844,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void ValueReferencePicker_OffersOnlyApprovedVariableKindsButLoadsLegacyReferences()
+    public void ValueReferencePicker_OffersContractCompatibleExistingKindsWithoutScalarEditors()
     {
         var text = Variable("Text", ResultValueKind.Text);
         var color = Variable("Color", ResultValueKind.Color);
@@ -4855,13 +4852,12 @@ public sealed class StepDefinitionCatalogTests
         var file = Variable("File", ResultValueKind.FilePath);
         var legacyEnum = Variable("Legacy enum", ResultValueKind.Enum);
         var legacyImage = Variable("Legacy image", ResultValueKind.Image);
-        var contract = new StepInputDescriptor(
-            "value", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.NotApplicable,
-            new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single),
+        var contract = new InputContractNode("value", null, [new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single),
             new AcceptedResultShape(ResultValueKind.Color, ResultCardinality.Single),
             new AcceptedResultShape(ResultValueKind.FilePath, ResultCardinality.Single),
             new AcceptedResultShape(ResultValueKind.Enum, ResultCardinality.Single),
-            new AcceptedResultShape(ResultValueKind.Image, ResultCardinality.Single))
+            new AcceptedResultShape(ResultValueKind.Image, ResultCardinality.Single)],
+            required: true, missingValuePolicy: MissingValuePolicy.FailStep, collectionConsumption: CollectionConsumptionMode.NotApplicable)
         {
             AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
         };
@@ -4873,8 +4869,8 @@ public sealed class StepDefinitionCatalogTests
         Assert.Contains(picker.SelectionTree, node => node.DisplayName == text.Name);
         Assert.Contains(picker.SelectionTree, node => node.DisplayName == color.Name);
         Assert.Contains(picker.SelectionTree, node => node.DisplayName == file.Name);
-        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == legacyEnum.Name);
-        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == legacyImage.Name);
+        Assert.NotNull(picker.SelectionTree.Single(node => node.DisplayName == legacyEnum.Name).SelectCommand);
+        Assert.NotNull(picker.SelectionTree.Single(node => node.DisplayName == legacyImage.Name).SelectCommand);
         Assert.Equal("#123456", picker.SelectionTree.Single(node => node.DisplayName == color.Name).ColorPreview);
 
         picker.Load(new ResultBinding
@@ -4927,7 +4923,7 @@ public sealed class StepDefinitionCatalogTests
         var secret = new ValueProviderSourceDescriptor(
             ValueProviderIds.Secret, Guid.NewGuid().ToString("D"), "Token", string.Empty,
             ResultValueKind.Text, ResultCardinality.Single, IsSensitive: true);
-        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")! with
+        var contract = InputContractRegistry.Find(typeof(ShowTextStep), "text")! with
         {
             AllowedProviderIds = new HashSet<string>
             {
@@ -4979,8 +4975,8 @@ public sealed class StepDefinitionCatalogTests
         Assert.False(pointSource.CanUseSecrets);
         Assert.True(pointEntry.WholeValueSource.UsesIndividualValues);
 
-        var detectionContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!;
-        var textContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "text")!;
+        var detectionContract = InputContractRegistry.Find(typeof(ShowOnDesktopStep), "detections")!;
+        var textContract = InputContractRegistry.Find(typeof(ShowOnDesktopStep), "text")!;
         var overlay = new GeneratedVisualOverlayEditorViewModel(
             null, [], detectionContract, textContract, false, variables: [pointVariable]);
         overlay.AddOverlayDetectionCommand.Execute(null);
@@ -5036,7 +5032,7 @@ public sealed class StepDefinitionCatalogTests
         {
             ProviderId = ValueProviderIds.LocalValue,
             SourceId = storedOverlay.Id.ToString("D"),
-            SchemaId = ValueBindingSchemaRegistry.VisualOverlay
+            SchemaId = InputSchemaIds.VisualOverlay
         };
         var viewModel = new AddJobStepDialogViewModel(
             new ControllableJobExecutor([]),
@@ -5271,7 +5267,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void GeneratedEditor_CreatesPredictMovementWithCompatiblePointBinding()
     {
-        var contract = StepInputContractRegistry.Get(typeof(PredictMovementStep), "points")!;
+        var contract = InputContractRegistry.Find(typeof(PredictMovementStep), "points")!;
         var resultType = StepResultMetadata.ResultTypes.First(type =>
             contract.FindPreferredProperty(type.Properties) is not null);
         var picker = new ValueReferencePickerViewModel(
@@ -5299,7 +5295,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void GeneratedEditor_CreatesKlickOnPointWithLocalizedEnumValue()
     {
-        var contract = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
+        var contract = InputContractRegistry.Find(typeof(KlickOnPointStep), "points")!;
         var resultType = StepResultMetadata.ResultTypes.First(type =>
             contract.FindPreferredProperty(type.Properties) is not null);
         var picker = new ValueReferencePickerViewModel(
@@ -5405,7 +5401,7 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void GeneratedEditor_CreatesDesktopOverlayThroughGenericAdapter()
     {
-        var contract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!;
+        var contract = InputContractRegistry.Find(typeof(ShowOnDesktopStep), "detections")!;
         var resultType = StepResultMetadata.ResultTypes.First(type =>
             contract.FindPreferredProperty(type.Properties) is not null);
         var property = contract.FindPreferredProperty(resultType.Properties)!;
@@ -5426,8 +5422,8 @@ public sealed class StepDefinitionCatalogTests
             visualOverlayResolver: (_, value) => overlayEditor = new(
                 value,
                 sources,
-                StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!,
-                StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "text")!,
+                InputContractRegistry.Find(typeof(ShowOnDesktopStep), "detections")!,
+                InputContractRegistry.Find(typeof(ShowOnDesktopStep), "text")!,
                 showDesktopOptions: true));
         var field = Assert.Single(editor.Fields);
 

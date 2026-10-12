@@ -16,44 +16,6 @@ public sealed class ResultPropertyAttribute(string id) : Attribute
     public string? Description { get; init; }
 }
 
-public sealed record ResultPropertyDescriptor(
-    string Name,
-    string DisplayName,
-    ResultValueKind DataType,
-    string? Description = null,
-    bool IsNullable = false,
-    string? Example = null,
-    ResultCardinality Cardinality = ResultCardinality.Single,
-    string? EnumTypeName = null,
-    IReadOnlyList<string>? EnumValues = null,
-    string? Id = null,
-    IReadOnlyDictionary<string, string>? EnumDisplayNames = null)
-{
-    public string StableId => string.IsNullOrWhiteSpace(Id)
-        ? ResultContractIds.FromPropertyPath(Name)
-        : Id;
-}
-
-public static class ResultContractIds
-{
-    public static string FromPropertyPath(string path)
-    {
-        var result = new System.Text.StringBuilder(path.Length + 8);
-        foreach (var character in path.Replace("[]", string.Empty, StringComparison.Ordinal))
-        {
-            if (character == '.')
-            {
-                if (result.Length > 0 && result[^1] != '.') result.Append('.');
-                continue;
-            }
-            if (char.IsUpper(character) && result.Length > 0 && result[^1] is not '.' and not '_')
-                result.Append('_');
-            result.Append(char.ToLowerInvariant(character));
-        }
-        return result.ToString();
-    }
-}
-
 public sealed record ResultTypeDescriptor(
     string TypeName,
     string DisplayName,
@@ -88,13 +50,17 @@ public static class ResultPropertyTree
     public static IReadOnlyList<ResultPropertyNode> Create(IEnumerable<ResultPropertyDescriptor> properties)
     {
         var roots = new List<ResultPropertyNode>();
-        foreach (var property in properties)
+        var descriptors = properties.ToArray();
+        foreach (var property in descriptors)
         {
             var children = roots;
             var segments = property.Name.Split('.');
             var displaySegments = property.DisplayName.Split('/', StringSplitOptions.TrimEntries);
             if (displaySegments.Length != segments.Length)
-                displaySegments = segments.Select(HumanizeSegment).ToArray();
+                displaySegments = segments.Select((segment, index) => index == segments.Length - 1
+                    ? property.DisplayName
+                    : descriptors.FirstOrDefault(p => p.Name == string.Join('.', segments.Take(index + 1)))
+                        ?.DisplayName.Split('/')[^1].Trim() ?? HumanizeSegment(segment.Replace("[]", string.Empty))).ToArray();
 
             for (var index = 0; index < segments.Length; index++)
             {
@@ -212,23 +178,8 @@ public static class StepResultMetadata
     }
 
     public static bool AreComparable(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
-        left.DataType == right.DataType
-        && (left.DataType != ResultValueKind.Enum || AreComparableEnums(left, right))
-        && (left.Cardinality == ResultCardinality.Collection)
-            == (right.Cardinality == ResultCardinality.Collection);
-
-    private static bool AreComparableEnums(ResultPropertyDescriptor left, ResultPropertyDescriptor right)
-    {
-        if (!string.IsNullOrWhiteSpace(left.EnumTypeName)
-            && !string.IsNullOrWhiteSpace(right.EnumTypeName))
-            return string.Equals(left.EnumTypeName, right.EnumTypeName, StringComparison.Ordinal);
-        if (string.IsNullOrWhiteSpace(left.EnumTypeName)
-            != string.IsNullOrWhiteSpace(right.EnumTypeName))
-            return false;
-        return string.IsNullOrWhiteSpace(left.EnumTypeName)
-               && string.IsNullOrWhiteSpace(right.EnumTypeName)
-               && string.Equals(left.StableId, right.StableId, StringComparison.Ordinal);
-    }
+        InputCompatibilityEvaluator.Evaluate(ConditionRules.ComparisonContract(left, allowTextConversion: false),
+            ValueProviderIds.StepResult, right).IsAccepted;
 
     public static bool TryReadValue(object result, ResultPropertyDescriptor property, out object? value)
     {
@@ -283,7 +234,8 @@ public static class StepResultMetadata
         }
     }
 
-    private static ResultTypeDescriptor CreateDescriptor(Type type) => new(type.Name, type.Name, BuildProperties(type).ToArray());
+    private static ResultTypeDescriptor CreateDescriptor(Type type) => new(type.Name, type.Name,
+        BuildProperties(type).OrderBy(property => property.IsDiagnostic).ToArray());
 
     private static IEnumerable<ResultPropertyDescriptor> BuildProperties(Type type)
     {
@@ -392,9 +344,11 @@ public static class StepResultMetadata
         ResultPropertyAttribute? attribute = null,
         string? stableId = null) =>
         new(path, attribute?.DisplayName ?? Humanize(path), dataType,
-            attribute?.Description ?? Description(dataType, nullable), nullable, Example(path), cardinality,
+            attribute?.Description ?? Description(dataType, nullable), nullable, Example(path, dataType, cardinality), cardinality,
             enumType?.FullName, enumType is null ? null : Enum.GetNames(enumType),
-            stableId ?? attribute?.Id ?? ResultContractIds.FromPropertyPath(path));
+            stableId ?? attribute?.Id ?? ResultContractIds.FromPropertyPath(path),
+            IsDiagnostic: path is "FrameVersion" or "FrameTimestamp" or "SourceFrameVersion" or "SourceFrameTimestamp"
+                or "ErrorCode" or "ErrorMessage");
 
     private static ResultValueKind SemanticKind(Type type) => type.IsEnum ? ResultValueKind.Enum
         : type == typeof(bool) ? ResultValueKind.Boolean
@@ -424,11 +378,29 @@ public static class StepResultMetadata
         System.Text.RegularExpressions.Regex.Replace(s, "(?<=[a-z0-9])([A-Z])", " $1")));
     private static string Description(ResultValueKind type, bool nullable) =>
         $"{type}{(nullable ? ", kann leer sein" : string.Empty)}";
-    private static string? Example(string path) => path switch
+    private static string? Example(string path, ResultValueKind type, ResultCardinality cardinality) => path switch
     {
         "AppliedRoi" or "GlobalBounds" => "{X=10,Y=20,Width=300,Height=200}",
-        "ErrorMessage" => "No detection point available",
-        _ => null
+        "Confidence" or "MinimumConfidence" => "0.92",
+        "Percentage" => "50",
+        "IdleMilliseconds" => "2500",
+        "IdleSeconds" => "2.5",
+        "SelectedIndex" => "0",
+        "FilePath" or "SourcePath" or "TargetPath" or "Path" or "Process.ExecutablePath" => @"C:\Data\example.png",
+        "FileName" => "example.png",
+        "Format" => "PNG",
+        "Text" or "Words[].Text" or "Lines[].Text" or "SelectedLabel" => "ABC 123",
+        _ when cardinality == ResultCardinality.Collection => null,
+        _ => type switch
+        {
+            ResultValueKind.Boolean => "true",
+            ResultValueKind.Integer => "3",
+            ResultValueKind.Number => "0.92",
+            ResultValueKind.Point => "{X=100,Y=200}",
+            ResultValueKind.Rectangle => "{X=10,Y=20,Width=300,Height=200}",
+            ResultValueKind.DateTime => "2030-01-01T08:00:00Z",
+            _ => null
+        }
     };
 }
 

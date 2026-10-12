@@ -18,7 +18,7 @@ public sealed class YoloDetectionStepDefinition : StepDefinition<YOLODetectionSt
             new StepFieldDescriptor(SelectionFieldId, "Ui.Step.Settings.Model", StepValueKind.Object,
                 Required: true,
                 DefaultValue: JsonSerializer.SerializeToNode(new StepYoloSelectionValue(string.Empty, string.Empty)),
-                EditorHint: StepEditorHints.YoloPicker, Order: 1,
+                EditorHint: StepEditorHints.YoloPicker, InputSchemaId: InputSchemaIds.YoloSelection, Order: 1,
                 YoloPickerOptions: new StepYoloPickerOptions(ConfidenceFieldId)),
             ImageDetectionStepDefinitionSupport.Roi(2),
             new StepFieldDescriptor(ConfidenceFieldId, "Ui.Step.Settings.ConfidencePercent", StepValueKind.Number,

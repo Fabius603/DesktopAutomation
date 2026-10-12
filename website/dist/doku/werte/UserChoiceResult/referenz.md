@@ -17,23 +17,23 @@ Typisierter Ergebnisvertrag UserChoiceResult. Wird von Benutzerauswahl abfragen 
 
 ### result.selected_index
 
-Index der gewählten Antwort, nullbasiert. Vor Verwendung was_cancelled prüfen. Einzelwert dieses Ergebnisses.
+Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde. Beispiel: 0.
 
 ### result.selected_label
 
-Sichtbarer Text der gewählten Antwort, geeignet für eine verständliche Rückmeldung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer. Beispiel: ABC 123.
 
 ### result.selected_option_id
 
-Stabile ID der gewählten Antwort; sie ist vom sichtbaren Label und vom fachlichen Textwert getrennt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.
 
 ### result.selected_value
 
-Weitergereichter fachlicher Textwert der Antwort, geeignet für nachfolgende Vergleiche. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.
 
 ### result.was_cancelled
 
-Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bedeutet nicht, dass der komplette Job gestoppt wurde. Einzelwert dieses Ergebnisses.
+Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde. Beispiel: true.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -46,9 +46,9 @@ Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bed
     "Properties": [
       {
         "Name": "SelectedOptionId",
-        "DisplayName": "Selected Option Id",
+        "DisplayName": "Ausgewählte Antwort",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -56,27 +56,29 @@ Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bed
         "EnumValues": null,
         "Id": "selected_option_id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_option_id"
       },
       {
         "Name": "SelectedLabel",
-        "DisplayName": "Selected Label",
+        "DisplayName": "Angezeigter Antwortname",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "ABC 123",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "selected_label",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_label"
       },
       {
         "Name": "SelectedValue",
-        "DisplayName": "Selected Value",
+        "DisplayName": "Rückgabewert der Antwort",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -84,46 +86,49 @@ Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bed
         "EnumValues": null,
         "Id": "selected_value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_value"
       },
       {
         "Name": "SelectedIndex",
-        "DisplayName": "Selected Index",
+        "DisplayName": "Position der Antwort",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "0",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "selected_index",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_index"
       },
       {
         "Name": "WasCancelled",
-        "DisplayName": "Was Cancelled",
+        "DisplayName": "Auswahl abgebrochen",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "was_cancelled",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "was_cancelled"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "SelectedOptionId",
-        "DisplayName": "Selected Option Id",
+        "DisplayName": "Ausgewählte Antwort",
         "Property": {
           "Name": "SelectedOptionId",
-          "DisplayName": "Selected Option Id",
+          "DisplayName": "Ausgewählte Antwort",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -131,37 +136,39 @@ Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bed
           "EnumValues": null,
           "Id": "selected_option_id",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_option_id"
         },
         "Children": []
       },
       {
         "Segment": "SelectedLabel",
-        "DisplayName": "Selected Label",
+        "DisplayName": "Angezeigter Antwortname",
         "Property": {
           "Name": "SelectedLabel",
-          "DisplayName": "Selected Label",
+          "DisplayName": "Angezeigter Antwortname",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "ABC 123",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "selected_label",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_label"
         },
         "Children": []
       },
       {
         "Segment": "SelectedValue",
-        "DisplayName": "Selected Value",
+        "DisplayName": "Rückgabewert der Antwort",
         "Property": {
           "Name": "SelectedValue",
-          "DisplayName": "Selected Value",
+          "DisplayName": "Rückgabewert der Antwort",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -169,44 +176,47 @@ Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bed
           "EnumValues": null,
           "Id": "selected_value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_value"
         },
         "Children": []
       },
       {
         "Segment": "SelectedIndex",
-        "DisplayName": "Selected Index",
+        "DisplayName": "Position der Antwort",
         "Property": {
           "Name": "SelectedIndex",
-          "DisplayName": "Selected Index",
+          "DisplayName": "Position der Antwort",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "0",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "selected_index",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_index"
         },
         "Children": []
       },
       {
         "Segment": "WasCancelled",
-        "DisplayName": "Was Cancelled",
+        "DisplayName": "Auswahl abgebrochen",
         "Property": {
           "Name": "WasCancelled",
-          "DisplayName": "Was Cancelled",
+          "DisplayName": "Auswahl abgebrochen",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "was_cancelled",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "was_cancelled"
         },
         "Children": []

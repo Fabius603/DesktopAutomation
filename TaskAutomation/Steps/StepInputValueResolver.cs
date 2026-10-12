@@ -10,9 +10,11 @@ namespace TaskAutomation.Steps;
 internal static class StepInputValueResolver
 {
     internal sealed record Overlay(IReadOnlySet<string> UnresolvedPaths, string? Error = null);
+    internal sealed record ReadResult(bool Resolved, JsonNode? Value, ResultPropertyDescriptor? Descriptor = null,
+        string? ProviderId = null, bool IsLegacyDirectValue = false);
 
     public static Overlay Apply(JobStep step, IStepDefinition definition, StepDraft draft,
-        Func<ResultBinding, (bool Resolved, JsonNode? Value)> read,
+        Func<ResultBinding, ReadResult> read,
         IReadOnlySet<string>? fieldIds = null, bool requireResolved = false)
     {
         var unresolved = new HashSet<string>(StringComparer.Ordinal);
@@ -40,10 +42,14 @@ internal static class StepInputValueResolver
             { MarkUnresolved(field.Id); return; }
             var binding = ValueBindingTree.Find(step.Inputs, field.Id);
             if (binding?.IsConfigured == true)
+            {
+                _ = InputBindingContractTraversal.Walk(binding,
+                    InputContractRegistry.Resolve(step.GetType(), field), field.Id).ToArray();
                 draft.Values[field.Id] = field.ValueKind == StepValueKind.ResultBinding
                     ? JsonSerializer.SerializeToNode(binding)
                     : Compose(binding, draft.Values.GetValueOrDefault(field.Id), field.Id,
-                        ValueBindingSchemaRegistry.ForField(field));
+                        InputContractRegistry.Resolve(step.GetType(), field));
+            }
             foreach (var (key, nested) in step.Inputs.Where(pair => pair.Key.StartsWith(field.Id + ".", StringComparison.Ordinal)))
             {
                 var root = draft.Values.GetValueOrDefault(field.Id);
@@ -51,23 +57,26 @@ internal static class StepInputValueResolver
                 var path = key[(field.Id.Length + 1)..];
                 var value = read(nested);
                 if (!value.Resolved) { MarkUnresolved(key); continue; }
-                if (!StepDraftValueOverlay.TrySet(root, path, value.Value)) throw Invalid(key);
+                var target = InputContractRegistry.ResolvePath(step.GetType(), field, key);
+                var converted = ConvertValue(value, target, key);
+                if (!StepDraftValueOverlay.TrySet(root, path, converted)) throw Invalid(key);
             }
         }
 
-        JsonNode? Compose(ResultBinding binding, JsonNode? inherited, string path, string? expectedSchema)
+        JsonNode? Compose(ResultBinding binding, JsonNode? inherited, string path, InputContractNode contract)
         {
+            var expectedSchema = contract.SchemaId;
             var node = inherited?.DeepClone();
             if (binding.HasProviderReference || binding.TryGetStepResult(out _))
             {
                 var value = read(binding);
-                if (value.Resolved) node = value.Value?.DeepClone();
+                if (value.Resolved) node = ConvertValue(value, contract, path);
                 else MarkUnresolved(path);
             }
-            ValueBindingSchemaDescriptor? schema = null;
+            InputContractSchema? schema = null;
             if (expectedSchema is not null)
             {
-                if (!ValueBindingSchemaRegistry.TryGet(expectedSchema, out schema!)
+                if (!InputContractRegistry.TryGetSchema(expectedSchema, out schema!)
                     || binding.SchemaId is { Length: > 0 } actual && actual != expectedSchema)
                     throw Invalid(path);
                 if (!unresolved.Contains(path) && (schema.ItemSchemaId is not null ? node is not JsonArray : node is not JsonObject))
@@ -78,7 +87,9 @@ internal static class StepInputValueResolver
                 if (!child.IsConfigured) continue;
                 if (schema is not null && !schema.Members.ContainsKey(key)) throw Invalid(path + "." + key);
                 if (node is null || !StepDraftValueOverlay.TryGet(node, key, out var previous)) throw Invalid(path + "." + key);
-                var composed = Compose(child, previous, path + "." + key, schema?.Members.GetValueOrDefault(key)?.NestedSchemaId);
+                var member = schema?.Members.GetValueOrDefault(key);
+                if (member is null) throw Invalid(path + "." + key);
+                var composed = Compose(child, previous, path + "." + key, member);
                 if (!StepDraftValueOverlay.TrySet(node, key, composed)) throw Invalid(path + "." + key);
             }
             if (binding.Items is { Count: > 0 } items)
@@ -86,7 +97,8 @@ internal static class StepInputValueResolver
                 if (node is not JsonArray array || items.Count > array.Count || schema is { ItemSchemaId: null }) throw Invalid(path);
                 for (var index = 0; index < items.Count; index++)
                     if (items[index].IsConfigured)
-                        array[index] = Compose(items[index], array[index], $"{path}.{index}", schema?.ItemSchemaId);
+                        array[index] = Compose(items[index], array[index], $"{path}.{index}",
+                            InputContractRegistry.Item(schema!.ItemSchemaId!));
             }
             return node;
         }
@@ -100,4 +112,13 @@ internal static class StepInputValueResolver
 
     private static InvalidOperationException Invalid(string path) =>
         new($"{path}: StepValidation.Invalid");
+
+    private static JsonNode? ConvertValue(ReadResult value, InputContractNode contract, string path)
+    {
+        if (value.Descriptor is null || value.ProviderId is null) throw Invalid(path);
+        var result = InputCompatibilityEvaluator.Evaluate(contract, value.ProviderId, value.Descriptor,
+            InputCompatibilityProfile.ExistingBinding, value.IsLegacyDirectValue);
+        if (!result.IsAccepted || result.Plan is null) throw Invalid(path);
+        return InputValueConverter.Convert(value.Value, result.Plan);
+    }
 }

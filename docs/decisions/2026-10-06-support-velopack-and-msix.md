@@ -1,8 +1,8 @@
 ---
 date: 2026-10-06
-status: accepted
+status: superseded
 supersedes:
-superseded_by:
+superseded_by: 2026-10-12-use-supported-windows-apis-with-msix-virtualization.md
 ---
 
 # Support Velopack and MSIX from one application payload

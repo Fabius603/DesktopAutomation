@@ -38,7 +38,7 @@ internal static class OutputFileStepDefinitionSupport
                 DefaultValue: JsonValue.Create(defaultFileName), Order: 2),
             new(OverlayFieldId, "Ui.Step.Settings.Overlays", StepValueKind.Object,
                 DefaultValue: JsonSerializer.SerializeToNode(new VisualOverlaySettings()),
-                EditorHint: StepEditorHints.VisualOverlay, Advanced: true, Order: 3,
+                EditorHint: StepEditorHints.VisualOverlay, InputSchemaId: InputSchemaIds.VisualOverlay, Advanced: true, Order: 3,
                 VisualOverlayOptions: new("detections", "text"))
         ],
         new(

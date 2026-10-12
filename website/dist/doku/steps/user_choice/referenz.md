@@ -5,9 +5,9 @@ Website: /doku/steps/user_choice/
 
 Abbildung: [Eine Rückfrage mit zwei beschrifteten Optionen und getrennten Rückgabewerten. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/step-auswahl.detail.png)
 
-1. Überschrift (optional): Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine technische Identität.
-2. Titel (optional): Fragetext der Benutzerauswahl. Formuliere ihn so, dass die angebotenen Antworten eine eindeutige Entscheidung ermöglichen.
-3. Beschreibung (optional): Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl.
+1. Dialogtitel (optional): Titel des Auswahlfensters, unabhängig vom Fragetext. Ab dem kommenden Update 1.6.2 unterscheiden die Beschriftungen Dialogtitel und Frage diese Eingaben eindeutig. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
+2. Frage (optional): Fragetext der Benutzerauswahl. Formuliere ihn so, dass die angebotenen Antworten eine eindeutige Entscheidung ermöglichen. Ab dem kommenden Update 1.6.2 beginnen Frage und Beschreibung oben im Textfeld und umbrechen längere Texte; Zeilenumbrüche bleiben erhalten. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
+3. Beschreibung (optional): Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 4. Monitor: Nullbasierter Zielmonitor der Desktop-Anzeige oder Benutzerauswahl. Prüfe ihn auf dem Zielrechner.
 5. Antwortmöglichkeiten (2 bis 18, verpflichtend): Lege zwei bis achtzehn Antworten an. Jede Antwort benötigt einen sichtbaren Antworttext. Ein optionaler Rückgabewert ermöglicht stabile Bedingungen; bleibt er leer, wird der Antworttext zurückgegeben. Die interne ID bleibt beim Umbenennen oder Umordnen erhalten.
 ### errors
@@ -20,7 +20,7 @@ Zwei Antworten: ID rechnung, Label Rechnungen, Wert rechnung sowie ID notiz, Lab
 
 ### field.description
 
-Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl.
+Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.desktop_index
 
@@ -32,11 +32,11 @@ Lege zwei bis achtzehn Antworten an. Jede Antwort benötigt einen sichtbaren Ant
 
 ### field.question
 
-Fragetext der Benutzerauswahl. Formuliere ihn so, dass die angebotenen Antworten eine eindeutige Entscheidung ermöglichen.
+Fragetext der Benutzerauswahl. Formuliere ihn so, dass die angebotenen Antworten eine eindeutige Entscheidung ermöglichen. Ab dem kommenden Update 1.6.2 beginnen Frage und Beschreibung oben im Textfeld und umbrechen längere Texte; Zeilenumbrüche bleiben erhalten. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.title
 
-Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine technische Identität.
+Titel des Auswahlfensters, unabhängig vom Fragetext. Ab dem kommenden Update 1.6.2 unterscheiden die Beschriftungen Dialogtitel und Frage diese Eingaben eindeutig. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### purpose
 
@@ -44,15 +44,15 @@ Lege zwei bis achtzehn Antworten an und frage den Benutzer während des Jobs nac
 
 ### result.selected_index
 
-Index der gewählten Antwort, nullbasiert. Vor Verwendung was_cancelled prüfen. Einzelwert dieses Ergebnisses.
+Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde. Beispiel: 0.
 
 ### result.selected_label
 
-Sichtbarer Text der gewählten Antwort, geeignet für eine verständliche Rückmeldung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer. Beispiel: ABC 123.
 
 ### result.selected_option_id
 
-Stabile ID der gewählten Antwort; sie ist vom sichtbaren Label und vom fachlichen Textwert getrennt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.
 
 ### result.selected_option_id.option.example-option-0
 
@@ -64,11 +64,11 @@ Beispielhafte Antwort-ID einer Benutzerauswahl; bei eigener Antwortliste entsteh
 
 ### result.selected_value
 
-Weitergereichter fachlicher Textwert der Antwort, geeignet für nachfolgende Vergleiche. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.
 
 ### result.was_cancelled
 
-Ob der Benutzer das Auswahlfenster ohne Antwort abgebrochen hat. Dies allein bedeutet nicht, dass der komplette Job gestoppt wurde. Einzelwert dieses Ergebnisses.
+Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde. Beispiel: true.
 
 ### schema.id
 
@@ -96,11 +96,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -148,11 +148,11 @@ Optionaler Textwert, der bei Auswahl dieser Antwort weitergereicht wird, zum Bei
 
 ### schema.settings.question
 
-Fragetext der Benutzerauswahl. Formuliere ihn so, dass die angebotenen Antworten eine eindeutige Entscheidung ermöglichen.
+Fragetext der Benutzerauswahl. Formuliere ihn so, dass die angebotenen Antworten eine eindeutige Entscheidung ermöglichen. Ab dem kommenden Update 1.6.2 beginnen Frage und Beschreibung oben im Textfeld und umbrechen längere Texte; Zeilenumbrüche bleiben erhalten.
 
 ### schema.settings.title
 
-Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine technische Identität.
+Titel des Auswahlfensters, unabhängig vom Fragetext. Ab dem kommenden Update 1.6.2 unterscheiden die Beschriftungen Dialogtitel und Frage diese Eingaben eindeutig.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -171,7 +171,9 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
   "fields": [
     {
       "id": "title",
-      "name": "Überschrift (optional)",
+      "name": "Dialogtitel (optional)",
+      "helpKey": "Ui.UserChoice.Title.Help",
+      "help": "Optionale Fensterüberschrift des Auswahldialogs.",
       "descriptor": {
         "Id": "title",
         "LabelKey": "Ui.UserChoice.Title",
@@ -196,12 +198,17 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "question",
-      "name": "Titel (optional)",
+      "name": "Frage (optional)",
+      "helpKey": "Ui.UserChoice.Question.Help",
+      "help": "Frage, die dem Nutzer im Auswahldialog gestellt wird. Mehrzeilige Eingaben sind möglich.",
       "descriptor": {
         "Id": "question",
         "LabelKey": "Ui.UserChoice.Question",
@@ -226,12 +233,17 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "description",
       "name": "Beschreibung (optional)",
+      "helpKey": "Ui.UserChoice.Description.Help",
+      "help": "Optionaler ergänzender Text im Auswahldialog. Mehrzeilige Eingaben sind möglich.",
       "descriptor": {
         "Id": "description",
         "LabelKey": "Ui.UserChoice.Description",
@@ -256,12 +268,17 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "desktop_index",
       "name": "Monitor",
+      "helpKey": "Ui.Step.Settings.DesktopIndex.Help",
+      "help": "Monitor, auf den sich die Aufnahme oder Anzeige bezieht.",
       "descriptor": {
         "Id": "desktop_index",
         "LabelKey": "Ui.Step.Settings.DesktopIndex",
@@ -292,12 +309,17 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "options",
       "name": "Antwortmöglichkeiten (2 bis 18, verpflichtend)",
+      "helpKey": "Ui.UserChoice.Answers.Help",
+      "help": "Antworten, die im Dialog angeboten werden. Jede Antwort besitzt eine Beschriftung und einen zurückgegebenen Wert.",
       "descriptor": {
         "Id": "options",
         "LabelKey": "Ui.UserChoice.Answers",
@@ -328,7 +350,10 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": "desktopautomation.user-choice-options/v1",
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -488,9 +513,9 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
     "Properties": [
       {
         "Name": "SelectedOptionId",
-        "DisplayName": "Selected Option Id",
+        "DisplayName": "Ausgewählte Antwort",
         "DataType": "Enum",
-        "Description": "Text, kann leer sein",
+        "Description": "Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -504,27 +529,29 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
           "example-option-0": "",
           "example-option-1": ""
         },
+        "IsDiagnostic": false,
         "StableId": "selected_option_id"
       },
       {
         "Name": "SelectedLabel",
-        "DisplayName": "Selected Label",
+        "DisplayName": "Angezeigter Antwortname",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "ABC 123",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "selected_label",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_label"
       },
       {
         "Name": "SelectedValue",
-        "DisplayName": "Selected Value",
+        "DisplayName": "Rückgabewert der Antwort",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -532,46 +559,49 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
         "EnumValues": null,
         "Id": "selected_value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_value"
       },
       {
         "Name": "SelectedIndex",
-        "DisplayName": "Selected Index",
+        "DisplayName": "Position der Antwort",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "0",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "selected_index",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "selected_index"
       },
       {
         "Name": "WasCancelled",
-        "DisplayName": "Was Cancelled",
+        "DisplayName": "Auswahl abgebrochen",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "was_cancelled",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "was_cancelled"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "SelectedOptionId",
-        "DisplayName": "Selected Option Id",
+        "DisplayName": "Ausgewählte Antwort",
         "Property": {
           "Name": "SelectedOptionId",
-          "DisplayName": "Selected Option Id",
+          "DisplayName": "Ausgewählte Antwort",
           "DataType": "Enum",
-          "Description": "Text, kann leer sein",
+          "Description": "Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -585,37 +615,39 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
             "example-option-0": "",
             "example-option-1": ""
           },
+          "IsDiagnostic": false,
           "StableId": "selected_option_id"
         },
         "Children": []
       },
       {
         "Segment": "SelectedLabel",
-        "DisplayName": "Selected Label",
+        "DisplayName": "Angezeigter Antwortname",
         "Property": {
           "Name": "SelectedLabel",
-          "DisplayName": "Selected Label",
+          "DisplayName": "Angezeigter Antwortname",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "ABC 123",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "selected_label",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_label"
         },
         "Children": []
       },
       {
         "Segment": "SelectedValue",
-        "DisplayName": "Selected Value",
+        "DisplayName": "Rückgabewert der Antwort",
         "Property": {
           "Name": "SelectedValue",
-          "DisplayName": "Selected Value",
+          "DisplayName": "Rückgabewert der Antwort",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -623,44 +655,47 @@ Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel. Sie ist keine t
           "EnumValues": null,
           "Id": "selected_value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_value"
         },
         "Children": []
       },
       {
         "Segment": "SelectedIndex",
-        "DisplayName": "Selected Index",
+        "DisplayName": "Position der Antwort",
         "Property": {
           "Name": "SelectedIndex",
-          "DisplayName": "Selected Index",
+          "DisplayName": "Position der Antwort",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "0",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "selected_index",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "selected_index"
         },
         "Children": []
       },
       {
         "Segment": "WasCancelled",
-        "DisplayName": "Was Cancelled",
+        "DisplayName": "Auswahl abgebrochen",
         "Property": {
           "Name": "WasCancelled",
-          "DisplayName": "Was Cancelled",
+          "DisplayName": "Auswahl abgebrochen",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "was_cancelled",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "was_cancelled"
         },
         "Children": []

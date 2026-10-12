@@ -1,6 +1,7 @@
-﻿<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Analysis.PointEntryEditor"
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Analysis.PointEntryEditor"
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:hover="clr-namespace:DesktopAutomationApp.Behaviors"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
@@ -20,7 +21,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.PointSource}"
+                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Step.Settings.PointSource.Help}" Text="{loc:Translate Key=Ui.Step.Settings.PointSource}"
                            Style="{StaticResource GeometrySectionHeader}"/>
                 <Button Grid.Column="1"
                         Style="{StaticResource ButtonIconDanger}"
@@ -39,12 +40,12 @@
                         <geometry:ResponsiveGeometryPanel Grid.IsSharedSizeScope="True">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="GeometryLabel"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <TextBlock Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/>
+                                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Common.XCoordinate.Help}" Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/>
                                 <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding ManualXField}"/>
                             </Grid>
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="GeometryLabel"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <TextBlock Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/>
+                                <TextBlock hover:HoverHelp.Text="{loc:Translate Key=Ui.Common.YCoordinate.Help}" Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/>
                                 <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding ManualYField}"/>
                             </Grid>
                         </geometry:ResponsiveGeometryPanel>

@@ -83,6 +83,7 @@ namespace DesktopAutomationApp
                     if (!args.Contains("--startup") && !args.Contains("--background")) activation.Set();
                     return;
                 }
+                if (!AppPaths.MigrateLegacyData()) throw new IOException("Existing application data could not be imported completely.");
                 if (!ProfileCompatibility.EnsureSupported(AppPaths.LocalRoot))
                 {
                     MessageBox.Show(Loc.Get("Deployment.ProfileTooNew"), "DesktopAutomation", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -119,7 +120,6 @@ namespace DesktopAutomationApp
             EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu), System.Windows.Controls.ContextMenu.OpenedEvent, new RoutedEventHandler((sender, _) => DesktopAutomationApp.Controls.ActionMenus.Prepare((System.Windows.Controls.ContextMenu)sender)));
             GlobalScrollBehavior.Initialize();
 
-            AppPaths.MigrateLegacyData();
             var logRepository = _logRepository = new LogRepository();
             var applicationLogService = new ApplicationLogService(logRepository);
 

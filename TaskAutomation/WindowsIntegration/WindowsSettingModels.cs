@@ -33,6 +33,9 @@ public sealed class WindowsSystemSettingService : IWindowsSystemSettingService
         WindowsSettingChange change,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (RetiredWindowsSettings.Contains(change.SettingId))
+            return Task.FromResult(RetiredWindowsSettings.Result(change.SettingId));
         var capability = _catalog.Find(change.SettingId);
         if (capability?.SupportsSettingChange != true)
             return Task.FromResult(WindowsSettingChangeResult.Failed(

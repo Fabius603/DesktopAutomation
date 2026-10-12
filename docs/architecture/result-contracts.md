@@ -2,6 +2,29 @@
 
 Step result behaviour is owned by the backend.
 
+`InputContractRegistry` owns semantic root, field and schema/member contracts. Immutable
+`InputContractNode` and `InputContractSchema` models live in `TaskAutomation.Contracts`.
+`InputCompatibilityEvaluator` checks metadata using NewSelection or ExistingBinding
+and returns a conversion plan; `InputValueConverter` executes it for known authoring
+and runtime values. These profiles are independent of the validation phase. Missing
+runtime values still follow the materializer's availability policy and target constraints
+still follow the shared draft validators. `JsonNumberRules` is the shared finite Number reader.
+
+Step descriptors declare InputSchemaId and specialized InputValueKind explicitly;
+EditorHint selects presentation only. The generated editor resolves nested contracts by
+path. The former descriptor and registry adapter types have been removed. Definitions
+and consumers use InputContractNode and InputContractSchema directly. Published
+bindingSchemas/fieldSchemas reference keys are maintained by pure website export mappings.
+The exporter adds versioned inputContracts with canonical field and schema policies.
+See [the adapter removal decision](../decisions/2026-10-12-remove-legacy-input-contract-adapters.md).
+
+Field and nested source shapes share `InputContractRegistry.AcceptedSourceShapes` and
+`LegacySourceShapes`.
+Scalar targets accept compatible Single and OptionalSingle sources;
+legacy text color and path references remain readable without becoming new selectable sources.
+The value picker follows the input contract independently of whether the variable kind has a
+direct editor. Editor support limits creation and editing rather than reference selection.
+
 - A handler returns one `StepResultBase` object.
 - Every selectable public result property must declare an explicit
   `ResultProperty` ID. Contract discovery fails immediately when an ID is
@@ -23,9 +46,10 @@ Step result behaviour is owned by the backend.
   base value and override stable `members` or indexed `items`. Every compound
   root uses a versioned `schema_id`; provider references are never embedded in
   the variable's JSON value. Legacy dotted input keys are migrated into this tree.
-- `ValueBindingSchemaRegistry` owns the stable member IDs, item schemas, types,
-  cardinalities, and provider policies for compound values. Validation and runtime
-  materialization traverse the same tree recursively.
+- `InputContractRegistry` owns stable member IDs, item schemas, types, cardinalities
+  and provider policies for compound values. InputSchemaIds contains the stable
+  persisted schema IDs. Validation and runtime share structural traversal
+  through `InputBindingContractTraversal` and the same source evaluator.
 - Every non-step provider exposes typed `ValueProviderSourceDescriptor`
   metadata to editors and implements `IRuntimeValueProvider` for resolution.
   Compatibility is decided by the same input-contract shapes used for step
@@ -33,7 +57,7 @@ Step result behaviour is owned by the backend.
 - Sensitive providers expose metadata only while editing. Their values are
   loaded only for referenced sources when execution starts, remain outside the
   serialized job, and must never be written to logs or condition diagnostics.
-- `StepInputDescriptor.AllowedProviderIds` may restrict an input to explicit
+- `InputContractNode.AllowedProviderIds` may restrict an input to explicit
   providers. A missing restriction means that every registered provider is
   allowed; type and cardinality compatibility still applies in both cases.
 - The shared `ValueReferencePicker` owns provider grouping, search, empty and
@@ -91,6 +115,16 @@ timestamps so subsequent runs can be checked against the input boundary.
 
 The frontend may localize and render descriptors, but it must not invent
 result properties or compatibility rules.
+
+`StepResultMetadata` also owns example values, payload ordering and the diagnostic
+classification of selectable properties. `ResultPropertyLocalization` in the contracts
+project projects the same bilingual resource keys for the application and website exporter.
+Result-specific wording takes precedence over shared property wording; neither projection
+changes stable IDs, paths, types, enum options or cardinalities. The output inspector shows
+the meaning and example in a hover tooltip for each value and groups diagnostic fields separately.
+Input explanations use descriptor DescriptionKey when supplied, otherwise the bilingual UI
+label Help resource projected by StepInputHelp. Nested inputs use the same projection; help
+does not alter input contracts or validation.
 
 The complete project checklist for adding a new step is documented in
 [`add-job-step`](../../.agents/skills/add-job-step/SKILL.md).

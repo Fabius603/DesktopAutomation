@@ -67,7 +67,28 @@ Before handoff, report the canonical owner chosen for each changed rule and any 
 that could not safely be consolidated. Durable exceptions or boundary changes require an accepted
 decision record.
 
-## Persistence
+## Windows APIs and Store compatibility
+
+New and changed features must not require the `unvirtualizedResources` restricted capability or
+disabled MSIX filesystem/registry write virtualization. Existing accepted decisions that rely on
+that capability must be superseded when the corresponding implementation is changed.
+
+- Before selecting a Windows API or deployment mechanism, verify its supported public contract
+  against official Microsoft documentation and record the relevant source in the change's design
+  or review evidence. API availability alone does not prove Store compatibility.
+- Use the same canonical behavior for MSIX, Velopack and local builds. Preserve automatic execution
+  where the feature contract promises it. Manual settings pages and unsupported-result fallbacks
+  are not equivalent replacements without explicit user authorization.
+- Do not use undocumented interfaces or helper processes, scripts, registry techniques or UI
+  automation to evade virtualization or supported-method requirements.
+- Report an unsupported feature contract before changing it. Do not claim full compatibility on
+  the basis of a successful registry write, process exit or settings-page launch; validate the
+  actual externally observable outcome.
+- Cover changed persistence, process coordination and system effects with risk-based tests and
+  installed MSIX probes using isolated data. Test relevant success and denied-access paths in
+  packaged and unpackaged execution. Passing unit tests alone does not establish deployed parity.
+
+## Persistence compatibility
 
 Persisted jobs, macros, automations, settings, identifiers, and paths are compatibility
 contracts. New properties need safe defaults. Migrations must be best-effort, non-overwriting,

@@ -17,35 +17,35 @@ Typisierter Ergebnisvertrag ProcessRunningQueryResult. Wird von der zugehörigen
 
 ### result.captured_at
 
-Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl laufender Prozesse mit dem gesuchten Namen. Beispiel: 3.
 
 ### result.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.error_message
 
-Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.exists
 
-Ob der abgefragte Datei-/Ordnerpfad zum Beobachtungszeitpunkt existiert. Einzelwert dieses Ergebnisses.
+Gibt an, ob mindestens ein Prozess mit dem gesuchten Namen läuft. Beispiel: true.
 
 ### result.id
 
-System-/Geräteidentität des jeweiligen Ergebnisobjekts. Ihre Lebensdauer und Form hängen von der abgefragten Windows-Funktion ab. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+ID des ersten gefundenen Prozesses als Text. Ohne Treffer leer; ist keine vollständige Prozessreferenz.
 
 ### result.name
 
-Lesbarer Name des abgefragten Geräts, Monitors, Laufwerks oder Objekts. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Prozessname der Abfrage ohne Dateiendung.
 
 ### result.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.
 
 ### result.status.option.AccessDenied
 
@@ -78,37 +78,39 @@ Funktion auf diesem Zielsystem nicht unterstützt.
     "Properties": [
       {
         "Name": "Exists",
-        "DisplayName": "Exists",
+        "DisplayName": "Prozess läuft",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob mindestens ein Prozess mit dem gesuchten Namen läuft.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "exists",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "exists"
       },
       {
         "Name": "Count",
-        "DisplayName": "Count",
+        "DisplayName": "Anzahl laufender Prozesse",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl laufender Prozesse mit dem gesuchten Namen.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "count"
       },
       {
         "Name": "Name",
-        "DisplayName": "Name",
+        "DisplayName": "Gesuchter Prozessname",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Prozessname der Abfrage ohne Dateiendung.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -116,13 +118,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "name",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "name"
       },
       {
         "Name": "Id",
-        "DisplayName": "Id",
+        "DisplayName": "Erste gefundene Prozess-ID",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "ID des ersten gefundenen Prozesses als Text. Ohne Treffer leer; ist keine vollständige Prozessreferenz.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -130,13 +133,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "id"
       },
       {
         "Name": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -150,27 +154,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "status"
       },
       {
         "Name": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "captured_at",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "captured_at"
       },
       {
         "Name": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -178,70 +184,74 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_code"
       },
       {
         "Name": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
         "IsNullable": true,
-        "Example": "No detection point available",
+        "Example": null,
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "error_message",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_message"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Exists",
-        "DisplayName": "Exists",
+        "DisplayName": "Prozess läuft",
         "Property": {
           "Name": "Exists",
-          "DisplayName": "Exists",
+          "DisplayName": "Prozess läuft",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob mindestens ein Prozess mit dem gesuchten Namen läuft.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "exists",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "exists"
         },
         "Children": []
       },
       {
         "Segment": "Count",
-        "DisplayName": "Count",
+        "DisplayName": "Anzahl laufender Prozesse",
         "Property": {
           "Name": "Count",
-          "DisplayName": "Count",
+          "DisplayName": "Anzahl laufender Prozesse",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl laufender Prozesse mit dem gesuchten Namen.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "count"
         },
         "Children": []
       },
       {
         "Segment": "Name",
-        "DisplayName": "Name",
+        "DisplayName": "Gesuchter Prozessname",
         "Property": {
           "Name": "Name",
-          "DisplayName": "Name",
+          "DisplayName": "Gesuchter Prozessname",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Prozessname der Abfrage ohne Dateiendung.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -249,18 +259,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "name",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "name"
         },
         "Children": []
       },
       {
         "Segment": "Id",
-        "DisplayName": "Id",
+        "DisplayName": "Erste gefundene Prozess-ID",
         "Property": {
           "Name": "Id",
-          "DisplayName": "Id",
+          "DisplayName": "Erste gefundene Prozess-ID",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "ID des ersten gefundenen Prozesses als Text. Ohne Treffer leer; ist keine vollständige Prozessreferenz.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -268,18 +279,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "id",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "id"
         },
         "Children": []
       },
       {
         "Segment": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "Property": {
           "Name": "Status",
-          "DisplayName": "Status",
+          "DisplayName": "Ergebnis der Windows-Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -293,37 +305,39 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "status"
         },
         "Children": []
       },
       {
         "Segment": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "Property": {
           "Name": "CapturedAt",
-          "DisplayName": "Captured At",
+          "DisplayName": "Abfragezeit (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "captured_at",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "captured_at"
         },
         "Children": []
       },
       {
         "Segment": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "Property": {
           "Name": "ErrorCode",
-          "DisplayName": "Error Code",
+          "DisplayName": "Technischer Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -331,25 +345,27 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_code"
         },
         "Children": []
       },
       {
         "Segment": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "Property": {
           "Name": "ErrorMessage",
-          "DisplayName": "Error Message",
+          "DisplayName": "Fehlerbeschreibung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
           "IsNullable": true,
-          "Example": "No detection point available",
+          "Example": null,
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "error_message",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_message"
         },
         "Children": []

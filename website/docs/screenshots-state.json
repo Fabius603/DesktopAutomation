@@ -1,337 +1,342 @@
 {
   "startseite": {
-    "source": "1f8fecca7af2870635c383acd38c7cf2181e94fe7ea530a53796f377a09550aa",
+    "source": "3382ae41fd7f9573fdeed14e8dbdd593a44e90c154594eaefd16551be6ad4ba6",
     "image": "5348cff05f6c3513a0b0ce82edce90e6187d44ef1138f8197501e1504a6f57fa",
     "reviewed": true
   },
   "unterlagen": {
-    "source": "a26f799fb3763a0c5bd08673c1b0e1a68d78f66e409168bc56030126175bfae3",
-    "image": "3c1aba83b471aec9ee12e12dd0532eb7b50fe5574df20c2c3b4323723e39ba4b",
+    "source": "9addfb5cdcebd25fa8d2d4a0940fe7f3704c83c6c0a4eaea17cee9cf198bb27a",
+    "image": "08f2a2659222c0797e7096260b8abf77fe181d30d551de6ddf8d0fb9708a7155",
     "reviewed": true
   },
   "sicherung": {
-    "source": "f754dd03074de2ad336cb34e60c296b6175e17a496cb6a4b4be91eea477bca66",
-    "image": "e8d747d2cf1e00fcb180b6c2bc42f591f9773dfacebcd8b9adbc12628ddae9e7",
+    "source": "21fb0821dc82969ec4b87e5058805ef8c17b5f0efffd99935cc226c32265e4da",
+    "image": "9ae9433617b12a32d5b27d584f676b863cb4fd06ee278110d9f3265ccbd9d9fe",
     "reviewed": true
   },
   "arbeitsplatz": {
-    "source": "7d9be275bb5114b476b57390fc61a0f6baa8b49eb4e4d15e791078d09d5ba14c",
-    "image": "4c609e1ec87ef0d69d8538f2129b5615f933f2ff7f9ad847b9e6405a647929cd",
+    "source": "7fd2916205b841481192f957c656f2044e66622528e1b5bd759351874ef1e522",
+    "image": "f39a6af58c932b3df6ad264bd241a5f11766b7f918979d999c4172927bd130db",
     "reviewed": true
   },
   "automationen": {
-    "source": "73b1401962a8403bbc0239628e0acc3f259e56e10acdfad51185ce3c55542c33",
+    "source": "030c8788289973dd8d89a5d18c7ef7b4381c33a9d6ed281f3fc2a0abe31b2e8c",
     "image": "a661db2344a2cd5868dfe1edf8f063185c5d725b7970deb0145b8403f45fb195",
     "reviewed": true
   },
   "verlauf": {
-    "source": "add6d4f02c9578b9edebbadbb35fb85bb91fa9be434794f196aec36af46764c2",
+    "source": "137b166ffa584fecbf178f2caab53f823bd1a976e0aa703f73d975b5552fc43d",
     "image": "6c8b14ed6f6d41447f3e2bc8d0ddb8731c55552f99366df9a098d166aafb9722",
     "reviewed": true
   },
   "makro-editor": {
-    "source": "d6f6acecc5d92daeaf376a29d7ac8b633920fcd04ede9494ee2e1119ba614042",
+    "source": "77d209580880913c1efa9ad660847e7b8ae0fe0416e791047c7bf2926f1b4016",
     "image": "b74aaa48b4401debc7afd3c4493f1ebb7df1a03be2c6f37019092995497f1faf",
     "reviewed": true
   },
   "step-auswahl": {
-    "source": "53192fba3bbdf30418d4a0f1a9e79d960ea84ad5d7a97827b85d830edd93116d",
-    "image": "512d34131079cd2b8dfb6288a5547b832dcfe88f30208788d92039bfc063b5a3",
+    "source": "6a63f73a2b60d472f4213ebe7da424d44abbea4fd22d81938ac2fa71e4553394",
+    "image": "7e3b6c06fd6ff3ef422027530f3a22a886354d04c0cc78273e5c85838b0f359e",
     "reviewed": true
   },
   "step-bedingung": {
-    "source": "74de1e4c819c372bdbdce0c1a2872467f5308f8a6e573332a346538fdb7cd87f",
-    "image": "3080e249db7e906a5d434f1a4da202280f2fc207f47cfdf227797dfccf923682",
+    "source": "c9597b7ddaf0f799494b523d792a30d017e29e1aff06553b0a7b718b3acecad5",
+    "image": "03bdb44e2cdd0f3e2a1e5783572772f07165fe9ce7d35ee538d961737f9fd70f",
     "reviewed": true
   },
   "step-dateien": {
-    "source": "349dca2eedcf51691ac7201c6d06123e541231ebadd81997883083a07a535ec2",
-    "image": "c4eda8b9d2d5779174ced069fb00c4c3eb1d5f65a23b65016b624955decb7ef4",
+    "source": "c54b5e1e014153718642a7ed1f1a6dd954484e0fb6790aaaf922a9418ac5b07a",
+    "image": "e543cdbeb082dff31d10293df8bdc5819fb5641b941853c4fc5655b6595eb1cc",
     "reviewed": true
   },
   "step-programmstart": {
-    "source": "afa7411571e00453f5199cdab9497d5ce0b918d371aeb904f2ff06071bd28606",
-    "image": "4e2e297040715f61b8a8d6f267d1e1a6128b335215b12bfbbd0c5a0bd1606d3e",
+    "source": "103cd38acb013503bb6750d210e0b7c1b04f5aea608b319bb3efd85f85149113",
+    "image": "c470a6a48258ae868addd9661bf7acf796f87d13e08f9a4df05e08ff3bf8642e",
     "reviewed": true
   },
   "step-makro": {
-    "source": "08af0ca577902b5c6a639e2e81f7ebd0d76ce4ae9bfe7e09abd4dfdb604ec0f6",
-    "image": "c3d6c9e0133e1cb6aef30c4c2ff4b91823441e4b3b0f1625488eb03062009b4e",
+    "source": "abc513d0c24385fd4f0a19f535ff8366ea38ea0b2d235fa8558971edf1a4297e",
+    "image": "91337749e4131ba50948b0e3d39dcf4a4ed513b9c9bee49f4511f99644fc4f55",
     "reviewed": true
   },
   "step-werte": {
-    "source": "7b19c64c209efd5a102727ea6103af53eaac2a0bc1382f0219826b46b2a2c0a6",
-    "image": "683cf0e2391b2ae1ac9fa7475777bab681032cc27e33c3cbad5d6946ba1a8234",
+    "source": "201db6292618d648637b0cb29e925d25ca00450ddfb7d44efedcff283dcb60ea",
+    "image": "37c55a99628c192731e45eb6aa9ad6f2c89b003509be7a40f530af0bc78b119e",
     "reviewed": true
   },
   "step-prozessstatus": {
-    "source": "42d3f21f2094709a99183ab1cb4f21ca2c166cac23a46596f868c0e54b5e16f8",
-    "image": "c8a35635c0958f46b82342ed89db039c3808c1dbc5221918a8e2993b6eba7267",
+    "source": "749e7cd7bb959ca29e5b8c45add4ab8d5224aca20d2ba3d5dec6e77a13de3048",
+    "image": "1f2975693881a5d598323e1faf802b1485a8eff16f5869ee262908a92c50206d",
     "reviewed": true
   },
   "automation-hotkey": {
-    "source": "62f1a9ae35f50b91a5c34624479423bea8f92fb0e658aa711c930d842a0b57e2",
+    "source": "056f9dc164d1acb0af5f56a5e48867d20358c3b4ba844d2edb219a40cfc94bf2",
     "image": "a78fb1f728cd1fd0c503dade03b1c6c3820962c74af3c2c14d54284133c153e6",
     "reviewed": true
   },
   "automation-ordner": {
-    "source": "d0053738a23ee9180f9fde926346989e48e9ac0cbb496a0a4a29e931c418e5c3",
+    "source": "aae1f3a8b387afe8f296ecd525fd177a22777a2224c6e68377e2965012277dd0",
     "image": "9f216948d114d93bf76f1911b443b25146536a83643df44abb99df494d03a1bd",
     "reviewed": true
   },
   "makro-text": {
-    "source": "d2684bd381d28e39994c3ef6555bbb4cc0e9c0532bd6e83485df51f009a6a702",
+    "source": "bfcce878184b2f7c7fd44cd9d48bd3b6ee53c37e31ccf62d185f2b4a68dbcabc",
     "image": "fe65153b84e985490ca9b34f3510229cfec27173c14f3305125b6d8e7c28fef2",
     "reviewed": true
   },
   "makro-wartezeit": {
-    "source": "97240ad7f6f73e4ae3e33c418da80c046532717ab41bf87fcdeac19d95591c54",
+    "source": "119f9d6cc0ec29a159098aa089d782e58546f127d14f4aaee88b14e3049e2b96",
     "image": "5d146c4edea344e0e5ccad5baa1afc481f7710e731c73b76c2a95d1a1d72cbbb",
     "reviewed": true
   },
   "ref-step-active-window": {
-    "source": "faf0869798f34915e6091b44eb097ab43e5f0808c8c9bf0590b210db455276c1",
-    "image": "555aac53e89baea70ace267bccd87db4dc7bbbad18cc54535ea1202a69b7f617",
+    "source": "d1c565b58c3658ac830becdcd3fe1c7128aaa9d53181ee93f0fa51be6ee83912",
+    "image": "822daa77fd7f17cd3b2fd57909f457e975d8489e38c9d61919ab2b80186022f9",
     "reviewed": true
   },
   "ref-step-block-input": {
-    "source": "bd16d42dfcb0b4a5a0c22f91f32cbfad7c456e8f7630860aa561555a7173d88b",
-    "image": "e70f8390edbb86405d37d4f9de265f14dd005ea90d9c066ed552c2be45a088ed",
+    "source": "cde68ee1029d663b9daeb2f6e1795655cf0b5da2d276deb612dc87249a5dd29c",
+    "image": "291664d313e75e0036b117100b09aa5f9a12ae9f4e491a3bda910f98e9335fd2",
     "reviewed": true
   },
   "ref-step-camera-capture": {
-    "source": "d5cf3a9394236f2cdfbeb029f28367bcfeb4ebbdbc535d462a816d3e5d422448",
-    "image": "532cfaa752f46baca71f58f1d1a9180b27569a78e07c6b97e205955b37d9b3bf",
+    "source": "7409246eadcd3d557113967581491b97cc9c5be7d4a62c26b7d2f2742bb1ca96",
+    "image": "c6479b5b9525b16b0245a9aa001fafccf74c746145969c9efa860a4daaccf021",
     "reviewed": true
   },
   "ref-step-color-detection": {
-    "source": "73e58635eb79928b21c6c072165bdab2977bea83c06372738e67ad902e1694ae",
-    "image": "3a8d89d1e3da00712fc804a3bc515aa608bf2e2b3b806c8d55b92dd71ed5011d",
+    "source": "9422225a45e7a8560e0d675d00b2a1fbf5c49f543774a6b0dc1a87d14914e7b0",
+    "image": "9115d362f967be87258d939142a05e71f1afc1cd5a667729c112b15f828d61aa",
     "reviewed": true
   },
   "ref-step-continue-job": {
-    "source": "e52d4e16fc8b9c20d0aada363d285c66bd7d9fc41f946467f4bbdbf3eff13f0e",
-    "image": "9552084ae6c44be4bd301fc4503ac04d7b9cf9c4f011b02ebec8c76a4d7e0625",
+    "source": "cb0767328378904f4d4dc952c8048ea49013008ecdd2774682b13a4db5961999",
+    "image": "8ba53c7312119a21730dc5728f64a7916e5995a853815e92a4d25fcb0c15be0b",
     "reviewed": true
   },
   "ref-step-desktop-duplication": {
-    "source": "8408b4f2a53da9d77c6370e83b10426ece70fabade7acb0ba9f3d51793ce2c51",
-    "image": "d461deafe262ccd2d357a219c8119372467502359c8e73dbe3e03627004bd72b",
+    "source": "196d1db64fbde0fc1b40b9d622e94d8f867f19f77a5832089fc96adbd886e946",
+    "image": "50b7b54b344a0b69034f9d788463a2203b53c529840b40e1062b7adea372e68c",
     "reviewed": true
   },
   "ref-step-dynamic-roi": {
-    "source": "78e3883cea8462ee819326db61b2294fba2e43660d5edd4a044e2505766b8540",
-    "image": "382843ab18f350cc969f4eef7f6a4068ccad614b1a5390e330b6457df443b380",
+    "source": "3405c272279c56cb61ceb5ddd73e6203612cba27e051bed7b8811697093560fb",
+    "image": "c4940c66b6ca038a1961c38d20dfc1ff184e85661a8bf57c66aa27579d0faa41",
     "reviewed": true
   },
   "ref-step-else": {
-    "source": "2964ee42eae7e78fcc76ddd248e7210a51d11cebffc377878bc1cf6d059731b2",
-    "image": "bfe34057d6cf48e8a0f094e9bf13744ac44071ffa5cfb0fcf3799bbabe223865",
+    "source": "2f7bdcb4668d5ddf539b6bfed5bdcb0f8ebe38d583da997ab3070ded7d3cab91",
+    "image": "70bd728b3d94b0edaca27f201a3fb614ade7a5ea38584a15d0316af26f7e3828",
     "reviewed": true
   },
   "ref-step-else-if": {
-    "source": "a148926bdd0f0174a4f631d51621037e75ff697f473358049fd91e3b53e5f1f8",
-    "image": "8e9bb0e40c5f4deb5053ff44bc041823ca30839b76ad091f60743030b952eb41",
+    "source": "9baa9340c94eb90a759043c26ec47b6af7fd9d0da05e647b96587b7e3e47785c",
+    "image": "e06c56d1b9ce2193b54220f07411186ffd7c75b9c0ed48c8a91d83164d104b0d",
     "reviewed": true
   },
   "ref-step-end-if": {
-    "source": "457f7180064aa23447c8b368494800f81e35d8658395e8c3ff419bd8072f60ce",
-    "image": "17f0ea3a6dc4e1be555f7fcda85059b515b1cc456c76694cb60bcb9b8625393f",
+    "source": "db38410ee0029753b685815425adb7a59a74318ece84e2ecdab535bd5ce150c9",
+    "image": "c4055a6d1b987b03d908fcf35acc2cefcb83d779be402f189152057d2073cd4e",
     "reviewed": true
   },
   "ref-step-end-job": {
-    "source": "fb5a10f98d89a3e59f7e3e7d4908b4f6eb2894e0c335eb39968bf6e5aab555e8",
-    "image": "9971fb10f00286c4863e9315fd8c224a1a4d4fa75940801a7bb8687d63d61458",
+    "source": "47c73edb00eb0d879c5554405682e50eb2e1b5fe73aabcfcce0e280e96f8510d",
+    "image": "c1ab62493c66dc3849d0c6857d7b593d90dc1923dde810e7652a2cbe43ca25db",
     "reviewed": true
   },
   "ref-step-focus-process": {
-    "source": "b6d73ae59bb8460e02799a5e9362fb0d2f1a8c057b41dc753201e41d21831581",
-    "image": "e5adeefbe5ecd964061927d143dab0ebacd20f3f79da081d52eca3232f91e975",
+    "source": "099e1056d14bdcf79a3d2ce966db6c2d9ad719f2b05afcde5fc1b68258353333",
+    "image": "6226d24506d0e5b16537ddc78001e17da3c5a4327db9f9f933a825e6d34edb4b",
     "reviewed": true
   },
   "ref-step-get-process": {
-    "source": "ec906a25fd70e24dca188e787e404c49912f92b73767eab7e4d0de3562d0690c",
-    "image": "468a2fe4db383dd90ac6e0a726ae8877a908795803c2f3881c0794aefd95c38a",
+    "source": "b78ad862bbe7267c0f712d696bf7b6ae936a188aa55ced57f365d4046aa2b9a8",
+    "image": "d855df3b8453bf2352e81f176ac05808b79dc6aac7e2c529958cf4bcb237d5a9",
     "reviewed": true
   },
   "ref-step-job-execution": {
-    "source": "7d8f044051e9af4dd44cf51c9d9545678734772511b026233fea1248d0304581",
-    "image": "7005fc0d769b8335fe9128e3290b43e0b3f6c21c846594d5b4227866d4cc22a0",
+    "source": "c353d4a150dba81d0e59811572e8f0eac249475ab03039e4c7a14f413236acaf",
+    "image": "69518b157b9c1b0e3fc7c23a84121293035aad64079f70c3534fbba23010d020",
     "reviewed": true
   },
   "ref-step-keypoint-matching": {
-    "source": "fdc85a8f0d3158b439fa9301db2c349b7733528a793805bc33b5bb5237bb0e53",
-    "image": "2360c8eb7143afb70cc8e50ff6afdcba26f68e6648a1d238b29b2f4cccedb3e5",
+    "source": "be5fc9851475f4d4e753ce14e0ce1ab3b11fb5beec6de7fc0cf1e794ffea6c5f",
+    "image": "6f8b272f3726e36c2e0609cebc0b69697aec71263945b7637d616625463ef7a9",
     "reviewed": true
   },
   "ref-step-klick-on-point": {
-    "source": "bc29eb3c49f812b0f93391ec9c0cc475a96b3fe06d948c07183ca051787429ba",
-    "image": "d7d4860963a1e7112fec8bd0d1b57255f38c02468b0c17b89e2c7027437a2b76",
+    "source": "1683775d04d6268797bbba6a72fa9e862d9621cda3897608963699a8f30a90b8",
+    "image": "4dfdad15df2353e02a2871144fb7fbfe3695ed8c64f4433bdb197e88d3fe4b6d",
     "reviewed": true
   },
   "ref-step-klick-on-point-3d": {
-    "source": "5fd29c07ade178ed0f5d4db249f66141aac8da537a1706f73f4d7c97614e4ef1",
-    "image": "0017d32a20301015341dad1efc7845f014dfbe12e2e12e4287ab78019ef5a444",
+    "source": "f460300c69c035ad364f598990abef3a19117a3f0a850638147ae108498a6978",
+    "image": "7b1e1b6d870aeccba14dc68491ebc79288065c04852e87e6b09c739a3637fa57",
     "reviewed": true
   },
   "ref-step-ocr": {
-    "source": "34d82fc5990a3c6a323090d3555de1e18e3f0d4565426f2c09d542f64d78a9e3",
-    "image": "9c2f92baa65a0ac71b72381c7debcc62cdd344802ad6ec31aa00117f3df052dd",
+    "source": "1f3284ff2dcf9b9a35b528c01837b0dc53a523435e12d8f726297cedb5873a99",
+    "image": "09511c14103828fdf6f3cd2d54191ff4f4c5fb0f001a9c05b620fe37ed466d13",
     "reviewed": true
   },
   "ref-step-point-comparison": {
-    "source": "ac725b58ae661281a6c0b587b169c06cb18e0f417aa120331cd34201be254552",
-    "image": "4f135ffb08d6d151ef7e4a461aeb967fc362abfed72dc9b80006e82e3fe08953",
+    "source": "80545d06f04618f16c5f754b802ab638c9e3ed4c48669dbd45ed34196575f13b",
+    "image": "0da0323d124d90315b0fc54df9b267704f150c61b32f19bd71307037f19ecf01",
     "reviewed": true
   },
   "ref-step-predict-movement": {
-    "source": "c9dab9f124903cd2b4bc1db89ffab373b4be21fd3734a9f3b3b6faa8e7886b0e",
-    "image": "19dc3df0df5599525527e9b0c7f48cabfab5d3abc1e5e8c05d2e47377eaeb4df",
+    "source": "493dbb8ab7278c68539b4e6443a624163008f75fb66a19fb0962b017e3bb6aaf",
+    "image": "bb4359fd554ca0f6d4ddb5f925490396d361235edee2eff065a7e2874876005d",
     "reviewed": true
   },
   "ref-step-save-image": {
-    "source": "f27b7c20a52a2b19b9b5585fe9bc3e8cd0dafc176917299778b1d057c131c3c5",
-    "image": "99f160a354ba3c34f29219d91b827be088ec3bfa0ed6d42cf7c06f633884c8b4",
+    "source": "ae2d82358c31762090033c15535a7e4e78f829303613ce40df803c2abc1844e8",
+    "image": "2a52e9be5ebeaadd222403ede3f0d4538d9bff50662c365bd7e8fa33965970e0",
     "reviewed": true
   },
   "ref-step-script-execution": {
-    "source": "1c2e9e05ef0697dc98ae96388a80245f0e6eb6e1fd40d8c771311b57881a6a29",
-    "image": "6afe40b486b2189c6f29a27880c1ed08691d3df2aa45e590315c492d1e305973",
+    "source": "ce1e0fc1d74c63c3c745cfff2b539a0db6f5a96e9a6fb197ef4d8eed8cf0bf84",
+    "image": "88e28aa26f0bd958d4661bdfaa9d6a02c27f99ad1d5efc741db94c65c1cd59e0",
     "reviewed": true
   },
   "ref-step-show-image": {
-    "source": "fd313d9421892d2af6dd9f66d8c84f67529b73350365c8f205f3820d1997a22b",
-    "image": "415d77a5d97ec02c3efb5d33793f1a7d748d73a5dd119e57b43e4b4bca073121",
+    "source": "426430c6d0195c3771726bf3d486f6e4a733490c949599ab893ddac448033e39",
+    "image": "926b1f331a79fc10b0e11e1942963029b36184cfcd15a67fa72d39b0ccafaba2",
     "reviewed": true
   },
   "ref-step-show-on-desktop": {
-    "source": "687cc925e80b94786e88713018d9dd4d537d1ffe96cf68bf061e6ed738130527",
-    "image": "15424bf894d181071106430e5cfba15998d395285af36d3b12ce6f17c5e2b444",
+    "source": "38fa113ef9e1fc7aa91d9019bb8419ffafc47cda7606f2a2d8587f804cb46ea8",
+    "image": "6f5b7241c703f3931cc946635e063f6a747c57399695e1527814b7ecafb656d9",
     "reviewed": true
   },
   "ref-step-template-matching": {
-    "source": "0f10ffb37b8d15bf1120bb065687f11ed0dffb5dfe2aea9544184c89862e653c",
-    "image": "2a1c60a92a9d9eb12418472242acc8ed371fdd280fb85c2c670e7d2245e4a3ff",
+    "source": "b0be7f4085aa210854b3856839333a9f9d5619fedab54c911f0589cb54f015d0",
+    "image": "3c4ae42d7d24094bbc127ca721cdcd235d6935ecc666d255b08f5a014f0e69c0",
     "reviewed": true
   },
   "ref-step-terminate-process": {
-    "source": "cb24bb188ff17bec12a86f3f464b8b3bbb76766dcc86be71579a20317d208e3a",
-    "image": "aaef5cd2a6bb834d097527621102f856e3d38e8d403d826ae4143c7951da166e",
+    "source": "3309e52a9bd9527ba88bd48f2371f58f735e04bb6359496483a4dc7aaa9726cd",
+    "image": "a764e9d36bede949af11c1554004d43eb9f30409335e2f1373b8962beb08d1b3",
     "reviewed": true
   },
   "ref-step-timeout": {
-    "source": "ffe91aa31d9445b6df05ca2c78f1580225b06b33f0d8657a9b4c03af314fcda9",
-    "image": "0f426cc7955263b5a5cfee10b9916037b2c49348801391d9b0fdf2ca1602f65b",
+    "source": "1df559f9006cc235b8d8daf33c49569c29dfe26e6d3a5b44c6a63505d631d86e",
+    "image": "7511a3b7f2602afab7305e66a1e8e147bd3107f12f8516b6b4bc4d86f6e6ee3e",
     "reviewed": true
   },
   "ref-step-unblock-input": {
-    "source": "86133a2a26a8995c6899181514a0bbeef96cb8e4e6a94dad89944e73137378d2",
-    "image": "c9fefa6188eae013a39bc850be7cad7bd0e52fac20f46803974c1282d2e233c8",
+    "source": "e21f0be1d269a28d0fd2966a2edfdfa3f100c88035eec9c2972872970fc22ee2",
+    "image": "6f0501db372faedf02b54247555376565a96c91d171d6acdb21ee2e6f70359b8",
     "reviewed": true
   },
   "ref-step-video-creation": {
-    "source": "d74dd5e76685dbcbf4d093b137529df5b4c561403c73fc57055aeb233d73226b",
-    "image": "ac965a001154deba446f111edcfdda6e775ca400907475e98c57d1cf23763e0a",
+    "source": "77ad7a62453b87171050803a073d2e7b839d49c9707bde971085e0230c9cc2fb",
+    "image": "510c5aace1a71c55fd31e8576187b09712186a08d2a01fdcab90b31fa8f4b9c3",
     "reviewed": true
   },
   "ref-step-windows-setting-change": {
-    "source": "c4c93d6e98d9cfb7a3a1f09d46dc4a7e7ed044af389d0e3db8fad3fc49204c24",
-    "image": "cc1aea5f5e84bcf5cc6490b25ba6a19e623f4f53b85d5c77af46044ade8ae910",
+    "source": "07138af3eeac940ecb8e0faa3cdf7e5b70c09093fd3d56734bf31bd5ba54beff",
+    "image": "156b666a65912f9f6426e7f0ef4e3683a61564d2707f323aa5e242eb9cde725c",
     "reviewed": true
   },
   "ref-step-windows-state-query": {
-    "source": "0eb6a62f082cd7f8bb44c8a2ae3d4d41ae02a2a7fab08dc71d072c09ee24d6ba",
-    "image": "3e551e807e1c89025adc88ecf44dbfc03cc1e7234e8c43cc376af4736d36718c",
+    "source": "094214b4b2dc4c43154ec2084d924a1f4bb5b5814fac2e5769ddeca11075a1cf",
+    "image": "3115d6ed3e884964ce3b469f765c17999e606da34fd9c1b883db26f4344172ce",
     "reviewed": true
   },
   "ref-step-yolo-detection": {
-    "source": "acbd01b641e13691d2bf8f1c948d5264d46e30acd2904d90347543e762f767da",
-    "image": "4e75f98f7d9be3bed89596d3857e32d327a341d41847e7cb568c98763cd7a1d2",
+    "source": "7c2ec714280ced014ebfa829f3a17a7bdb7075fff4dd0614d40ed809f3379981",
+    "image": "46dd96387a9041adacfa0b2ea4ea4f06b8cab56df9ca026135f88162b2e6449a",
     "reviewed": true
   },
   "ref-macro-key-down": {
-    "source": "4971d4fb20b5d850f44c6e663f0ac551b6cd3ab0cd2f1930a2793533fcc5b8b2",
+    "source": "7da2c0f1e0ac121e49e2743db5c43aebbf9c32119597268cf7dc83242cb5ff38",
     "image": "6480a80ed86568547eb63db85613991a5cb796ce19b40846e934e5da3f8db6f9",
     "reviewed": true
   },
   "ref-macro-key-up": {
-    "source": "f7cae2f659bd0e80025ad7cc23629c49de7a429cf71c9a521d76df0b4acbb87e",
+    "source": "ed73141d7ad92388e464a82fb0d5885ff6faa784f2d45a679a129bb97274349c",
     "image": "645e9e249da294c34262201ea03d09bf4c68e1e0a513568bd48b17575a3ab582",
     "reviewed": true
   },
   "ref-macro-mouse-down": {
-    "source": "aabbeca470dd4bf291beff38153fbb6803b0c6272261af8fca518bd94e9256c3",
+    "source": "121f7dcaa16557bc4a06b381ded89c7de048663ac230202c8fd098a324af8f41",
     "image": "14ae2ce16085026458cc4680b42ae2fe4e96fcb2add4a11aa4f59872191179c1",
     "reviewed": true
   },
   "ref-macro-mouse-move-absolute": {
-    "source": "32794589b3163c0e4f82beeab2a051caa4046d6ebb64f040ec1bab094901ffa0",
+    "source": "0a140449b59e947294aa470562cc957351511c0be3a0b95ef2ca708d68126465",
     "image": "4f7298a36273296aa62780f77f18dbf5fb1e47214b9b5e114a41fb2de61e0f45",
     "reviewed": true
   },
   "ref-macro-mouse-move-relative": {
-    "source": "f87ff1f7aa4493128769540f35046af81740e089b9c2112fb58699a8ebe4a342",
+    "source": "20303f68375d4083dcfcd727521ce3439cf36fd6b335e13dd176025d5408eb65",
     "image": "8f939c0070ed89d79e5a341401f64d16e3ff0b43453329a4c4c62c9658df77a7",
     "reviewed": true
   },
   "ref-macro-mouse-up": {
-    "source": "155b08231721df26328cabef80df89d9ddc95c6ad87ea548d8819389ed695b9d",
+    "source": "6d2f8c018922ba6282c6ea3bd03a4fa679ed79f618cc7cffe1f53c3190c397f3",
     "image": "4ce1ac2963524b0a366f2c4714f38c1344f2441ad4587f14aeab31f00c782504",
     "reviewed": true
   },
   "ref-macro-mouse-wheel": {
-    "source": "3d1e5f3f093dbb512fc5241bb69e50aeea58133d6e5e9bec4e34e6857678558a",
+    "source": "9172c5de5087706df643a8c387abf0f9ecdc2b2500dea045c6c718b6a13deb89",
     "image": "a7d2cf5318dc6ef22140d23c31c1205757c4932d41ad61c432b9ace0b4c68104",
     "reviewed": true
   },
   "ref-auto-interval": {
-    "source": "ee1006d98139f76df98fe89d2db97996f70d2cb867dcd5cef89238e9db5cfe0e",
+    "source": "290da34fc97222fc0b38b808962629e0219c647f9ccfc64d842c19286d8daaad",
     "image": "80ee4d372e0820fef1360bc80ecdea52e74c7870a17a34fa3c3b597dcb39446a",
     "reviewed": true
   },
   "ref-auto-once-at": {
-    "source": "7fe8a068ae41f9fe625a94d10dcad5e98cb057d8b5178c54135fd79454b7cdf3",
+    "source": "4dcc55ef99337db4ab24706b48d9421377735cea30c6b4e1cfb0fcc61ccdb95b",
     "image": "8a40a0be6114835c988d96d728c73898a7aac2d7c2a3e349a6c7a280d3bd2234",
     "reviewed": true
   },
   "ref-auto-process-exited": {
-    "source": "d4487e10e71ccbecf6a6680910c687384f606b4675808ec6795200413cea127e",
+    "source": "f09baa82bf266f6a5747143efec0977f5c0d37401b1792523a22426278635459",
     "image": "42dd600beb615d91e39deb2ac4ebc1487b398b14100681f63c6c56d40b28af9f",
     "reviewed": true
   },
   "ref-auto-process-started": {
-    "source": "71ebccec56686b1421572a7e1f8eb3e8ceaa8ff937b38ab1d00bc89176695664",
+    "source": "f01558d6f9109df1a1731706690a85f35cc26ea8e93ac33034baf1e2dc0a626c",
     "image": "5d58d5738c12e34ca05f0e0573080c8e0e0c7c210a6cc409da8204d01af98b8f",
     "reviewed": true
   },
   "ref-auto-system-event": {
-    "source": "b95c85c47a0baaab24d6fe674b4c9049a4ebfd3c1a390b6a834715e4ff336436",
+    "source": "aa2944555c3a43f55b0e2e297e62fbfef925f1cf0ed5b6d0ff8e1c598aa5adc4",
     "image": "d380a5c166457331cd35be7c28cc05799c56bcaf8b75419d1e6e23ed289b5557",
     "reviewed": true
   },
   "ref-auto-webhook": {
-    "source": "29814a38b8e6633a15ce7bebef43842a1b280583f73acd835b740b61ade8ea71",
+    "source": "fceb6473e57796a7c1fac9eb93107ca94d28c4ff02c56195a81a7f6600f7a8b3",
     "image": "4d84792150189f14c0aae14de224e3a7a8365f7744055cecb0cda5f470ee7666",
     "reviewed": true
   },
   "ref-auto-window-event": {
-    "source": "9f5b658d833ce9e86c668caa92641e00ee12d960364a9ec9301b48097261b26b",
+    "source": "1bca7c4a5704d1e81cfb95552adc9ee321aa421fcaf8e6654db7d8a2fdbaa939",
     "image": "27cf162aad73f9478806bc66fe883ca918937df239eefba35f7a21c97af515e2",
     "reviewed": true
   },
   "ref-auto-windows-event": {
-    "source": "419684f5f469aee4aff1d9a5e2babcb99fcfe9baa081054612a966a7b2946cdd",
-    "image": "687a1348893db96333dd644a2b80a95c19b10a4b8c2f71e54e7f4eb5693a204e",
+    "source": "653c42989f314eba525d29ddf818845ae6739e6b8583216711b651fd384ddeff",
+    "image": "a1645b0e3eb1930b1040c29c8f2230e7b9b9c19eb3cdd5e5a5aeb15891b63f2b",
     "reviewed": true
   },
   "ref-step-file-system-operation-rename": {
-    "source": "3145f1196dc0b36a255dfd8108a9e73deceb7904d4190560594b7233066bd26d",
-    "image": "99e545c88de7a041008e5d4b16417afaabcb7ccd819710d27e4162cc8fdf2324",
+    "source": "4f1780426c221f575e9ab7bd959d516e66a9de588437423bf98a11d247ad9f26",
+    "image": "acb99e584928dc321d9561fec1ab54af29c00fd37da2b1fb8ffb822e22f63280",
     "reviewed": true
   },
   "ref-step-file-system-operation-delete": {
-    "source": "56bd67de2f3be984f5d4ae214f041dc7ff44117a1884a4dbca50e2671d842f10",
-    "image": "e9100a99c94299a82554548e397f816ae845bd58e596909b23a4e8138c0d4620",
+    "source": "b8b33f05913b8e339b0fff59fea9a80ec79889973e21990470b1f23aa6e50ff8",
+    "image": "355cb21b84f77002dc4f91666169e86c52a149ac0dc3daad45cfb6c20eb5bb6e",
+    "reviewed": true
+  },
+  "step-ergebnisse": {
+    "source": "6b27e149f5f4031f9b20b9b80f7aebc04ebf658147d962d4cf0deffaa97ff893",
+    "image": "225f3c75dfb59a646d456d84401c5cc99b06d02953bb202971ade702fda273e3",
     "reviewed": true
   }
 }

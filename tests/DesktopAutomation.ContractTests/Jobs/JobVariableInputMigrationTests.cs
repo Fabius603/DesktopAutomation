@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using System.Text.Json.Nodes;
 using System.Text.Json;
 using TaskAutomation.Jobs;
@@ -47,7 +48,7 @@ public sealed class JobVariableInputMigrationTests
             Assert.Equal(Job.CurrentFormatVersion, job.FormatVersion);
             var migratableFields = definition.Descriptor.Fields.Where(field =>
                 field.ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.ResultBinding
-                || StepInputContractRegistry.Resolve(definition.StepType, field).AllowsDirectValue).ToArray();
+                || InputContractRegistry.Resolve(definition.StepType, field).AllowsDirectValue).ToArray();
             Assert.Equal(migratableFields.Length, step.Inputs.Count);
             Assert.All(migratableFields, field =>
             {
@@ -234,7 +235,7 @@ public sealed class JobVariableInputMigrationTests
         var materialized = Assert.IsType<ActiveProcessStep>(StepInputMaterializer.Materialize(step, results));
 
         var root = Assert.Single(step.Inputs).Value;
-        Assert.Equal(ValueBindingSchemaRegistry.ProcessTarget, root.SchemaId);
+        Assert.Equal(InputSchemaIds.ProcessTarget, root.SchemaId);
         Assert.Equal(title.Id.ToString("D"), root.Members!["window_title_contains"].SourceId);
         Assert.Equal("notepad", materialized.Settings.Target.ProcessName);
         Assert.Equal("Bericht", materialized.Settings.Target.WindowTitleContains);
@@ -333,7 +334,7 @@ public sealed class JobVariableInputMigrationTests
         var text = Assert.Single(materialized.Settings.Overlay.TextResults);
         Assert.Equal(36f, text.FontSize);
         Assert.Equal(9000, text.DurationMs);
-        Assert.Equal(ValueBindingSchemaRegistry.VisualOverlay,
+        Assert.Equal(InputSchemaIds.VisualOverlay,
             step.Inputs[ShowOnDesktopStepDefinition.OverlayFieldId].SchemaId);
     }
 
@@ -372,7 +373,7 @@ public sealed class JobVariableInputMigrationTests
         Assert.Equal(Job.CurrentFormatVersion, job.FormatVersion);
         Assert.DoesNotContain(nestedPath, step.Inputs.Keys);
         var root = Assert.Contains(ActiveProcessStepDefinition.ProcessTargetFieldId, step.Inputs);
-        Assert.Equal(ValueBindingSchemaRegistry.ProcessTarget, root.SchemaId);
+        Assert.Equal(InputSchemaIds.ProcessTarget, root.SchemaId);
         Assert.Equal(title.Id.ToString("D"), ValueBindingTree.Find(step.Inputs, nestedPath)!.SourceId);
         var options = new JsonSerializerOptions();
         JobJsonSerialization.Configure(options);

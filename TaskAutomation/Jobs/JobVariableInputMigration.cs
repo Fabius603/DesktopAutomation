@@ -33,7 +33,7 @@ public static class JobVariableInputMigration
                         changed = true;
                     }
                     if (binding.IsConfigured || step.Inputs.ContainsKey(field.Id)) continue;
-                    var contract = StepInputContractRegistry.Resolve(step.GetType(), field);
+                    var contract = InputContractRegistry.Resolve(step.GetType(), field);
                     var shape = contract?.AcceptedShapes.FirstOrDefault();
                     if (contract?.AllowsDirectValue != true) continue;
                     var placeholder = new LocalValue
@@ -113,12 +113,7 @@ public static class JobVariableInputMigration
         _ => ResultValueKind.Text
     };
 
-    public static ResultValueKind MapKind(StepFieldDescriptor field) => field.EditorHint switch
-    {
-        StepEditorHints.JobPicker => ResultValueKind.JobReference,
-        StepEditorHints.MacroPicker => ResultValueKind.MacroReference,
-        _ => MapKind(field.ValueKind)
-    };
+    public static ResultValueKind MapKind(StepFieldDescriptor field) => field.InputValueKind ?? MapKind(field.ValueKind);
 
     private static bool MigrateLegacyAliases(JobStep step)
     {

@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using TaskAutomation.Steps;
+using TaskAutomation.WindowsIntegration;
 using Tesseract;
 using Windows.ApplicationModel;
 
@@ -31,6 +32,27 @@ public static class DeploymentProbe
             try { action(); checks[name] = "Passed"; }
             catch (Exception exception) { checks[name] = exception.GetType().Name + ": " + exception.Message; }
         }
+        Check("SupportedSettings", () =>
+        {
+            var catalog = new WindowsCapabilityCatalog();
+            var provider = new DefaultWindowsSettingProvider();
+            foreach (var id in new[] { "audio.default_output", "audio.default_input", "personalization.theme", "notifications.focus_mode" })
+            {
+                if (catalog.Find(id) is not null) throw new InvalidOperationException("Removed setting still offered.");
+                var result = provider.ChangeAsync(new() { SettingId = id }, CancellationToken.None).GetAwaiter().GetResult();
+                if (result.Success || result.Status != WindowsCapabilityStatus.Unsupported || result.ErrorCode != "setting.removed")
+                    throw new InvalidOperationException("Removed setting was not rejected.");
+            }
+        });
+        if (installation.Kind == InstallationKind.Msix)
+            Check("StandardVirtualization", () =>
+            {
+                var manifest = System.Xml.Linq.XDocument.Load(Path.Combine(AppContext.BaseDirectory, "AppxManifest.xml"));
+                if (manifest.Descendants().Any(element =>
+                    element.Name.LocalName is "FileSystemWriteVirtualization" or "RegistryWriteVirtualization" ||
+                    (string?)element.Attribute("Name") == "unvirtualizedResources"))
+                    throw new InvalidOperationException("Package opts out of standard virtualization.");
+            });
         Check("SharedData", () =>
         {
             Directory.CreateDirectory(AppPaths.JobConfigDirectory);

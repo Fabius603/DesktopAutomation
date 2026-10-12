@@ -1347,6 +1347,8 @@ namespace TaskAutomation.Jobs
                         FormatLogValue(value),
                         FormatLogValue(expected));
                 var rightStatus = rightWasExecuted ? string.Empty : " (Standardwert; Step wurde nicht ausgeführt)";
+                if (descriptor.DataType == ResultValueKind.Text)
+                    expected = TextValueFormatter.Format(expected);
                 expectedText = $"{rightName}{rightStatus} [{rightDescriptor.DataType}] = {FormatLogValue(expected)}";
             }
 

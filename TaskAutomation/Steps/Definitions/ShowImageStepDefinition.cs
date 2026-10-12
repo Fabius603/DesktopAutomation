@@ -20,7 +20,7 @@ public sealed class ShowImageStepDefinition : StepDefinition<ShowImageStep>
                 DefaultValue: JsonValue.Create("MyWindow"), Order: 1),
             new(OverlayFieldId, "Ui.Step.Settings.Overlays", StepValueKind.Object,
                 DefaultValue: JsonSerializer.SerializeToNode(new VisualOverlaySettings()),
-                EditorHint: StepEditorHints.VisualOverlay, Advanced: true, Order: 2,
+                EditorHint: StepEditorHints.VisualOverlay, InputSchemaId: InputSchemaIds.VisualOverlay, Advanced: true, Order: 2,
                 VisualOverlayOptions: new("detections", "text"))
         ],
         new(

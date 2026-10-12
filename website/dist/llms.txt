@@ -183,8 +183,6 @@ IDs und Enum-Schreibweisen aus den Verträgen übernehmen. Jobs/Makros verwenden
 - [WindowsSettingChangeResult](/doku/werte/WindowsSettingChangeResult/referenz.md) · werte · WindowsSettingChangeResult
 - [WindowsUpdateStatusQueryResult](/doku/werte/WindowsUpdateStatusQueryResult/referenz.md) · werte · WindowsUpdateStatusQueryResult
 - [YOLODetectionResult](/doku/werte/YOLODetectionResult/referenz.md) · werte · YOLODetectionResult
-- [audio.default_input](/doku/werte/audio.default_input/referenz.md) · werte · audio.default_input
-- [audio.default_output](/doku/werte/audio.default_output/referenz.md) · werte · audio.default_output
 - [Audiogerät hinzugefügt](/doku/werte/audio.device.added/referenz.md) · werte · audio.device.added
 - [Audiogerät geändert](/doku/werte/audio.device.changed/referenz.md) · werte · audio.device.changed
 - [Audiogerät verbunden](/doku/werte/audio.device.connected/referenz.md) · werte · audio.device.connected
@@ -267,8 +265,6 @@ IDs und Enum-Schreibweisen aus den Verträgen übernehmen. Jobs/Makros verwenden
 - [WLAN-Suche abgeschlossen](/doku/werte/network.wifi.scan_completed/referenz.md) · werte · network.wifi.scan_completed
 - [WLAN-Suche fehlgeschlagen](/doku/werte/network.wifi.scan_failed/referenz.md) · werte · network.wifi.scan_failed
 - [WLAN-Signalstärke geändert](/doku/werte/network.wifi.signal_quality_changed/referenz.md) · werte · network.wifi.signal_quality_changed
-- [notifications.focus_mode](/doku/werte/notifications.focus_mode/referenz.md) · werte · notifications.focus_mode
-- [personalization.theme](/doku/werte/personalization.theme/referenz.md) · werte · personalization.theme
 - [personalization.wallpaper](/doku/werte/personalization.wallpaper/referenz.md) · werte · personalization.wallpaper
 - [Netzteil angeschlossen](/doku/werte/power.ac_connected/referenz.md) · werte · power.ac_connected
 - [Netzteil getrennt](/doku/werte/power.ac_disconnected/referenz.md) · werte · power.ac_disconnected

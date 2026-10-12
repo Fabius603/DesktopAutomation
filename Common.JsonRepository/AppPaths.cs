@@ -11,20 +11,18 @@ public static class AppPaths
 
     public static string? ProfileName { get; } = ValidateProfile(Environment.GetEnvironmentVariable("DESKTOPAUTOMATION_PROFILE"));
     public static bool IsDefaultProfile => ProfileName is null;
-    private static string ProfileFolder => ProfileName is null ? ApplicationFolderName : Path.Combine(ApplicationFolderName, "Profiles", ProfileName);
+    private static string ProfileFolder => ProfileName is null ? "" : Path.Combine("Profiles", ProfileName);
+    public static string DataRoot { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ApplicationFolderName, ProfileFolder);
 
     public static string? ValidateProfile(string? name)
     {
         return ProfileNames.Validate(name);
     }
 
-    public static string RoamingRoot { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        ProfileFolder);
+    public static string RoamingRoot { get; } = Path.Combine(DataRoot, "Roaming");
 
-    public static string LocalRoot { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        ProfileFolder);
+    public static string LocalRoot { get; } = Path.Combine(DataRoot, "Local");
 
     public static string ConfigRoot => Path.Combine(RoamingRoot, "Configs");
     public static string JobConfigDirectory => Path.Combine(ConfigRoot, "Job");
@@ -49,15 +47,16 @@ public static class AppPaths
     /// Copies data from the former DesktopAutomationApp roots without replacing
     /// files that already exist in the canonical locations.
     /// </summary>
-    public static void MigrateLegacyData()
+    public static bool MigrateLegacyData()
     {
-        if (!IsDefaultProfile) return;
-        TryCopyMissingFiles(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopAutomationApp"),
-            RoamingRoot);
-        TryCopyMissingFiles(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopAutomationApp"),
-            LocalRoot);
+        var legacyProfile = ProfileName is null ? "" : Path.Combine("Profiles", ProfileName);
+        var roamingImported = LegacyDataImport.CopyOnce(RoamingRoot,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ApplicationFolderName, legacyProfile),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopAutomationApp", legacyProfile));
+        var localImported = LegacyDataImport.CopyOnce(LocalRoot,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationFolderName, legacyProfile),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopAutomationApp", legacyProfile));
+        return roamingImported && localImported;
     }
 
     private static string Combine(string root, IEnumerable<string> segments)
@@ -72,28 +71,4 @@ public static class AppPaths
         return path;
     }
 
-    private static void TryCopyMissingFiles(string sourceRoot, string targetRoot)
-    {
-        if (!Directory.Exists(sourceRoot))
-            return;
-
-        try
-        {
-            foreach (var sourceFile in Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories))
-            {
-                var relativePath = Path.GetRelativePath(sourceRoot, sourceFile);
-                var targetFile = Path.Combine(targetRoot, relativePath);
-                if (File.Exists(targetFile))
-                    continue;
-
-                Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
-                File.Copy(sourceFile, targetFile, overwrite: false);
-            }
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            // Migration is best-effort. Existing canonical data must remain usable
-            // even if an obsolete directory is locked or no longer readable.
-        }
-    }
 }

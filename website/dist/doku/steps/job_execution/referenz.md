@@ -53,11 +53,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -106,6 +106,8 @@ true wartet auf den Unterjob, bevor der nächste Step beginnt. false erlaubt par
     {
       "id": "job",
       "name": "Job",
+      "helpKey": "Ui.Step.Settings.Job.Help",
+      "help": "Gespeicherter Job, den dieser Step ausführt.",
       "descriptor": {
         "Id": "job",
         "LabelKey": "Ui.Step.Settings.Job",
@@ -130,12 +132,17 @@ true wartet auf den Unterjob, bevor der nächste Step beginnt. false erlaubt par
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": "JobReference"
       }
     },
     {
       "id": "wait_for_completion",
       "name": "Auf Beendigung warten",
+      "helpKey": "Ui.Step.Settings.WaitForCompletion.Help",
+      "help": "Wartet auf das Ende der gestarteten Ausführung, bevor der Job mit dem nächsten Step fortfährt.",
       "descriptor": {
         "Id": "wait_for_completion",
         "LabelKey": "Ui.Step.Settings.WaitForCompletion",
@@ -160,7 +167,10 @@ true wartet auf den Unterjob, bevor der nächste Step beginnt. false erlaubt par
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],

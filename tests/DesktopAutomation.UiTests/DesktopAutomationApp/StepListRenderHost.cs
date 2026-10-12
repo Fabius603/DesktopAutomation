@@ -28,6 +28,7 @@ internal static class StepListRenderHost
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--render-result-help") return ResultHelpRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-validation-layout") return ValidationLayoutRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-overlays") return ValueSourceRenderHost.RunOverlays(args[1]);
         if (args.Length == 2 && args[0] == "--render-value-sources") return ValueSourceRenderHost.Run(args[1]);

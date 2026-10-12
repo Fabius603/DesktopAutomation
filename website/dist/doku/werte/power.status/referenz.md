@@ -17,31 +17,31 @@ Zustandsabfrage: Akku und Energiequelle. Liest den aktuellen vom System angebote
 
 ### result.captured_at
 
-Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.error_message
 
-Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.is_charging
 
-Ob das System ein Laden des Akkus meldet. Einzelwert dieses Ergebnisses.
+Gibt an, ob Windows einen laufenden Ladevorgang meldet. Beispiel: true.
 
 ### result.is_connected
 
-Ob die Verbindung zum Zeitpunkt der Abfrage hergestellt war. Einzelwert dieses Ergebnisses.
+Gibt an, ob Windows eine Verbindung zur externen Stromversorgung meldet. Beispiel: true.
 
 ### result.percentage
 
-Aktueller Akkuladestand als Prozentwert, soweit vom System verfügbar. Einzelwert dieses Ergebnisses.
+Von Windows gemeldeter Akkustand in Prozent. Nur zusammen mit dem Abfragestatus und der Stromquelle bewerten. Beispiel: 50.
 
 ### result.power_source
 
-Gemeldete Energiequelle, etwa Netzbetrieb oder Akkubetrieb. Einzelwert dieses Ergebnisses.
+Gibt an, ob Windows Netzstrom, Akku oder eine unbekannte Stromquelle meldet.
 
 ### result.power_source.option.Ac
 
@@ -57,7 +57,7 @@ Die vorhandenen Daten erlauben keinen eindeutigeren Zustand.
 
 ### result.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.
 
 ### result.status.option.AccessDenied
 
@@ -91,51 +91,54 @@ Funktion auf diesem Zielsystem nicht unterstützt.
     "Properties": [
       {
         "Name": "IsConnected",
-        "DisplayName": "Is Connected",
+        "DisplayName": "Netzstrom angeschlossen",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob Windows eine Verbindung zur externen Stromversorgung meldet.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "is_connected",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "is_connected"
       },
       {
         "Name": "IsCharging",
-        "DisplayName": "Is Charging",
+        "DisplayName": "Akku wird geladen",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob Windows einen laufenden Ladevorgang meldet.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "is_charging",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "is_charging"
       },
       {
         "Name": "Percentage",
-        "DisplayName": "Percentage",
+        "DisplayName": "Akkustand (%)",
         "DataType": "Number",
-        "Description": "Number",
+        "Description": "Von Windows gemeldeter Akkustand in Prozent. Nur zusammen mit dem Abfragestatus und der Stromquelle bewerten.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "50",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "percentage",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "percentage"
       },
       {
         "Name": "PowerSource",
-        "DisplayName": "Power Source",
+        "DisplayName": "Stromquelle",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Gibt an, ob Windows Netzstrom, Akku oder eine unbekannte Stromquelle meldet.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -147,13 +150,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "power_source",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "power_source"
       },
       {
         "Name": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -167,27 +171,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "status"
       },
       {
         "Name": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "captured_at",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "captured_at"
       },
       {
         "Name": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -195,89 +201,94 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_code"
       },
       {
         "Name": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
         "IsNullable": true,
-        "Example": "No detection point available",
+        "Example": null,
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "error_message",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_message"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "IsConnected",
-        "DisplayName": "Is Connected",
+        "DisplayName": "Netzstrom angeschlossen",
         "Property": {
           "Name": "IsConnected",
-          "DisplayName": "Is Connected",
+          "DisplayName": "Netzstrom angeschlossen",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob Windows eine Verbindung zur externen Stromversorgung meldet.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "is_connected",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "is_connected"
         },
         "Children": []
       },
       {
         "Segment": "IsCharging",
-        "DisplayName": "Is Charging",
+        "DisplayName": "Akku wird geladen",
         "Property": {
           "Name": "IsCharging",
-          "DisplayName": "Is Charging",
+          "DisplayName": "Akku wird geladen",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob Windows einen laufenden Ladevorgang meldet.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "is_charging",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "is_charging"
         },
         "Children": []
       },
       {
         "Segment": "Percentage",
-        "DisplayName": "Percentage",
+        "DisplayName": "Akkustand (%)",
         "Property": {
           "Name": "Percentage",
-          "DisplayName": "Percentage",
+          "DisplayName": "Akkustand (%)",
           "DataType": "Number",
-          "Description": "Number",
+          "Description": "Von Windows gemeldeter Akkustand in Prozent. Nur zusammen mit dem Abfragestatus und der Stromquelle bewerten.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "50",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "percentage",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "percentage"
         },
         "Children": []
       },
       {
         "Segment": "PowerSource",
-        "DisplayName": "Power Source",
+        "DisplayName": "Stromquelle",
         "Property": {
           "Name": "PowerSource",
-          "DisplayName": "Power Source",
+          "DisplayName": "Stromquelle",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Gibt an, ob Windows Netzstrom, Akku oder eine unbekannte Stromquelle meldet.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -289,18 +300,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "power_source",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "power_source"
         },
         "Children": []
       },
       {
         "Segment": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "Property": {
           "Name": "Status",
-          "DisplayName": "Status",
+          "DisplayName": "Ergebnis der Windows-Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -314,37 +326,39 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "status"
         },
         "Children": []
       },
       {
         "Segment": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "Property": {
           "Name": "CapturedAt",
-          "DisplayName": "Captured At",
+          "DisplayName": "Abfragezeit (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "captured_at",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "captured_at"
         },
         "Children": []
       },
       {
         "Segment": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "Property": {
           "Name": "ErrorCode",
-          "DisplayName": "Error Code",
+          "DisplayName": "Technischer Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -352,25 +366,27 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_code"
         },
         "Children": []
       },
       {
         "Segment": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "Property": {
           "Name": "ErrorMessage",
-          "DisplayName": "Error Message",
+          "DisplayName": "Fehlerbeschreibung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
           "IsNullable": true,
-          "Example": "No detection point available",
+          "Example": null,
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "error_message",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_message"
         },
         "Children": []

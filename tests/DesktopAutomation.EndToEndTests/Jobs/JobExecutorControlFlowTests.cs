@@ -9,6 +9,50 @@ namespace TaskAutomation.Tests.Jobs;
 
 public sealed class JobExecutorControlFlowTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TextComparison_ConvertsNumericValuesBeforeChoosingTheBranch(bool collection)
+    {
+        var text = new JobVariable
+        {
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create(collection ? "1" + Environment.NewLine + "2" : "7")
+        };
+        var number = new JobVariable
+        {
+            ValueKind = ResultValueKind.Integer,
+            Cardinality = collection ? ResultCardinality.Collection : ResultCardinality.Single,
+            Value = System.Text.Json.Nodes.JsonNode.Parse(collection ? "[1,2]" : "7")
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = text.Id.ToString("D"),
+            Operator = ConditionOperator.Equals,
+            Comparison = new()
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.JobVariable,
+                SourceId = number.Id.ToString("D")
+            }
+        };
+        var job = new Job
+        {
+            Name = "Text comparison",
+            Variables = [text, number],
+            Steps = [new IfStep { Settings = new() { Conditions = [condition] } },
+            Text("matched"), new EndIfStep()]
+        };
+        Assert.True(JobValidation.ValidateJob(job).IsValid);
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+        var completion = Assert.Single(builder.Logs.Completions);
+        Assert.True(completion.Success, completion.Details);
+        Assert.Equal("matched", Assert.Single(builder.Overlay.TextCalls).Text);
+    }
+
     [Fact]
     public async Task ExecuteJob_LoadsReferencedSecretOnlyForRuntimeResolution()
     {

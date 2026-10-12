@@ -20,7 +20,7 @@ public sealed class TerminateProcessStepDefinition : StepDefinition<TerminatePro
                 "Ui.Step.Settings.ProcessSource",
                 StepValueKind.Object,
                 Required: true,
-                EditorHint: StepEditorHints.ProcessTargetPicker,
+                EditorHint: StepEditorHints.ProcessTargetPicker, InputSchemaId: InputSchemaIds.ProcessTarget, OwnsStructuredInputContract: true,
                 InputContractId: "process",
                 Order: 0)
         ],

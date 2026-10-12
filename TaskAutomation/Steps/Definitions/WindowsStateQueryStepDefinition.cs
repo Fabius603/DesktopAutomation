@@ -98,6 +98,8 @@ internal static class WindowsCapabilityStepDefinitionSupport
         StepWindowsCapabilityPickerMode mode)
     {
         var value = ReadSelection(draft);
+        if (mode == StepWindowsCapabilityPickerMode.SettingChange && RetiredWindowsSettings.Contains(value.CapabilityId))
+            return [new("StepValidation.WindowsSettingRemoved", WindowsStateQueryStepDefinition.CapabilityFieldId)];
         var capability = new WindowsCapabilityCatalog().Find(value.CapabilityId);
         var supported = mode == StepWindowsCapabilityPickerMode.StateQuery
             ? capability?.SupportsStateQuery == true

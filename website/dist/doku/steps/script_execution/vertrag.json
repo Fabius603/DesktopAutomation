@@ -14,6 +14,8 @@
       {
         "id": "script_path",
         "name": "Skriptpfad",
+        "helpKey": "Ui.Step.Settings.ScriptPath.Help",
+        "help": "Pfad zum Skript, das dieser Step ausführt.",
         "descriptor": {
           "Id": "script_path",
           "LabelKey": "Ui.Step.Settings.ScriptPath",
@@ -38,12 +40,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "wait_for_exit",
         "name": "Auf Beendigung warten",
+        "helpKey": "Ui.Step.Settings.WaitForCompletion.Help",
+        "help": "Wartet auf das Ende der gestarteten Ausführung, bevor der Job mit dem nächsten Step fortfährt.",
         "descriptor": {
           "Id": "wait_for_exit",
           "LabelKey": "Ui.Step.Settings.WaitForCompletion",
@@ -68,12 +75,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "arguments",
         "name": "Argumente",
+        "helpKey": "Ui.Step.Settings.Arguments.Help",
+        "help": "Zusätzliche Startargumente für das Programm. Die erwartete Schreibweise richtet sich nach dem Programm.",
         "descriptor": {
           "Id": "arguments",
           "LabelKey": "Ui.Step.Settings.Arguments",
@@ -98,7 +110,10 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       }
     ],
@@ -230,7 +245,7 @@
     "errors": "Ein nicht vorhandener Interpreter oder Skriptpfad, ein fehlerhafter Exit beziehungsweise ein fehlgeschlagener Hintergrundprozess kann den Job fehlschlagen lassen. Der Verlauf enthält Kontext und bereinigte Diagnose, nicht automatisch den vollständigen Skriptinhalt oder dessen Argumente.",
     "field.script_path": "Pfad zur vorhandenen .ps1-, .py- oder Batch-Datei. Der entsprechende Interpreter muss auf dem Zielrechner verfügbar sein.",
     "field.wait_for_exit": "true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts. Ohne sofortiges Warten bleibt besessene Skriptarbeit bis zum Job-Ende zugeordnet.",
-    "field.arguments": "Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen.",
+    "field.arguments": "Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.",
     "schema.id": "Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.",
     "schema.inputs": "Zuordnung von UI-Feld-ID zu typisierter Wertequelle. Bei vorhandenen inputs serialisiert der kanonische Job-Serializer settings nicht zusätzlich. Leere inputs mit settings bleiben als Legacy-/direkte Konfiguration lesbar.",
     "schema.inputs.items": "Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.",
@@ -238,8 +253,8 @@
     "schema.inputs.property_path": "Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.",
     "schema.inputs.source_step_id": "Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.",
     "schema.inputs.members": "Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.",
-    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.",
-    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.",
+    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.",
+    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.",
     "schema.inputs.source_id": "Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.",
     "schema.inputs.value_path": "Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.",
     "schema.is_enabled": "true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.",
@@ -320,7 +335,7 @@
               "value": "C:\\Beispiele\\Notiz.txt"
             }
           ],
-          "explanation": "Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen."
+          "explanation": "Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle."
         }
       ]
     }

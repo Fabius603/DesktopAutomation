@@ -5,6 +5,34 @@ namespace DesktopAutomation.ArchitectureTests;
 public sealed class ProjectDependencyRulesTests
 {
     [Fact]
+    public void InputContracts_DoNotExposeTheRemovedDomainModels()
+    {
+        var removedNames = new[]
+        {
+            "StepInputDescriptor", "StepInputContractRegistry", "ValueBindingMemberDescriptor",
+            "ValueBindingSchemaDescriptor", "ValueBindingSchemaRegistry"
+        };
+        foreach (var assembly in new[]
+                 {
+                     typeof(TaskAutomation.Contracts.Steps.InputContractNode).Assembly,
+                     typeof(TaskAutomation.Steps.InputContractRegistry).Assembly,
+                     typeof(DesktopAutomationApp.ViewModels.ValueReferencePickerViewModel).Assembly
+                 })
+            Assert.DoesNotContain(assembly.GetTypes(), type => removedNames.Contains(type.Name, StringComparer.Ordinal));
+    }
+    [Fact]
+    public void InputPolicies_AreTransportableAndEvaluatedBelowPresentation()
+    {
+        Assert.Equal("TaskAutomation.Contracts", typeof(TaskAutomation.Contracts.Steps.InputContractNode).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation.Contracts", typeof(TaskAutomation.Contracts.Steps.InputCompatibilityResult).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation.Contracts", typeof(TaskAutomation.Jobs.ResultValueKind).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation.Contracts", typeof(TaskAutomation.Steps.ResultPropertyDescriptor).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation", typeof(TaskAutomation.Steps.InputCompatibilityEvaluator).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation", typeof(TaskAutomation.Steps.InputContractRegistry).Assembly.GetName().Name);
+        Assert.DoesNotContain(typeof(TaskAutomation.Contracts.Steps.InputContractNode).Assembly.GetReferencedAssemblies(),
+            reference => reference.Name is "TaskAutomation" or "DesktopAutomationApp" or "PresentationFramework");
+    }
+    [Fact]
     public void LoggingSchemaAndRules_LiveBelowPresentation()
     {
         Assert.Equal("TaskAutomation.Contracts", typeof(TaskAutomation.Logging.LogEvent).Assembly.GetName().Name);

@@ -64,7 +64,7 @@ public static class VisualOverlayResolver
                 continue;
             }
 
-            var text = string.Join(Environment.NewLine, resolved.Values.Select(ResultDisplayFormatter.Format));
+            var text = TextValueFormatter.Format(resolved.Values);
             if (string.IsNullOrEmpty(text)) continue;
             texts.Add(new ResolvedTextOverlay(
                 entry.Id == Guid.Empty ? Guid.NewGuid() : entry.Id,
@@ -95,9 +95,7 @@ public static class ResultDisplayFormatter
     public static string Format(object? value) => value switch
     {
         null => string.Empty,
-        bool boolean => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de"
-            ? boolean ? "Ja" : "Nein"
-            : boolean ? "Yes" : "No",
+        bool boolean => boolean.ToString(),
         DateTime dateTime => dateTime.ToString(CultureInfo.CurrentCulture),
         DateTimeOffset dateTimeOffset => dateTimeOffset.ToString(CultureInfo.CurrentCulture),
         Point point => $"X={point.X}, Y={point.Y}",
@@ -109,8 +107,10 @@ public static class ResultDisplayFormatter
         DetectionItem detection => detection.BoundingBox is { } bounds
             ? $"{detection.Confidence:P1} ({bounds.X}, {bounds.Y}, {bounds.Width}, {bounds.Height})"
             : $"{detection.Confidence:P1} (X={detection.Center.X}, Y={detection.Center.Y})",
+        RuntimeProcessReference process => string.IsNullOrWhiteSpace(process.ProcessName)
+            ? $"Prozess {process.ProcessId}" : $"{process.ProcessName} (PID {process.ProcessId})",
         IFormattable formattable => formattable.ToString(null, CultureInfo.CurrentCulture) ?? string.Empty,
-        _ => value.ToString() ?? string.Empty
+        _ => System.Text.Json.JsonSerializer.Serialize(value, value.GetType())
     };
 }
 

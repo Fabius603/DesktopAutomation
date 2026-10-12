@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using System.Text.Json.Nodes;
 using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
@@ -11,7 +12,7 @@ public sealed class QuickCreateJobVariableViewModel : ViewModelBase
     private readonly IReadOnlySet<string> _existingNames;
 
     public QuickCreateJobVariableViewModel(
-        StepInputDescriptor contract,
+        InputContractNode contract,
         string stepName,
         string fieldName,
         IReadOnlyList<JobVariable> existing)
@@ -81,7 +82,7 @@ public sealed class QuickCreateJobVariableViewModel : ViewModelBase
         ResultValueKind.Color => JsonValue.Create("#FFFFFF"),
         ResultValueKind.Point => new JsonObject { ["x"] = 0, ["y"] = 0 },
         ResultValueKind.Rectangle => new JsonObject
-            { ["x"] = 0, ["y"] = 0, ["width"] = 0, ["height"] = 0 },
+        { ["x"] = 0, ["y"] = 0, ["width"] = 0, ["height"] = 0 },
         ResultValueKind.Image => JsonValue.Create(string.Empty),
         ResultValueKind.ResultObject => new JsonObject(),
         _ => null

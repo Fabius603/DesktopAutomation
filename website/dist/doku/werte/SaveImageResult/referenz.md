@@ -17,31 +17,31 @@ Typisierter Ergebnisvertrag SaveImageResult. Wird von Bild speichern geliefert. 
 
 ### result.file_name
 
-Name der erzeugten Datei ohne zwingend den ganzen Verzeichnispfad. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Name der gespeicherten Bilddatei ohne Ordnerpfad. Beispiel: example.png.
 
 ### result.file_path
 
-Pfad der erzeugten Bild-/Videodatei auf dem ausführenden Rechner. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vollständiger Pfad der gespeicherten Bilddatei, verwendbar für nachfolgende Dateiaktionen. Beispiel: C:\Data\example.png.
 
 ### result.file_size_bytes
 
-Größe der gespeicherten Datei in Bytes. Einzelwert dieses Ergebnisses.
+Größe der gespeicherten Bilddatei in Bytes. Beispiel: 3.
 
 ### result.format
 
-Ausgabeformat der Bild-/Videodatei. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Format der gespeicherten Datei, beispielsweise PNG oder JPEG. Beispiel: PNG.
 
 ### result.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+Höhe des gespeicherten Bildes in Pixeln. Beispiel: 3.
 
 ### result.saved_at_utc
 
-UTC-Zeitpunkt der Speicherung/Finalisierung. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem das Bild gespeichert wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.width
 
-Breite des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+Breite des gespeicherten Bildes in Pixeln. Beispiel: 3.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -54,233 +54,247 @@ Breite des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
     "Properties": [
       {
         "Name": "FilePath",
-        "DisplayName": "File Path",
+        "DisplayName": "Vollständiger Dateipfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Vollständiger Pfad der gespeicherten Bilddatei, verwendbar für nachfolgende Dateiaktionen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "file_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "file_path"
       },
       {
         "Name": "FileName",
-        "DisplayName": "File Name",
+        "DisplayName": "Dateiname",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Name der gespeicherten Bilddatei ohne Ordnerpfad.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "file_name",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "file_name"
       },
       {
         "Name": "Format",
-        "DisplayName": "Format",
+        "DisplayName": "Bildformat",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Format der gespeicherten Datei, beispielsweise PNG oder JPEG.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "PNG",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "format",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "format"
       },
       {
         "Name": "Width",
-        "DisplayName": "Width",
+        "DisplayName": "Bildbreite",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des gespeicherten Bildes in Pixeln.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "width"
       },
       {
         "Name": "Height",
-        "DisplayName": "Height",
+        "DisplayName": "Bildhöhe",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des gespeicherten Bildes in Pixeln.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "height"
       },
       {
         "Name": "FileSizeBytes",
-        "DisplayName": "File Size Bytes",
+        "DisplayName": "Dateigröße (Bytes)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Größe der gespeicherten Bilddatei in Bytes.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "file_size_bytes",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "file_size_bytes"
       },
       {
         "Name": "SavedAtUtc",
-        "DisplayName": "Saved At Utc",
+        "DisplayName": "Gespeichert am (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem das Bild gespeichert wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "saved_at_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "saved_at_utc"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "FilePath",
-        "DisplayName": "File Path",
+        "DisplayName": "Vollständiger Dateipfad",
         "Property": {
           "Name": "FilePath",
-          "DisplayName": "File Path",
+          "DisplayName": "Vollständiger Dateipfad",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Vollständiger Pfad der gespeicherten Bilddatei, verwendbar für nachfolgende Dateiaktionen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "C:\\Data\\example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "file_path",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "file_path"
         },
         "Children": []
       },
       {
         "Segment": "FileName",
-        "DisplayName": "File Name",
+        "DisplayName": "Dateiname",
         "Property": {
           "Name": "FileName",
-          "DisplayName": "File Name",
+          "DisplayName": "Dateiname",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Name der gespeicherten Bilddatei ohne Ordnerpfad.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "file_name",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "file_name"
         },
         "Children": []
       },
       {
         "Segment": "Format",
-        "DisplayName": "Format",
+        "DisplayName": "Bildformat",
         "Property": {
           "Name": "Format",
-          "DisplayName": "Format",
+          "DisplayName": "Bildformat",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Format der gespeicherten Datei, beispielsweise PNG oder JPEG.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "PNG",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "format",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "format"
         },
         "Children": []
       },
       {
         "Segment": "Width",
-        "DisplayName": "Width",
+        "DisplayName": "Bildbreite",
         "Property": {
           "Name": "Width",
-          "DisplayName": "Width",
+          "DisplayName": "Bildbreite",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Breite des gespeicherten Bildes in Pixeln.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "width",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "width"
         },
         "Children": []
       },
       {
         "Segment": "Height",
-        "DisplayName": "Height",
+        "DisplayName": "Bildhöhe",
         "Property": {
           "Name": "Height",
-          "DisplayName": "Height",
+          "DisplayName": "Bildhöhe",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Höhe des gespeicherten Bildes in Pixeln.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "height",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "height"
         },
         "Children": []
       },
       {
         "Segment": "FileSizeBytes",
-        "DisplayName": "File Size Bytes",
+        "DisplayName": "Dateigröße (Bytes)",
         "Property": {
           "Name": "FileSizeBytes",
-          "DisplayName": "File Size Bytes",
+          "DisplayName": "Dateigröße (Bytes)",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Größe der gespeicherten Bilddatei in Bytes.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "file_size_bytes",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "file_size_bytes"
         },
         "Children": []
       },
       {
         "Segment": "SavedAtUtc",
-        "DisplayName": "Saved At Utc",
+        "DisplayName": "Gespeichert am (UTC)",
         "Property": {
           "Name": "SavedAtUtc",
-          "DisplayName": "Saved At Utc",
+          "DisplayName": "Gespeichert am (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem das Bild gespeichert wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "saved_at_utc",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "saved_at_utc"
         },
         "Children": []

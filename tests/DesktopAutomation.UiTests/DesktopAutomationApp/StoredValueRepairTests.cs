@@ -118,7 +118,7 @@ public sealed class StoredValueRepairTests
     [Fact]
     public void TextOverlayPreservesUnknownFontColorUntilAnExplicitReplacement()
     {
-        var row = new TextOverlayRowViewModel([], [], StepInputContractRegistry.Get(typeof(VideoCreationStep), "text")!, null,
+        var row = new TextOverlayRowViewModel([], [], InputContractRegistry.Find(typeof(VideoCreationStep), "text")!, null,
             settings: new TextResultOverlaySettings { FontColor = "not-a-color" });
         Assert.Equal("not-a-color", row.ToSettings().FontColor);
         row.FontColor = System.Windows.Media.Colors.White;
@@ -131,7 +131,7 @@ public sealed class StoredValueRepairTests
         var variable = new JobVariable { ValueKind = ResultValueKind.Integer, Value = JsonValue.Create(3) };
         var local = new LocalValue { Id = variable.Id, ValueKind = variable.ValueKind, Value = JsonValue.Create(8) };
         var sources = new ValueReferenceSourceCatalog([], [variable, local]);
-        var contract = StepInputContractRegistry.ForField(new TimeoutStepDefinition().Descriptor.Fields.Single());
+        var contract = InputContractRegistry.ForField(new TimeoutStepDefinition().Descriptor.Fields.Single());
         var picker = new ValueReferencePickerViewModel(sources, contract, selectDefault: false);
         picker.Load(new ResultBinding { ProviderId = ValueProviderIds.JobVariable, SourceId = variable.Id.ToString() });
         Assert.Same(variable, picker.SelectedJobVariable);
@@ -215,7 +215,7 @@ public sealed class StoredValueRepairTests
         var id = Guid.NewGuid().ToString("D");
         var source = new ValueProviderSourceDescriptor(ValueProviderIds.Secret, id, "Token", "hidden secret description",
             ResultValueKind.Text, ResultCardinality.Single, IsSensitive: true);
-        var picker = new ValueReferencePickerViewModel([], StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!,
+        var picker = new ValueReferencePickerViewModel([], InputContractRegistry.Find(typeof(ShowTextStep), "text")!,
             false, providerSources: [source]);
         picker.Load(new ResultBinding { ProviderId = ValueProviderIds.Secret, SourceId = id });
         Assert.True(picker.IsConfigured);

@@ -2,16 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace TaskAutomation.Jobs;
 
-public enum ResultValueKind
-{
-    Boolean, Integer, Number, Text, DateTime, Image, Point, Rectangle,
-    Detection, ProcessReference, ResultObject, Enum, JobReference, MacroReference,
-    Color, FilePath
-}
-
-public enum ResultCardinality { Single, OptionalSingle, Collection }
-public enum MissingValuePolicy { FailStep, SkipStep, UseDefault }
-
 /// <summary>Provider-owned reference to exactly one typed value.</summary>
 public class ValueReference
 {
@@ -31,14 +21,6 @@ public class ValueReference
     [JsonIgnore]
     public bool HasProviderReference => !string.IsNullOrWhiteSpace(ProviderId)
                                         && !string.IsNullOrWhiteSpace(SourceId);
-}
-
-public static class ValueProviderIds
-{
-    public const string LocalValue = "local_value";
-    public const string JobVariable = "job_variable";
-    public const string StepResult = "step_result";
-    public const string Secret = "secret";
 }
 
 public sealed record StepResultSourceId(string StepId, string PropertyId);

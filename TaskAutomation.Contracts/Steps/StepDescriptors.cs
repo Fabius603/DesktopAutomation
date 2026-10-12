@@ -226,7 +226,10 @@ public sealed record StepFieldDescriptor(
     StepWindowsCapabilityPickerOptions? WindowsCapabilityPickerOptions = null,
     StepScreenPointPickerOptions? ScreenPointPickerOptions = null,
     bool? AllowsDirectValue = null,
-    string? MonitorDeviceNameFieldId = null);
+    string? MonitorDeviceNameFieldId = null,
+    string? InputSchemaId = null,
+    bool OwnsStructuredInputContract = false,
+    TaskAutomation.Jobs.ResultValueKind? InputValueKind = null);
 
 public sealed record StepEditorSectionDescriptor(
     string Id,

@@ -7,7 +7,7 @@ Abbildung: [Notepad als Beispielprogramm: ausführbare Datei und Startoptionen i
 
 1. Programmpfad: Pfad zur ausführbaren Datei. Beim Start muss er zu einem startbaren Programm führen; bei einer Suche grenzt er die Programminstanz ein.
 2. Auf Beendigung warten: Mit Häkchen wartet der Job auf das Ende des gestarteten Programms. Ohne Häkchen folgt der nächste Step nach dem Start; für einen geöffneten Editor ist das meist die passende Wahl.
-3. Argumente: Zusätzliche Startargumente des Programms, etwa der Pfad zu einer Textdatei für den Editor. Pfade mit Leerzeichen in Anführungszeichen setzen. Leer lassen, wenn keine Argumente nötig sind.
+3. Argumente: Zusätzliche Startargumente des Programms, etwa der Pfad zu einer Textdatei für den Editor. Pfade mit Leerzeichen in Anführungszeichen setzen. Leer lassen, wenn keine Argumente nötig sind. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 4. Arbeitsverzeichnis: Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms können davon abhängen.
 5. Monitor: Nullbasierter Monitor für Programmfenster oder Anzeige. Er bezieht sich auf die aktuelle Bildschirmkonfiguration.
 6. Fenstermodus: Fensterdarstellung: Voreinstellung des Programms, Normal oder Maximiert, soweit der jeweilige Step diese Option unterstützt.
@@ -36,7 +36,7 @@ Beendet die gewählte Programminstanz beziehungsweise die unterstützte Zielsuch
 
 ### field.arguments
 
-Zusätzliche Startargumente des Programms, etwa der Pfad zu einer Textdatei für den Editor. Pfade mit Leerzeichen in Anführungszeichen setzen. Leer lassen, wenn keine Argumente nötig sind.
+Zusätzliche Startargumente des Programms, etwa der Pfad zu einer Textdatei für den Editor. Pfade mit Leerzeichen in Anführungszeichen setzen. Leer lassen, wenn keine Argumente nötig sind. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.executable_path
 
@@ -68,7 +68,7 @@ Verwendet die angegebenen Positionsversätze.
 
 ### field.process_target
 
-Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang.
+Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang. Ab dem kommenden Update 1.6.2 lassen sich vorhandene gemeinsame Prozessvariablen als gesamte Prozessreferenz auswählen; die Erstellung neuer Variablen bleibt auf direkt editierbare Typen begrenzt.
 
 ### field.wait_for_exit
 
@@ -104,27 +104,27 @@ Starte ein Programm über seinen ausführbaren Pfad. Argumente und Arbeitsverzei
 
 ### result.process
 
-Konkrete Prozessreferenz mit Identität und optionalen Programmdaten. Bei keinem Treffer kann sie fehlen; nicht nur process_name als Instanzidentität verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.
 
 ### result.process.executable_path
 
-Ermittelter Pfad des Programms. Bei fehlenden Rechten oder fehlender Information kann ein optionaler Wert leer sein. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten. Beispiel: C:\Data\example.png.
 
 ### result.process.process_id
 
-Windows-Prozess-ID. PIDs können später wiederverwendet werden; die Prozessreferenz ergänzt daher gegebenenfalls Startzeit und weitere Merkmale. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen. Beispiel: 3.
 
 ### result.process.process_name
 
-Vom System ermittelter Prozessname, nicht notwendigerweise der sichtbare Fenstertitel. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.
 
 ### result.process.start_time_utc
 
-UTC-Startzeit der Prozessinstanz zur Unterscheidung wiederverwendeter PIDs. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.process.window_handle
 
-Native Fensterkennung der Programminstanz. Sie gilt im laufenden System und ist kein stabiler Dateipfad oder dauerhafter Job-Bezeichner. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist. Beispiel: 3.
 
 ### schema.id
 
@@ -152,11 +152,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -324,6 +324,8 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
     {
       "id": "action",
       "name": "Aktion",
+      "helpKey": "Ui.Step.Settings.Action.Help",
+      "help": "Legt fest, welche der angebotenen Aktionen dieser Step ausführt.",
       "descriptor": {
         "Id": "action",
         "LabelKey": "Ui.Step.Settings.Action",
@@ -368,12 +370,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "process_target",
       "name": "Prozessreferenz",
+      "helpKey": "Ui.Step.Settings.ProcessSource.Help",
+      "help": "Suchmerkmale oder Referenz auf eine konkrete Programminstanz. Eine Prozessreferenz identifiziert die gewählte Instanz.",
       "descriptor": {
         "Id": "process_target",
         "LabelKey": "Ui.Step.Settings.ProcessSource",
@@ -402,12 +409,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": "desktopautomation.process-target/v1",
+        "OwnsStructuredInputContract": true,
+        "InputValueKind": null
       }
     },
     {
       "id": "executable_path",
       "name": "Programmpfad",
+      "helpKey": "Ui.Step.Settings.PathProgram.Help",
+      "help": "Pfad zur ausführbaren Programmdatei.",
       "descriptor": {
         "Id": "executable_path",
         "LabelKey": "Ui.Step.Settings.PathProgram",
@@ -436,12 +448,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "wait_for_exit",
       "name": "Auf Beendigung warten",
+      "helpKey": "Ui.Step.Settings.WaitForCompletion.Help",
+      "help": "Wartet auf das Ende der gestarteten Ausführung, bevor der Job mit dem nächsten Step fortfährt.",
       "descriptor": {
         "Id": "wait_for_exit",
         "LabelKey": "Ui.Step.Settings.WaitForCompletion",
@@ -466,12 +483,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "arguments",
       "name": "Argumente",
+      "helpKey": "Ui.Step.Settings.Arguments.Help",
+      "help": "Zusätzliche Startargumente für das Programm. Die erwartete Schreibweise richtet sich nach dem Programm.",
       "descriptor": {
         "Id": "arguments",
         "LabelKey": "Ui.Step.Settings.Arguments",
@@ -496,12 +518,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "working_directory",
       "name": "Arbeitsverzeichnis",
+      "helpKey": "Ui.Step.Settings.WorkingDirectory.Help",
+      "help": "Arbeitsordner des gestarteten Programms. Relative Dateipfade des Programms können sich darauf beziehen.",
       "descriptor": {
         "Id": "working_directory",
         "LabelKey": "Ui.Step.Settings.WorkingDirectory",
@@ -526,12 +553,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "monitor_index",
       "name": "Monitor",
+      "helpKey": "Ui.Step.Settings.Monitor.Help",
+      "help": "Monitor für die Position, Aufnahme oder Einblendung.",
       "descriptor": {
         "Id": "monitor_index",
         "LabelKey": "Ui.Step.Settings.Monitor",
@@ -562,12 +594,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "window_mode",
       "name": "Fenstermodus",
+      "helpKey": "Ui.Step.Settings.WindowMode.Help",
+      "help": "Anzeigemodus des gestarteten Programmfensters, beispielsweise normal, minimiert oder maximiert.",
       "descriptor": {
         "Id": "window_mode",
         "LabelKey": "Ui.Step.Settings.WindowMode",
@@ -618,12 +655,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "placement_mode",
       "name": "Position",
+      "helpKey": "Ui.Step.Settings.Position.Help",
+      "help": "Position auf dem gewählten Monitor. X ist die horizontale, Y die vertikale Koordinate in Pixeln.",
       "descriptor": {
         "Id": "placement_mode",
         "LabelKey": "Ui.Step.Settings.Position",
@@ -668,12 +710,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_x",
       "name": "Versatz X (px)",
+      "helpKey": "Ui.Step.Settings.XOffsetPixels.Help",
+      "help": "Horizontaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_x",
         "LabelKey": "Ui.Step.Settings.XOffsetPixels",
@@ -702,12 +749,17 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_y",
       "name": "Versatz Y (px)",
+      "helpKey": "Ui.Step.Settings.YOffsetPixels.Help",
+      "help": "Vertikaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_y",
         "LabelKey": "Ui.Step.Settings.YOffsetPixels",
@@ -736,7 +788,10 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -1041,9 +1096,9 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
     "Properties": [
       {
         "Name": "Process",
-        "DisplayName": "Process",
+        "DisplayName": "Ermittelter Prozess",
         "DataType": "ProcessReference",
-        "Description": "ProcessReference, kann leer sein",
+        "Description": "Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -1051,41 +1106,44 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "EnumValues": null,
         "Id": "process",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process"
       },
       {
         "Name": "Process.ProcessId",
-        "DisplayName": "Process / Process Id",
+        "DisplayName": "Prozess / Prozess-ID",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.process_id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.process_id"
       },
       {
         "Name": "Process.StartTimeUtc",
-        "DisplayName": "Process / Start Time Utc",
+        "DisplayName": "Prozess / Startzeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.start_time_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.start_time_utc"
       },
       {
         "Name": "Process.ProcessName",
-        "DisplayName": "Process / Process Name",
+        "DisplayName": "Prozess / Prozessname",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -1093,46 +1151,49 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
         "EnumValues": null,
         "Id": "process.process_name",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.process_name"
       },
       {
         "Name": "Process.ExecutablePath",
-        "DisplayName": "Process / Executable Path",
+        "DisplayName": "Prozess / Programmpfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.executable_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.executable_path"
       },
       {
         "Name": "Process.WindowHandle",
-        "DisplayName": "Process / Window Handle",
+        "DisplayName": "Prozess / Fensterkennung",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "process.window_handle",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "process.window_handle"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Process",
-        "DisplayName": "Process",
+        "DisplayName": "Ermittelter Prozess",
         "Property": {
           "Name": "Process",
-          "DisplayName": "Process",
+          "DisplayName": "Ermittelter Prozess",
           "DataType": "ProcessReference",
-          "Description": "ProcessReference, kann leer sein",
+          "Description": "Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -1140,55 +1201,58 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
           "EnumValues": null,
           "Id": "process",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "process"
         },
         "Children": [
           {
             "Segment": "ProcessId",
-            "DisplayName": "Process Id",
+            "DisplayName": "Prozess-ID",
             "Property": {
               "Name": "Process.ProcessId",
-              "DisplayName": "Process / Process Id",
+              "DisplayName": "Prozess / Prozess-ID",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.process_id",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.process_id"
             },
             "Children": []
           },
           {
             "Segment": "StartTimeUtc",
-            "DisplayName": "Start Time Utc",
+            "DisplayName": "Startzeit (UTC)",
             "Property": {
               "Name": "Process.StartTimeUtc",
-              "DisplayName": "Process / Start Time Utc",
+              "DisplayName": "Prozess / Startzeit (UTC)",
               "DataType": "DateTime",
-              "Description": "DateTime",
+              "Description": "UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "2030-01-01T08:00:00Z",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.start_time_utc",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.start_time_utc"
             },
             "Children": []
           },
           {
             "Segment": "ProcessName",
-            "DisplayName": "Process Name",
+            "DisplayName": "Prozessname",
             "Property": {
               "Name": "Process.ProcessName",
-              "DisplayName": "Process / Process Name",
+              "DisplayName": "Prozess / Prozessname",
               "DataType": "Text",
-              "Description": "Text, kann leer sein",
+              "Description": "Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.",
               "IsNullable": true,
               "Example": null,
               "Cardinality": "OptionalSingle",
@@ -1196,44 +1260,47 @@ Arbeitsverzeichnis des gestarteten Programms. Relative Pfade des Programms könn
               "EnumValues": null,
               "Id": "process.process_name",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.process_name"
             },
             "Children": []
           },
           {
             "Segment": "ExecutablePath",
-            "DisplayName": "Executable Path",
+            "DisplayName": "Programmpfad",
             "Property": {
               "Name": "Process.ExecutablePath",
-              "DisplayName": "Process / Executable Path",
+              "DisplayName": "Prozess / Programmpfad",
               "DataType": "Text",
-              "Description": "Text, kann leer sein",
+              "Description": "Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten.",
               "IsNullable": true,
-              "Example": null,
+              "Example": "C:\\Data\\example.png",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.executable_path",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.executable_path"
             },
             "Children": []
           },
           {
             "Segment": "WindowHandle",
-            "DisplayName": "Window Handle",
+            "DisplayName": "Fensterkennung",
             "Property": {
               "Name": "Process.WindowHandle",
-              "DisplayName": "Process / Window Handle",
+              "DisplayName": "Prozess / Fensterkennung",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "process.window_handle",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "process.window_handle"
             },
             "Children": []

@@ -37,7 +37,7 @@ public sealed class StepAuthoringRegressionTests
         Assert.True(source.InputReferenceEditor!.Picker.CanUseJobVariables);
         Assert.True(source.InputReferenceEditor.Picker.CanUseStepResults);
         Assert.True(BuiltInStepDefinitions.Instance.TryGetByName(stepType, out var definition));
-        var contract = StepInputContractRegistry.Get(definition.StepType, "points")!;
+        var contract = InputContractRegistry.Find(definition.StepType, "points")!;
         Assert.False(contract.AllowsProvider(ValueProviderIds.LocalValue));
         Assert.Contains(ValueProviderIds.LocalValue, contract.LegacyAllowedProviderIds);
         var step = definition.CreateDefault();

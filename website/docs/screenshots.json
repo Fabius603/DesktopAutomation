@@ -3,6 +3,8 @@
   "theme": "Light.Blue",
   "culture": "de-DE",
   "commonSources": [
+    "DesktopAutomationApp/Behaviors/HoverHelp.cs",
+    "DesktopAutomationApp/Localization/StepInputHelp.cs",
     "website/tools/Renderer/Program.cs",
     "website/tools/Renderer/ScreenshotCapture.cs",
     "DesktopAutomationApp/MainWindow.xaml",
@@ -67,7 +69,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         293,
@@ -107,7 +114,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         293,
@@ -147,7 +159,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         293,
@@ -314,7 +331,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -323,16 +345,16 @@
         1400
       ],
       "markLabels": [
-        "Überschrift (optional)",
-        "Titel (optional)",
+        "Dialogtitel (optional)",
+        "Frage (optional)",
         "Beschreibung (optional)",
         "Monitor",
         "Antwortmöglichkeiten (2 bis 18, verpflichtend)"
       ],
       "markNotes": {
-        "Überschrift (optional)": "Sichtbare Überschrift der Auswahl beziehungsweise Gruppentitel.",
-        "Titel (optional)": "Fragetext der Benutzerauswahl.",
-        "Beschreibung (optional)": "Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl..",
+        "Dialogtitel (optional)": "Titel des Auswahlfensters; unabhängig vom Fragetext.",
+        "Frage (optional)": "Fragetext der Benutzerauswahl.",
+        "Beschreibung (optional)": "Zusätzliche Beschreibung für Menschen; sie ist kein auszuführender Befehl.",
         "Monitor": "Nullbasierter Zielmonitor der Desktop-Anzeige oder Benutzerauswahl.",
         "Antwortmöglichkeiten (2 bis 18, verpflichtend)": "Antwortliste mit zwei bis achtzehn Einträgen."
       },
@@ -356,7 +378,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -390,7 +417,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -440,7 +472,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -494,7 +531,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -529,7 +571,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -579,7 +626,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -785,7 +837,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -822,7 +879,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -857,7 +919,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -892,7 +959,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -943,7 +1015,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -978,7 +1055,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1023,7 +1105,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1066,7 +1153,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1100,7 +1192,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1135,7 +1232,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         293,
@@ -1171,7 +1273,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1206,7 +1313,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1245,7 +1357,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1284,7 +1401,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1321,7 +1443,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1364,7 +1491,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1409,7 +1541,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1455,7 +1592,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1496,7 +1638,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1551,7 +1698,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1601,7 +1753,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1642,7 +1799,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1681,7 +1843,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1720,7 +1887,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1755,7 +1927,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1800,7 +1977,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1835,7 +2017,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1870,7 +2057,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1904,7 +2096,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1945,7 +2142,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -1980,7 +2182,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -2015,7 +2222,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -2713,7 +2925,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -2763,7 +2980,12 @@
         "TaskAutomation/Steps/Definitions/*.cs",
         "website/tools/Exporter/Examples.cs",
         "tests/DesktopAutomation.UiTests/DesktopAutomationApp/JobStepsViewModelExecutionTests.cs",
-        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs"
+        "tests/TestInfrastructure/TestDoubles/ControllableJobExecutor.cs",
+        "TaskAutomation/Steps/InputContract*.cs",
+        "TaskAutomation/Steps/InputCompatibilityEvaluator.cs",
+        "TaskAutomation/Steps/InputContractRegistry.cs",
+        "TaskAutomation/Jobs/ValueBindingTree.cs",
+        "TaskAutomation.Contracts/Steps/*.cs"
       ],
       "crop": [
         1155,
@@ -2794,6 +3016,41 @@
         "Wartezeit zwischen Versuchen (ms)": "Pause zwischen Wiederholungsversuchen in Millisekunden."
       },
       "fieldDetails": true
+    },
+    {
+      "id": "step-ergebnisse",
+      "file": "step-ergebnisse.png",
+      "width": 1600,
+      "height": 1100,
+      "title": "Ergebniswerte verstehen",
+      "caption": "Der Tab Ausgaben zeigt Namen und Typen der OCR-Ergebnisse. Bedeutung, Einheiten und Beispiele erscheinen beim Hover über eine Ergebniszeile. Unterwerte und die Diagnosegruppe lassen sich aufklappen.",
+      "pages": [
+        "/doku/werte-verbinden/",
+        "/doku/steps/ocr/"
+      ],
+      "sources": [
+        "DesktopAutomationApp/Views/JobsView/JobStepsView.xaml",
+        "DesktopAutomationApp/Services/Jobs/JobStepDetailsProvider.cs",
+        "DesktopAutomationApp/Localization/StepLocalization.cs",
+        "TaskAutomation/Steps/StepResultMetadata.cs",
+        "TaskAutomation.Contracts/Steps/ResultProperty*.cs"
+      ],
+      "crop": [
+        1155,
+        160,
+        420,
+        500
+      ],
+      "markLabels": [
+        "Text gefunden",
+        "Erkannter Text",
+        "Durchschnittliche Erkennungsqualität"
+      ],
+      "markNotes": {
+        "Text gefunden": "Trefferstatus für Textbedingungen.",
+        "Erkannter Text": "Gesamttext für Anzeige oder Vergleich.",
+        "Durchschnittliche Erkennungsqualität": "Erkennungsqualität von 0 bis 1."
+      }
     }
   ]
 }

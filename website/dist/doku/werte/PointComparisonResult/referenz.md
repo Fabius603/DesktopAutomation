@@ -17,15 +17,15 @@ Typisierter Ergebnisvertrag PointComparisonResult. Wird von Punkte vergleichen g
 
 ### result.match_count
 
-Anzahl passender Prozesse oder Merkmalszuordnungen im konkreten Ergebnis; der Ergebnis-Typ bestimmt, was gezählt wird. Einzelwert dieses Ergebnisses.
+Anzahl der Punkte, die den konfigurierten Vergleich erfüllen. Beispiel: 3.
 
 ### result.matches
 
-Einzelne OCR-/Punktvergleichstreffer mit ihren Detailwerten. Der Ergebnis-Typ bestimmt die Elementstruktur. Einzelwert dieses Ergebnisses.
+Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist. Beispiel: true.
 
 ### result.total_count
 
-Gesamtzahl der im konkreten Abfrageergebnis gelieferten Einträge. Einzelwert dieses Ergebnisses.
+Gesamtanzahl der in diesem Vergleich geprüften Punkte. Beispiel: 3.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -38,101 +38,107 @@ Gesamtzahl der im konkreten Abfrageergebnis gelieferten Einträge. Einzelwert di
     "Properties": [
       {
         "Name": "Matches",
-        "DisplayName": "Matches",
+        "DisplayName": "Punktvergleich erfüllt",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "matches",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "matches"
       },
       {
         "Name": "MatchCount",
-        "DisplayName": "Match Count",
+        "DisplayName": "Anzahl passender Punkte",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der Punkte, die den konfigurierten Vergleich erfüllen.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "match_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "match_count"
       },
       {
         "Name": "TotalCount",
-        "DisplayName": "Total Count",
+        "DisplayName": "Anzahl geprüfter Punkte",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Gesamtanzahl der in diesem Vergleich geprüften Punkte.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "total_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "total_count"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Matches",
-        "DisplayName": "Matches",
+        "DisplayName": "Punktvergleich erfüllt",
         "Property": {
           "Name": "Matches",
-          "DisplayName": "Matches",
+          "DisplayName": "Punktvergleich erfüllt",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "matches",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "matches"
         },
         "Children": []
       },
       {
         "Segment": "MatchCount",
-        "DisplayName": "Match Count",
+        "DisplayName": "Anzahl passender Punkte",
         "Property": {
           "Name": "MatchCount",
-          "DisplayName": "Match Count",
+          "DisplayName": "Anzahl passender Punkte",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der Punkte, die den konfigurierten Vergleich erfüllen.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "match_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "match_count"
         },
         "Children": []
       },
       {
         "Segment": "TotalCount",
-        "DisplayName": "Total Count",
+        "DisplayName": "Anzahl geprüfter Punkte",
         "Property": {
           "Name": "TotalCount",
-          "DisplayName": "Total Count",
+          "DisplayName": "Anzahl geprüfter Punkte",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Gesamtanzahl der in diesem Vergleich geprüften Punkte.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "total_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "total_count"
         },
         "Children": []

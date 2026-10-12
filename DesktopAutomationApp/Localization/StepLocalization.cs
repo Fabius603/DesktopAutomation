@@ -7,6 +7,14 @@ namespace DesktopAutomationApp.Localization;
 
 public static class StepLocalization
 {
+    public static string Description(TaskAutomation.Contracts.Steps.StepDescriptor descriptor)
+    {
+        var description = Loc.Get(descriptor.DescriptionKey);
+        if (string.IsNullOrWhiteSpace(descriptor.Presentation.EditorDescriptionKey)) return description;
+        var editorDescription = Loc.Get(descriptor.Presentation.EditorDescriptionKey);
+        return editorDescription == description ? description : $"{description}\n{editorDescription}";
+    }
+
     public static string Type(Type type) => Type(type.Name);
 
     public static string Type(string typeName)
@@ -23,45 +31,27 @@ public static class StepLocalization
     public static string PropertyPath(string propertyPath)
         => PropertyPath(null, propertyPath);
 
+    public static string ResultPath(string sourceName, string propertyName) =>
+        $"{sourceName} \u2192 {propertyName}";
+
     public static string PropertyPath(string? resultTypeName, string propertyPath)
+        => ResultPropertyLocalization.Name(resultTypeName, propertyPath, LookupResultText);
+
+    private static string? LookupResultText(string key)
     {
-        if (!string.IsNullOrWhiteSpace(resultTypeName))
-        {
-            var typeSpecificKey = $"Step.ResultProperty.{resultTypeName}.{propertyPath}";
-            var typeSpecific = LocalizationService.Instance[typeSpecificKey];
-            if (typeSpecific != $"[{typeSpecificKey}]") return typeSpecific;
-        }
-
-        var fullPathKey = $"Step.ResultProperty.{propertyPath}";
-        var fullPath = LocalizationService.Instance[fullPathKey];
-        if (fullPath != $"[{fullPathKey}]") return fullPath;
-
-        return string.Join(" / ", propertyPath.Split('.').Select(segment =>
-        {
-            var cleanSegment = segment.Replace("[]", string.Empty, StringComparison.Ordinal);
-            var segmentKey = $"Ui.Job.Steps.ResultProperty.{cleanSegment}";
-            var translated = LocalizationService.Instance[segmentKey];
-            return translated == $"[{segmentKey}]"
-                ? System.Text.RegularExpressions.Regex.Replace(cleanSegment, "(?<=[a-z0-9])([A-Z])", " $1")
-                : translated;
-        }));
+        var text = LocalizationService.Instance[key];
+        return text == $"[{key}]" ? null : text;
     }
 
     public static string PropertyDescription(string resultTypeName, ResultPropertyDescriptor property)
-    {
-        var key = $"Step.ResultPropertyDescription.{resultTypeName}.{property.Name}";
-        var localized = LocalizationService.Instance[key];
-        if (localized != $"[{key}]") return localized;
+        => ResultPropertyLocalization.Description(resultTypeName, property, LookupResultText);
 
-        if (typeof(WindowsStateQueryResult).IsAssignableFrom(
-                typeof(WindowsStateQueryResult).Assembly.GetType($"TaskAutomation.Steps.{resultTypeName}")))
-        {
-            var commonKey = $"Step.ResultPropertyDescription.WindowsStateQueryResult.{property.Name}";
-            var common = LocalizationService.Instance[commonKey];
-            if (common != $"[{commonKey}]") return common;
-        }
-        return property.Description ?? string.Empty;
-    }
+    public static string PropertyGroupDescription(string resultTypeName, string path) =>
+        ResultPropertyLocalization.Description(resultTypeName, path, LookupResultText) ?? string.Empty;
+
+    public static string? PropertyHelp(ResultPropertyDescriptor? localizedProperty) => localizedProperty is null ? null
+        : string.IsNullOrWhiteSpace(localizedProperty.Example) ? localizedProperty.Description
+        : $"{localizedProperty.Description}\n{Loc.Format("Ui.ValueReference.ResultExample", localizedProperty.Example)}";
 
     public static string ResultValueType(ResultPropertyDescriptor property)
         => ResultValueType(property.DataType, property.Cardinality);
@@ -99,9 +89,11 @@ public static class StepLocalization
             descriptor.TypeName,
             descriptor.DisplayName,
             descriptor.Properties
-                .Select(p => new ResultPropertyDescriptor(p.Name, PropertyPath(descriptor.TypeName, p.Name), p.DataType,
-                    PropertyDescription(descriptor.TypeName, p), p.IsNullable, p.Example, p.Cardinality, p.EnumTypeName,
-                    p.EnumValues, p.StableId, p.EnumDisplayNames))
+                .Select(p => p with
+                {
+                    DisplayName = PropertyPath(descriptor.TypeName, p.Name),
+                    Description = PropertyDescription(descriptor.TypeName, p)
+                })
                 .ToArray());
 
     public static string NumberedName(Type type, int oneBasedIndex) =>

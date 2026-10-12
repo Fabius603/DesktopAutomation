@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -24,9 +24,9 @@ namespace ImageCapture.Video
 
         public VideoImageCreator()
         {
-            frameFolder = Path.Combine(Path.GetTempPath(), "ffmpeg_frames");
+            frameFolder = Path.Combine(Path.GetTempPath(), "ffmpeg_frames-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(frameFolder);
-            ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
+            ffmpegInitTask = FFmpegRuntime.EnsureAvailableAsync();
         }
 
         public void AddFrame(Bitmap image)
@@ -90,7 +90,7 @@ namespace ImageCapture.Video
                 selectedFiles.Add(copiedFrames[currentIndex].FilePath);
             }
 
-            FFmpeg.SetExecutablesPath(Path.Combine(AppContext.BaseDirectory));
+            FFmpeg.SetExecutablesPath(FFmpegRuntime.DirectoryPath);
 
             // Umkopieren mit sequentieller Benennung für FFmpeg
             for (int i = 0; i < selectedFiles.Count; i++)

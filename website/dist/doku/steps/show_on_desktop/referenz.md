@@ -5,7 +5,7 @@ Website: /doku/steps/show_on_desktop/
 
 Abbildung: [Detailansicht: Auf Desktop anzeigen. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-show-on-desktop.detail.png)
 
-1. Einblendungen: Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Die zugrunde liegenden Ergebnisse müssen vorher erzeugt worden sein.
+1. Einblendungen: Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Ab dem kommenden Update 1.6.2 können Textzeilen direkt eingegebene lokale Werte, gemeinsame Job-Werte oder vorherige Step-Ergebnisse anzeigen. Ergebnisquellen müssen vorher erzeugt worden sein. Ab dem kommenden Update 1.6.2 sind die direkt erzeugten Standardwerte für Schriftgröße und Deckkraft gültig; passende optionale Einzelwerte lassen sich für die Einstellungen auswählen.
 ### errors
 
 Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
@@ -16,7 +16,7 @@ all_detections einer Erkennung als Rechtecke einblenden und text einer OCR-Quell
 
 ### field.overlay
 
-Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Die zugrunde liegenden Ergebnisse müssen vorher erzeugt worden sein.
+Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Ab dem kommenden Update 1.6.2 können Textzeilen direkt eingegebene lokale Werte, gemeinsame Job-Werte oder vorherige Step-Ergebnisse anzeigen. Ergebnisquellen müssen vorher erzeugt worden sein. Ab dem kommenden Update 1.6.2 sind die direkt erzeugten Standardwerte für Schriftgröße und Deckkraft gültig; passende optionale Einzelwerte lassen sich für die Einstellungen auswählen.
 
 ### input.detections
 
@@ -24,7 +24,7 @@ Einblendungsquellen mit Geometrie. Eine gültige, aber noch nicht verfügbare op
 
 ### input.text
 
-Text beziehungsweise darstellbarer Wert. Eine gültige, aber noch nicht verfügbare optionale Step-Quelle kann den Verbraucher mit NoInput überspringen; malformed Referenzen bleiben Fehler. Alle kompatiblen Listeneinträge werden verarbeitet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.
+Text beziehungsweise darstellbarer Wert. Ab dem kommenden Update 1.6.2 sind lokale Werte (local_value), gemeinsame Job-Werte (job_variable) und vorherige Step-Ergebnisse (step_result) erlaubt. Typ und Kardinalität müssen passen. Eine gültige, noch nicht verfügbare optionale Step-Quelle kann zum Überspringen führen; ungültige Referenzen bleiben Fehler. Ab dem kommenden Update 1.6.2 werden alle darstellbaren Werttypen einschließlich strukturierter Objekte und Listen akzeptiert. Listen erscheinen zeilenweise vollständig, Objekte als JSON und Zahlen im aktuellen Zahlenformat. Bilddaten sind ausgeschlossen.
 
 ### purpose
 
@@ -56,11 +56,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -184,7 +184,7 @@ Anzeigedauer in Millisekunden. Beachte die vom Editor angebotenen Grenzen und di
 
 ### schema.settings.overlay.text_results.font_color
 
-Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund.
+Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund. Ab dem kommenden Update 1.6.2 bleiben vorhandene Text-Farbreferenzen mit gültigem Farbtoken auch in verschachtelten Einblendungen zulässig. Neue Farbquellen verwenden Color.
 
 ### schema.settings.overlay.text_results.font_size
 
@@ -208,7 +208,7 @@ Deckkraft als Anteil von 0 bis 1, auch im referenzierten localValues-Wert. 1 bed
 
 ### schema.settings.overlay.text_results.result
 
-Typisierte Ergebnisreferenz für den betreffenden Wert; Quelle und Ergebnis-ID auswählen und die Ausführungsreihenfolge beachten.
+Typisierte Bindung der Textzeile. Ab dem kommenden Update 1.6.2 kann provider_id=local_value mit source_id=<GUID aus localValues> einen direkt eingegebenen Text referenzieren. Alternativ job_variable oder step_result verwenden. Bei Step-Ergebnissen die Ausführungsreihenfolge beachten.
 
 ### schema.settings.overlay.text_results.result.items
 
@@ -260,6 +260,8 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
     {
       "id": "overlay",
       "name": "Einblendungen",
+      "helpKey": "Ui.Step.Settings.Overlays.Help",
+      "help": "Einblendungen für Erkennungsergebnisse oder Text. Jede Einblendung besitzt eigene Darstellungswerte.",
       "descriptor": {
         "Id": "overlay",
         "LabelKey": "Ui.Step.Settings.Overlays",
@@ -291,7 +293,10 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": "desktopautomation.visual-overlay/v1",
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -723,56 +728,40 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
           "ValueKind": "Text",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "Boolean",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "Integer",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "Number",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "DateTime",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
-          ]
-        },
-        {
-          "ValueKind": "Color",
-          "Cardinalities": [
-            "Single",
-            "OptionalSingle"
-          ]
-        },
-        {
-          "ValueKind": "FilePath",
-          "Cardinalities": [
-            "Single",
-            "OptionalSingle"
-          ]
-        },
-        {
-          "ValueKind": "Enum",
-          "Cardinalities": [
-            "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
@@ -806,6 +795,54 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
             "OptionalSingle",
             "Collection"
           ]
+        },
+        {
+          "ValueKind": "ResultObject",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "Enum",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "JobReference",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "MacroReference",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "Color",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "FilePath",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
         }
       ],
       "AllowedProviderIds": [
@@ -815,7 +852,7 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
       "LegacyAllowedProviderIds": [
         "secret"
       ],
-      "AllowsDirectValue": false,
+      "AllowsDirectValue": true,
       "LegacyAcceptedShapes": []
     }
   ],

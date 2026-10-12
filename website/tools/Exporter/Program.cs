@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -19,6 +20,10 @@ options.Converters.Add(new JsonStringEnumConverter());
 var strings = XDocument.Load(Path.Combine(root, "DesktopAutomationApp/Resources/Strings.resx"))
     .Descendants("data").ToDictionary(x => (string)x.Attribute("name")!, x => (string?)x.Element("value") ?? "");
 string Label(string key) => strings.GetValueOrDefault(key, key);
+ResultTypeDescriptor? LocalizedResult(ResultTypeDescriptor? result) => result is null ? null : new(
+    result.TypeName, result.DisplayName,
+    result.Properties.Select(p => ResultPropertyLocalization.Localize(result.TypeName, p,
+        key => strings.GetValueOrDefault(key))).ToArray());
 object Field(PropertyInfo p, object? instance, string path) => new
 {
     id = path + (p.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? p.Name),
@@ -65,7 +70,7 @@ ResultTypeDescriptor? ResultFor(IStepDefinition d)
     step.Id = "documentation-" + d.Descriptor.TypeId;
     if (step is UserChoiceStep choice)
         for (var i = 0; i < choice.Settings.Options.Count; i++) choice.Settings.Options[i].Id = "example-option-" + i;
-    return StepResultContractRegistry.Resolve(step);
+    return LocalizedResult(StepResultContractRegistry.Resolve(step));
 }
 var steps = BuiltInStepDefinitions.Instance.Definitions.OrderBy(d => d.Descriptor.TypeId).Select(d => new
 {
@@ -74,9 +79,11 @@ var steps = BuiltInStepDefinitions.Instance.Definitions.OrderBy(d => d.Descripto
     description = Label(d.Descriptor.DescriptionKey),
     category = d.Descriptor.CategoryId,
     uiFieldIds = d.Descriptor.Presentation.EditorSections.SelectMany(section => section.FieldIds).Distinct().ToArray(),
-    fields = d.Descriptor.Fields.Select(f => new { id = f.Id, name = Label(f.LabelKey), descriptor = f }),
+    fields = d.Descriptor.Fields.Select(f => new { id = f.Id, name = Label(f.LabelKey),
+        helpKey = f.DescriptionKey ?? f.LabelKey + ".Help",
+        help = Label(f.DescriptionKey ?? f.LabelKey + ".Help"), descriptor = f }),
     schema = Schema(d.StepType, d.CreateDefault()),
-    inputs = StepInputContractRegistry.Get(d.StepType),
+    inputs = InputContractRegistry.Roots(d.StepType).Select(InputContractExport.Root).ToArray(),
     result = ResultFor(d)
 }).ToArray();
 string DerivedName(Type type)
@@ -107,8 +114,9 @@ var metadata = new
         options = t.IsEnum ? Enum.GetNames(t) : [], fields = t.IsEnum ? [] : Schema(t) }),
     logCodes = typeof(LogCodes).GetFields(BindingFlags.Public | BindingFlags.Static).OrderBy(f => f.Name)
         .Select(f => new { id = f.GetRawConstantValue()?.ToString(), name = f.Name }),
-    resultTypes = StepResultMetadata.ResultTypes,
-    windowsCapabilities = new WindowsCapabilityCatalog().Capabilities.OrderBy(c => c.Id).Select(c => new { descriptor = c, result = WindowsQueryResultRegistry.GetContract(c.Id) }),
+    resultTypes = StepResultMetadata.ResultTypes.Select(LocalizedResult),
+    windowsCapabilities = new WindowsCapabilityCatalog().Capabilities.OrderBy(c => c.Id).Select(c => new { descriptor = c, result = LocalizedResult(WindowsQueryResultRegistry.GetContract(c.Id)) }),
+    retiredWindowsSettings = RetiredWindowsSettings.Ids,
     sources = SourceFiles(root).ToDictionary(p => Path.GetRelativePath(root, p).Replace('\\', '/'),
         p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))).ToLowerInvariant())
 };

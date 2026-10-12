@@ -52,83 +52,83 @@ Leite aus einem Erkennungstreffer den nächsten Suchbereich ab. Rand, Mindestkon
 
 ### result.consecutive_misses
 
-Anzahl aufeinanderfolgender nicht verwertbarer Treffer seit der letzten gültigen Aktualisierung. Einzelwert dieses Ergebnisses.
+Anzahl aufeinanderfolgender Suchen ohne passenden Treffer. Ein Treffer setzt den Zähler zurück. Beispiel: 3.
 
 ### result.full_search_interval
 
-Konfigurierter Abstand regelmäßiger Vollsuchen in Durchläufen; 0 bedeutet keine regelmäßige Vollsuche. Einzelwert dieses Ergebnisses.
+Konfiguriertes Intervall für die erneute vollständige Suche, angegeben in Durchläufen. Beispiel: 3.
 
 ### result.global_bounds
 
-Suchrechteck in globalen Desktopkoordinaten. Für bildlokale Verbraucher muss dessen Quelle/Versatz berücksichtigt werden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Aktueller dynamischer Bereich in globalen Pixelkoordinaten. Kann fehlen, wenn noch kein Bereich ermittelt wurde oder die vollständige Suche aktiv ist. Beispiel: {X=10,Y=20,Width=300,Height=200}.
 
 ### result.global_bounds.bottom
 
-Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.center
 
-Mittelpunkt einer einzelnen Erkennung in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.global_bounds.center.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.center.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.is_empty
 
-Ob die Zwischenablage im abgefragten Kontext leer ist. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Gibt an, ob der Bereich keine positive Breite oder Höhe hat. Beispiel: true.
 
 ### result.global_bounds.left
 
-Linke Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.location
 
-Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.global_bounds.location.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.location.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.right
 
-Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.top
 
-Obere Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.width
 
-Breite des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.global_bounds.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.roi_reset
 
-Ob der Suchbereich wegen der Rücksetzregel auf den Ausgangsbereich zurückgesetzt wurde. Einzelwert dieses Ergebnisses.
+Gibt an, ob der dynamische Suchbereich auf die vollständige Suche zurückgesetzt wurde. Beispiel: true.
 
 ### result.roi_updated
 
-Ob der dynamische Suchbereich in diesem Step neu aus einem verwertbaren Treffer aktualisiert wurde. Einzelwert dieses Ergebnisses.
+Gibt an, ob der dynamische Suchbereich anhand eines Treffers aktualisiert wurde. Beispiel: true.
 
 ### schema.id
 
@@ -156,11 +156,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -296,6 +296,8 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
     {
       "id": "bounds_source",
       "name": "Erkennungsergebnis",
+      "helpKey": "Ui.Step.DynamicRoi.Source.Help",
+      "help": "Erkennungsergebnis mit Position oder Bereich des gefundenen Ziels.",
       "descriptor": {
         "Id": "bounds_source",
         "LabelKey": "Ui.Step.DynamicRoi.Source",
@@ -320,12 +322,17 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "padding_source",
       "name": "Rand (px)",
+      "helpKey": "Ui.Step.DynamicRoi.Padding.Help",
+      "help": "Zusätzlicher Rand um den erkannten Bereich in Pixeln.",
       "descriptor": {
         "Id": "padding_source",
         "LabelKey": "Ui.Step.DynamicRoi.Padding",
@@ -350,12 +357,17 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": true,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "minimum_confidence",
       "name": "Mindestkonfidenz (%)",
+      "helpKey": "Ui.Step.DynamicRoi.MinimumConfidence.Help",
+      "help": "Mindestqualität der Erkennung, damit ihr Bereich für die nächste Suche verwendet wird.",
       "descriptor": {
         "Id": "minimum_confidence",
         "LabelKey": "Ui.Step.DynamicRoi.MinimumConfidence",
@@ -386,12 +398,17 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "full_search_interval",
       "name": "Durchläufe bis zur Vollbildsuche (0 = nie)",
+      "helpKey": "Ui.Step.DynamicRoi.FullSearchInterval.Help",
+      "help": "Anzahl der Durchläufe zwischen vollständigen Suchen. 0 deaktiviert die regelmäßige Vollbildsuche.",
       "descriptor": {
         "Id": "full_search_interval",
         "LabelKey": "Ui.Step.DynamicRoi.FullSearchInterval",
@@ -422,12 +439,17 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "reset_after_misses",
       "name": "Fehlversuche bis zum Zurücksetzen (0 = nie)",
+      "helpKey": "Ui.Step.DynamicRoi.ResetAfterMisses.Help",
+      "help": "Anzahl erfolgloser Erkennungen bis zur Rückkehr zur vollständigen Suche. 0 deaktiviert dieses Zurücksetzen.",
       "descriptor": {
         "Id": "reset_after_misses",
         "LabelKey": "Ui.Step.DynamicRoi.ResetAfterMisses",
@@ -458,7 +480,10 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -775,37 +800,39 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
     "Properties": [
       {
         "Name": "RoiUpdated",
-        "DisplayName": "Roi Updated",
+        "DisplayName": "Suchbereich aktualisiert",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der dynamische Suchbereich anhand eines Treffers aktualisiert wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "roi_updated",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "roi_updated"
       },
       {
         "Name": "RoiReset",
-        "DisplayName": "Roi Reset",
+        "DisplayName": "Suchbereich zurückgesetzt",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der dynamische Suchbereich auf die vollständige Suche zurückgesetzt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "roi_reset",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "roi_reset"
       },
       {
         "Name": "GlobalBounds",
-        "DisplayName": "Global Bounds",
+        "DisplayName": "Dynamischer Suchbereich",
         "DataType": "Rectangle",
-        "Description": "Rectangle, kann leer sein",
+        "Description": "Aktueller dynamischer Bereich in globalen Pixelkoordinaten. Kann fehlen, wenn noch kein Bereich ermittelt wurde oder die vollständige Suche aktiv ist.",
         "IsNullable": true,
         "Example": "{X=10,Y=20,Width=300,Height=200}",
         "Cardinality": "OptionalSingle",
@@ -813,294 +840,314 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
         "EnumValues": null,
         "Id": "global_bounds",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds"
       },
       {
         "Name": "GlobalBounds.X",
-        "DisplayName": "Global Bounds / X",
+        "DisplayName": "Dynamischer Suchbereich / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.x"
       },
       {
         "Name": "GlobalBounds.Y",
-        "DisplayName": "Global Bounds / Y",
+        "DisplayName": "Dynamischer Suchbereich / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.y"
       },
       {
         "Name": "GlobalBounds.Width",
-        "DisplayName": "Global Bounds / Width",
+        "DisplayName": "Dynamischer Suchbereich / Breite (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.width"
       },
       {
         "Name": "GlobalBounds.Height",
-        "DisplayName": "Global Bounds / Height",
+        "DisplayName": "Dynamischer Suchbereich / Höhe (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.height"
       },
       {
         "Name": "GlobalBounds.Left",
-        "DisplayName": "Global Bounds / Left",
+        "DisplayName": "Dynamischer Suchbereich / Linke Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.left",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.left"
       },
       {
         "Name": "GlobalBounds.Top",
-        "DisplayName": "Global Bounds / Top",
+        "DisplayName": "Dynamischer Suchbereich / Obere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.top",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.top"
       },
       {
         "Name": "GlobalBounds.Right",
-        "DisplayName": "Global Bounds / Right",
+        "DisplayName": "Dynamischer Suchbereich / Rechte Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.right",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.right"
       },
       {
         "Name": "GlobalBounds.Bottom",
-        "DisplayName": "Global Bounds / Bottom",
+        "DisplayName": "Dynamischer Suchbereich / Untere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.bottom",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.bottom"
       },
       {
         "Name": "GlobalBounds.IsEmpty",
-        "DisplayName": "Global Bounds / Is Empty",
+        "DisplayName": "Dynamischer Suchbereich / Bereich ist leer",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.is_empty",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.is_empty"
       },
       {
         "Name": "GlobalBounds.Location",
-        "DisplayName": "Global Bounds / Location",
+        "DisplayName": "Dynamischer Suchbereich / Linke obere Ecke",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.location",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.location"
       },
       {
         "Name": "GlobalBounds.Location.X",
-        "DisplayName": "Global Bounds / Location / X",
+        "DisplayName": "Dynamischer Suchbereich / Linke obere Ecke / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.location.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.location.x"
       },
       {
         "Name": "GlobalBounds.Location.Y",
-        "DisplayName": "Global Bounds / Location / Y",
+        "DisplayName": "Dynamischer Suchbereich / Linke obere Ecke / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.location.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.location.y"
       },
       {
         "Name": "GlobalBounds.Center",
-        "DisplayName": "Global Bounds / Center",
+        "DisplayName": "Dynamischer Suchbereich / Mittelpunkt",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.center",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.center"
       },
       {
         "Name": "GlobalBounds.Center.X",
-        "DisplayName": "Global Bounds / Center / X",
+        "DisplayName": "Dynamischer Suchbereich / Mittelpunkt / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.center.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.center.x"
       },
       {
         "Name": "GlobalBounds.Center.Y",
-        "DisplayName": "Global Bounds / Center / Y",
+        "DisplayName": "Dynamischer Suchbereich / Mittelpunkt / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "global_bounds.center.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "global_bounds.center.y"
       },
       {
         "Name": "ConsecutiveMisses",
-        "DisplayName": "Consecutive Misses",
+        "DisplayName": "Fehlende Treffer in Folge",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl aufeinanderfolgender Suchen ohne passenden Treffer. Ein Treffer setzt den Zähler zurück.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "consecutive_misses",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "consecutive_misses"
       },
       {
         "Name": "FullSearchInterval",
-        "DisplayName": "Full Search Interval",
+        "DisplayName": "Intervall der vollständigen Suche",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Konfiguriertes Intervall für die erneute vollständige Suche, angegeben in Durchläufen.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "full_search_interval",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "full_search_interval"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "RoiUpdated",
-        "DisplayName": "Roi Updated",
+        "DisplayName": "Suchbereich aktualisiert",
         "Property": {
           "Name": "RoiUpdated",
-          "DisplayName": "Roi Updated",
+          "DisplayName": "Suchbereich aktualisiert",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob der dynamische Suchbereich anhand eines Treffers aktualisiert wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "roi_updated",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "roi_updated"
         },
         "Children": []
       },
       {
         "Segment": "RoiReset",
-        "DisplayName": "Roi Reset",
+        "DisplayName": "Suchbereich zurückgesetzt",
         "Property": {
           "Name": "RoiReset",
-          "DisplayName": "Roi Reset",
+          "DisplayName": "Suchbereich zurückgesetzt",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob der dynamische Suchbereich auf die vollständige Suche zurückgesetzt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "roi_reset",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "roi_reset"
         },
         "Children": []
       },
       {
         "Segment": "GlobalBounds",
-        "DisplayName": "Global Bounds",
+        "DisplayName": "Dynamischer Suchbereich",
         "Property": {
           "Name": "GlobalBounds",
-          "DisplayName": "Global Bounds",
+          "DisplayName": "Dynamischer Suchbereich",
           "DataType": "Rectangle",
-          "Description": "Rectangle, kann leer sein",
+          "Description": "Aktueller dynamischer Bereich in globalen Pixelkoordinaten. Kann fehlen, wenn noch kein Bereich ermittelt wurde oder die vollständige Suche aktiv ist.",
           "IsNullable": true,
           "Example": "{X=10,Y=20,Width=300,Height=200}",
           "Cardinality": "OptionalSingle",
@@ -1108,232 +1155,245 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
           "EnumValues": null,
           "Id": "global_bounds",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "global_bounds"
         },
         "Children": [
           {
             "Segment": "X",
-            "DisplayName": "X",
+            "DisplayName": "X-Koordinate (px)",
             "Property": {
               "Name": "GlobalBounds.X",
-              "DisplayName": "Global Bounds / X",
+              "DisplayName": "Dynamischer Suchbereich / X-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.x",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.x"
             },
             "Children": []
           },
           {
             "Segment": "Y",
-            "DisplayName": "Y",
+            "DisplayName": "Y-Koordinate (px)",
             "Property": {
               "Name": "GlobalBounds.Y",
-              "DisplayName": "Global Bounds / Y",
+              "DisplayName": "Dynamischer Suchbereich / Y-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.y",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.y"
             },
             "Children": []
           },
           {
             "Segment": "Width",
-            "DisplayName": "Width",
+            "DisplayName": "Breite (px)",
             "Property": {
               "Name": "GlobalBounds.Width",
-              "DisplayName": "Global Bounds / Width",
+              "DisplayName": "Dynamischer Suchbereich / Breite (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.width",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.width"
             },
             "Children": []
           },
           {
             "Segment": "Height",
-            "DisplayName": "Height",
+            "DisplayName": "Höhe (px)",
             "Property": {
               "Name": "GlobalBounds.Height",
-              "DisplayName": "Global Bounds / Height",
+              "DisplayName": "Dynamischer Suchbereich / Höhe (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.height",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.height"
             },
             "Children": []
           },
           {
             "Segment": "Left",
-            "DisplayName": "Left",
+            "DisplayName": "Linke Kante (px)",
             "Property": {
               "Name": "GlobalBounds.Left",
-              "DisplayName": "Global Bounds / Left",
+              "DisplayName": "Dynamischer Suchbereich / Linke Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.left",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.left"
             },
             "Children": []
           },
           {
             "Segment": "Top",
-            "DisplayName": "Top",
+            "DisplayName": "Obere Kante (px)",
             "Property": {
               "Name": "GlobalBounds.Top",
-              "DisplayName": "Global Bounds / Top",
+              "DisplayName": "Dynamischer Suchbereich / Obere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.top",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.top"
             },
             "Children": []
           },
           {
             "Segment": "Right",
-            "DisplayName": "Right",
+            "DisplayName": "Rechte Kante (px)",
             "Property": {
               "Name": "GlobalBounds.Right",
-              "DisplayName": "Global Bounds / Right",
+              "DisplayName": "Dynamischer Suchbereich / Rechte Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.right",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.right"
             },
             "Children": []
           },
           {
             "Segment": "Bottom",
-            "DisplayName": "Bottom",
+            "DisplayName": "Untere Kante (px)",
             "Property": {
               "Name": "GlobalBounds.Bottom",
-              "DisplayName": "Global Bounds / Bottom",
+              "DisplayName": "Dynamischer Suchbereich / Untere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.bottom",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.bottom"
             },
             "Children": []
           },
           {
             "Segment": "IsEmpty",
-            "DisplayName": "Is Empty",
+            "DisplayName": "Bereich ist leer",
             "Property": {
               "Name": "GlobalBounds.IsEmpty",
-              "DisplayName": "Global Bounds / Is Empty",
+              "DisplayName": "Dynamischer Suchbereich / Bereich ist leer",
               "DataType": "Boolean",
-              "Description": "Boolean",
+              "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "true",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.is_empty",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.is_empty"
             },
             "Children": []
           },
           {
             "Segment": "Location",
-            "DisplayName": "Location",
+            "DisplayName": "Linke obere Ecke",
             "Property": {
               "Name": "GlobalBounds.Location",
-              "DisplayName": "Global Bounds / Location",
+              "DisplayName": "Dynamischer Suchbereich / Linke obere Ecke",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.location",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.location"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "GlobalBounds.Location.X",
-                  "DisplayName": "Global Bounds / Location / X",
+                  "DisplayName": "Dynamischer Suchbereich / Linke obere Ecke / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "global_bounds.location.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "global_bounds.location.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "GlobalBounds.Location.Y",
-                  "DisplayName": "Global Bounds / Location / Y",
+                  "DisplayName": "Dynamischer Suchbereich / Linke obere Ecke / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "global_bounds.location.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "global_bounds.location.y"
                 },
                 "Children": []
@@ -1342,56 +1402,59 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
           },
           {
             "Segment": "Center",
-            "DisplayName": "Center",
+            "DisplayName": "Mittelpunkt",
             "Property": {
               "Name": "GlobalBounds.Center",
-              "DisplayName": "Global Bounds / Center",
+              "DisplayName": "Dynamischer Suchbereich / Mittelpunkt",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "global_bounds.center",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "global_bounds.center"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "GlobalBounds.Center.X",
-                  "DisplayName": "Global Bounds / Center / X",
+                  "DisplayName": "Dynamischer Suchbereich / Mittelpunkt / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "global_bounds.center.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "global_bounds.center.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "GlobalBounds.Center.Y",
-                  "DisplayName": "Global Bounds / Center / Y",
+                  "DisplayName": "Dynamischer Suchbereich / Mittelpunkt / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "global_bounds.center.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "global_bounds.center.y"
                 },
                 "Children": []
@@ -1402,38 +1465,40 @@ Anzahl aufeinanderfolgender Fehlversuche bis zum Rücksetzen auf den Ausgangssuc
       },
       {
         "Segment": "ConsecutiveMisses",
-        "DisplayName": "Consecutive Misses",
+        "DisplayName": "Fehlende Treffer in Folge",
         "Property": {
           "Name": "ConsecutiveMisses",
-          "DisplayName": "Consecutive Misses",
+          "DisplayName": "Fehlende Treffer in Folge",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl aufeinanderfolgender Suchen ohne passenden Treffer. Ein Treffer setzt den Zähler zurück.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "consecutive_misses",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "consecutive_misses"
         },
         "Children": []
       },
       {
         "Segment": "FullSearchInterval",
-        "DisplayName": "Full Search Interval",
+        "DisplayName": "Intervall der vollständigen Suche",
         "Property": {
           "Name": "FullSearchInterval",
-          "DisplayName": "Full Search Interval",
+          "DisplayName": "Intervall der vollständigen Suche",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Konfiguriertes Intervall für die erneute vollständige Suche, angegeben in Durchläufen.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "full_search_interval",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "full_search_interval"
         },
         "Children": []

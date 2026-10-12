@@ -5,7 +5,7 @@ Website: /doku/steps/terminate_process/
 
 Abbildung: [Detailansicht: Prozess beenden. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-terminate-process.detail.png)
 
-1. Prozessreferenz: Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang.
+1. Prozessreferenz: Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang. Ab dem kommenden Update 1.6.2 lassen sich vorhandene gemeinsame Prozessvariablen als gesamte Prozessreferenz auswählen; die Erstellung neuer Variablen bleibt auf direkt editierbare Typen begrenzt.
 ### errors
 
 Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
@@ -16,7 +16,7 @@ Eine zuvor über get_process ermittelte Testprogramm-Instanz beenden; keine unge
 
 ### field.process_target
 
-Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang.
+Im Editor eine kompatible Prozessreferenz wählen. Suchkriterien einer älteren settings.target-Konfiguration sind kein Ersatz für eine beliebige Textquelle im typisierten Prozesseingang. Ab dem kommenden Update 1.6.2 lassen sich vorhandene gemeinsame Prozessvariablen als gesamte Prozessreferenz auswählen; die Erstellung neuer Variablen bleibt auf direkt editierbare Typen begrenzt.
 
 ### input.process
 
@@ -52,11 +52,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -148,6 +148,8 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
     {
       "id": "process_target",
       "name": "Prozessreferenz",
+      "helpKey": "Ui.Step.Settings.ProcessSource.Help",
+      "help": "Suchmerkmale oder Referenz auf eine konkrete Programminstanz. Eine Prozessreferenz identifiziert die gewählte Instanz.",
       "descriptor": {
         "Id": "process_target",
         "LabelKey": "Ui.Step.Settings.ProcessSource",
@@ -172,7 +174,10 @@ Optionaler Teil des Fenstertitels zum Eingrenzen mehrerer Fenster. Ein leerer Te
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": "desktopautomation.process-target/v1",
+        "OwnsStructuredInputContract": true,
+        "InputValueKind": null
       }
     }
   ],

@@ -17,35 +17,35 @@ Typisierter Ergebnisvertrag FileSystemOperationResult. Wird von Datei oder Ordne
 
 ### result.affected_bytes
 
-Umfang der betroffenen Dateidaten in Bytes. Einzelwert dieses Ergebnisses.
+Datenmenge der von der Aktion erfassten Dateien in Bytes. Beispiel: 3.
 
 ### result.affected_count
 
-Gesamtzahl betroffener Einträge der Dateiaktion. Einzelwert dieses Ergebnisses.
+Gesamtanzahl der von der Aktion erfassten Elemente. Beispiel: 3.
 
 ### result.affected_directory_count
 
-Anzahl betroffener Ordner, getrennt von Dateien. Einzelwert dieses Ergebnisses.
+Anzahl der von der Aktion erfassten Ordner. Beispiel: 3.
 
 ### result.affected_file_count
 
-Anzahl betroffener Dateien, getrennt von Ordnern. Einzelwert dieses Ergebnisses.
+Anzahl der von der Aktion erfassten Dateien. Beispiel: 3.
 
 ### result.affected_paths
 
-Liste der von der Dateiaktion betroffenen Pfade. Ein erfolgreicher Zähler ist nicht automatisch ein Backup-Versionsnachweis. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.
 
 ### result.affected_paths.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0. Beispiel: 3.
 
 ### result.completed_at_utc
 
-UTC-Abschlusszeitpunkt der Aktion. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.item_type
 
-Ob Datei, Ordner oder mehrere Einträge von der Dateiaktion betroffen waren. Einzelwert dieses Ergebnisses.
+Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.
 
 ### result.item_type.option.Directory
 
@@ -61,7 +61,7 @@ Mehrere Einträge wurden bearbeitet.
 
 ### result.operation
 
-Tatsächlich angeforderte Dateiaktion. Zusammen mit den Zählern und Pfaden lesen, um deren Auswirkungen zu verstehen. Einzelwert dieses Ergebnisses.
+Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.
 
 ### result.operation.option.Copy
 
@@ -81,11 +81,11 @@ Benennt den Quelleintrag mit new_name um.
 
 ### result.source_path
 
-Verwendeter Quellpfad der Dateiaktion. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Quellpfad der ausgeführten Datei- oder Ordneraktion. Beispiel: C:\Data\example.png.
 
 ### result.target_path
 
-Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besitzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein. Beispiel: C:\Data\example.png.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -98,9 +98,9 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
     "Properties": [
       {
         "Name": "Operation",
-        "DisplayName": "Operation",
+        "DisplayName": "Ausgeführte Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -113,41 +113,44 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
         ],
         "Id": "operation",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "operation"
       },
       {
         "Name": "SourcePath",
-        "DisplayName": "Source Path",
+        "DisplayName": "Vollständiger Quellpfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Quellpfad der ausgeführten Datei- oder Ordneraktion.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "source_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "source_path"
       },
       {
         "Name": "TargetPath",
-        "DisplayName": "Target Path",
+        "DisplayName": "Vollständiger Zielpfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "target_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "target_path"
       },
       {
         "Name": "ItemType",
-        "DisplayName": "Item Type",
+        "DisplayName": "Art des Eintrags",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -159,69 +162,74 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
         ],
         "Id": "item_type",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "item_type"
       },
       {
         "Name": "AffectedCount",
-        "DisplayName": "Affected Count",
+        "DisplayName": "Bearbeitete Einträge",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Gesamtanzahl der von der Aktion erfassten Elemente.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_count"
       },
       {
         "Name": "AffectedFileCount",
-        "DisplayName": "Affected File Count",
+        "DisplayName": "Bearbeitete Dateien",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der von der Aktion erfassten Dateien.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_file_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_file_count"
       },
       {
         "Name": "AffectedDirectoryCount",
-        "DisplayName": "Affected Directory Count",
+        "DisplayName": "Bearbeitete Ordner",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der von der Aktion erfassten Ordner.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_directory_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_directory_count"
       },
       {
         "Name": "AffectedBytes",
-        "DisplayName": "Affected Bytes",
+        "DisplayName": "Bearbeitete Bytes",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Datenmenge der von der Aktion erfassten Dateien in Bytes.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_bytes",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_bytes"
       },
       {
         "Name": "AffectedPaths",
-        "DisplayName": "Affected Paths",
+        "DisplayName": "Bearbeitete Pfade",
         "DataType": "Text",
-        "Description": "Text",
+        "Description": "Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -229,46 +237,49 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
         "EnumValues": null,
         "Id": "affected_paths",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_paths"
       },
       {
         "Name": "AffectedPaths.Count",
-        "DisplayName": "Affected Paths / Count",
+        "DisplayName": "Betroffene Pfade / Anzahl",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_paths.count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_paths.count"
       },
       {
         "Name": "CompletedAtUtc",
-        "DisplayName": "Completed At Utc",
+        "DisplayName": "Abgeschlossen am (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "completed_at_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "completed_at_utc"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Operation",
-        "DisplayName": "Operation",
+        "DisplayName": "Ausgeführte Aktion",
         "Property": {
           "Name": "Operation",
-          "DisplayName": "Operation",
+          "DisplayName": "Ausgeführte Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -281,56 +292,59 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
           ],
           "Id": "operation",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "operation"
         },
         "Children": []
       },
       {
         "Segment": "SourcePath",
-        "DisplayName": "Source Path",
+        "DisplayName": "Vollständiger Quellpfad",
         "Property": {
           "Name": "SourcePath",
-          "DisplayName": "Source Path",
+          "DisplayName": "Vollständiger Quellpfad",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Quellpfad der ausgeführten Datei- oder Ordneraktion.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "C:\\Data\\example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "source_path",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "source_path"
         },
         "Children": []
       },
       {
         "Segment": "TargetPath",
-        "DisplayName": "Target Path",
+        "DisplayName": "Vollständiger Zielpfad",
         "Property": {
           "Name": "TargetPath",
-          "DisplayName": "Target Path",
+          "DisplayName": "Vollständiger Zielpfad",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "C:\\Data\\example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "target_path",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "target_path"
         },
         "Children": []
       },
       {
         "Segment": "ItemType",
-        "DisplayName": "Item Type",
+        "DisplayName": "Art des Eintrags",
         "Property": {
           "Name": "ItemType",
-          "DisplayName": "Item Type",
+          "DisplayName": "Art des Eintrags",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -342,94 +356,99 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
           ],
           "Id": "item_type",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "item_type"
         },
         "Children": []
       },
       {
         "Segment": "AffectedCount",
-        "DisplayName": "Affected Count",
+        "DisplayName": "Bearbeitete Einträge",
         "Property": {
           "Name": "AffectedCount",
-          "DisplayName": "Affected Count",
+          "DisplayName": "Bearbeitete Einträge",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Gesamtanzahl der von der Aktion erfassten Elemente.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_count"
         },
         "Children": []
       },
       {
         "Segment": "AffectedFileCount",
-        "DisplayName": "Affected File Count",
+        "DisplayName": "Bearbeitete Dateien",
         "Property": {
           "Name": "AffectedFileCount",
-          "DisplayName": "Affected File Count",
+          "DisplayName": "Bearbeitete Dateien",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der von der Aktion erfassten Dateien.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_file_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_file_count"
         },
         "Children": []
       },
       {
         "Segment": "AffectedDirectoryCount",
-        "DisplayName": "Affected Directory Count",
+        "DisplayName": "Bearbeitete Ordner",
         "Property": {
           "Name": "AffectedDirectoryCount",
-          "DisplayName": "Affected Directory Count",
+          "DisplayName": "Bearbeitete Ordner",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der von der Aktion erfassten Ordner.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_directory_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_directory_count"
         },
         "Children": []
       },
       {
         "Segment": "AffectedBytes",
-        "DisplayName": "Affected Bytes",
+        "DisplayName": "Bearbeitete Bytes",
         "Property": {
           "Name": "AffectedBytes",
-          "DisplayName": "Affected Bytes",
+          "DisplayName": "Bearbeitete Bytes",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Datenmenge der von der Aktion erfassten Dateien in Bytes.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_bytes",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_bytes"
         },
         "Children": []
       },
       {
         "Segment": "AffectedPaths",
-        "DisplayName": "Affected Paths",
+        "DisplayName": "Bearbeitete Pfade",
         "Property": {
           "Name": "AffectedPaths",
-          "DisplayName": "Affected Paths",
+          "DisplayName": "Bearbeitete Pfade",
           "DataType": "Text",
-          "Description": "Text",
+          "Description": "Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Collection",
@@ -437,24 +456,26 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
           "EnumValues": null,
           "Id": "affected_paths",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_paths"
         },
         "Children": [
           {
             "Segment": "Count",
-            "DisplayName": "Count",
+            "DisplayName": "Anzahl",
             "Property": {
               "Name": "AffectedPaths.Count",
-              "DisplayName": "Affected Paths / Count",
+              "DisplayName": "Betroffene Pfade / Anzahl",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "affected_paths.count",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "affected_paths.count"
             },
             "Children": []
@@ -463,19 +484,20 @@ Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besit
       },
       {
         "Segment": "CompletedAtUtc",
-        "DisplayName": "Completed At Utc",
+        "DisplayName": "Abgeschlossen am (UTC)",
         "Property": {
           "Name": "CompletedAtUtc",
-          "DisplayName": "Completed At Utc",
+          "DisplayName": "Abgeschlossen am (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "completed_at_utc",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "completed_at_utc"
         },
         "Children": []

@@ -58,6 +58,22 @@ internal static class Program
         var options = new JsonSerializerOptions { WriteIndented = true };
         JobJsonSerialization.Configure(options);
         var jobs = new List<Job>();
+        if (selected.Contains("step-ergebnisse"))
+        {
+            var preview = new Job { Name = "Ergebniswerte verstehen", Steps = [
+                new DesktopDuplicationStep { Id = "capture" },
+                new OcrStep { Settings = new() { ImageSource = new ResultBinding { SourceStepId = "capture", PropertyPath = "Image" } } }] };
+            using var vm = (JobStepsViewModel)tests.GetType("TaskAutomation.Tests.DesktopAutomationApp.JobStepsViewModelExecutionTests")!
+                .GetMethod("CreateRenderViewModel", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [preview])!;
+            vm.SelectedStep = vm.Steps[1];
+            var view = new JobStepsView { DataContext = vm };
+            ScreenshotCapture.Render(view, "step-ergebnisse", specs, output, () =>
+            {
+                var tabs = (System.Windows.Controls.TabControl)view.FindName("SelectedJobStepTabs");
+                tabs.SelectedIndex = 1;
+                return tabs.SelectedIndex == 1;
+            });
+        }
         foreach (var file in new[] { "unterlagen", "sicherung", "arbeitsplatz" })
         {
             var reread = JsonSerializer.Deserialize<Job>(File.ReadAllText(Path.Combine(root, "artifacts/website-export/examples", file, "jobs", file + ".json")), options)!;

@@ -3,7 +3,7 @@
 DesktopAutomation supports Velopack direct downloads, Store MSIX and local source builds.
 The canonical policy is `DesktopAutomation.Application/Deployment/InstallationContext.cs`.
 `AppPaths` owns all persisted locations; `ProfileLease` owns exclusive access before any app
-services run. See the [distribution decision](../decisions/2026-10-06-support-velopack-and-msix.md).
+services run. See the [distribution decision](../decisions/2026-10-12-use-supported-windows-apis-with-msix-virtualization.md).
 
 ## Build
 
@@ -30,30 +30,37 @@ The release workflow produces a development MSIX until all three GitHub reposito
 `MSIX_IDENTITY_NAME`, `MSIX_PUBLISHER`, `MSIX_PUBLISHER_DISPLAY_NAME` are set from Partner Center.
 Partial configuration fails. A development identity is never a valid Store product identity.
 Upload the correctly identified MSIX manually through Partner Center; store publishing is not
-performed by this workflow. Explain `runFullTrust` and `unvirtualizedResources` during certification.
+performed by this workflow. Explain `runFullTrust` and detailed WLAN access during certification.
+The manifest uses standard virtualization and does not request `unvirtualizedResources`.
 For sideloading, pass `-CertificateThumbprint` for a certificate whose subject matches Publisher.
 The Store supplies production package signing. Set the optional `VELOPACK_SIGN_PARAMS` GitHub secret for Velopack code signing; the referenced certificate must be available to the runner. The manual `Package MSIX` workflow also builds packages without creating a GitHub release.
 
 ## Profiles and coexistence
 
-Default data stays under `%APPDATA%\DesktopAutomation` and `%LOCALAPPDATA%\DesktopAutomation`.
+Default data lives under `%USERPROFILE%\DesktopAutomation\Roaming` and
+`%USERPROFILE%\DesktopAutomation\Local`, shared across all distribution channels.
 Use `DesktopAutomationApp.exe --profile development` for all three channels to select isolated
-data under `Profiles\development`. Names are limited to 64 ASCII letters, digits, underscores
+data under `%USERPROFILE%\DesktopAutomation\Profiles\development` with `Local` and `Roaming`
+subdirectories. Names are limited to 64 ASCII letters, digits, underscores
 and hyphens, excluding Windows device names. Non-default profiles never change autostart.
 
 All current channels share an exclusive file lease. A manual duplicate requests foreground
 activation; an autostart/background duplicate simply exits. File ownership works across Windows
 sessions; activation is limited to the current interactive session. Crashes release the handle.
-MSIX explicitly disables write virtualization to preserve jobs, credentials, logs and Windows
-settings across channels and uninstall. Settings, user files and installer files remain separate.
+User-owned data is outside AppData redirection and the package directory; standard MSIX
+virtualization remains enabled. Shared data survives package uninstall. `Local` and `Roaming`
+are logical data categories, not Windows roaming synchronization. Existing AppData data is copied
+once, without overwriting targets or deleting originals. Completed imports do not resurrect deleted
+files; partial imports can be retried. Update old installations before concurrent use because their
+old data paths and leases do not coordinate with the new versions.
 
-`.profile-format.json` is additive. Unsupported formats are refused before loading/migration.
+`.profile-format.json` is additive. Imported unsupported formats are refused before application services load.
 Advance its version for a future incompatible persistence change. Older releases without this
 guard cannot coordinate; upgrade them before using the shared profile concurrently.
 
 MSIX StartupTask carries `--startup`; Velopack registers its stable launcher with the same argument.
 Startup follows shared preferences and only one process executes automations. Enabling MSIX
-startup removes the recognized legacy Run entry; user-disabled StartupTasks remain disabled.
+startup leaves the download version's Run entry alone; user-disabled StartupTasks remain disabled.
 Uninstalling a channel does not automatically select the other channel for startup: enable
 startup explicitly in the remaining installed app. Local builds never register a build path.
 

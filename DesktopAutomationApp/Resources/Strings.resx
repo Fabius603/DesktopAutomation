@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     Microsoft ResX Schema
@@ -1793,24 +1793,12 @@ Fehlercode: {3}</value>
   <data name="Step.Number" xml:space="preserve">
     <value>Schritt {0}</value>
   </data>
-  <data name="Step.ResultProperty.Success" xml:space="preserve">
-    <value>Erfolgreich</value>
-  </data>
-  <data name="Step.ResultProperty.Found" xml:space="preserve">
-    <value>Gefunden</value>
-  </data>
-  <data name="Step.ResultProperty.Confidence" xml:space="preserve">
-    <value>Konfidenz</value>
-  </data>
-  <data name="Step.ResultProperty.IsPredicted" xml:space="preserve">
-    <value>Vorhergesagt</value>
-  </data>
-  <data name="Step.ResultProperty.HasImage" xml:space="preserve">
-    <value>Bild vorhanden</value>
-  </data>
-  <data name="Step.ResultProperty.Image" xml:space="preserve">
-    <value>Bild</value>
-  </data>
+  <data name="Step.ResultProperty.Success" xml:space="preserve"><value>Einstellung geändert</value></data>
+  <data name="Step.ResultProperty.Found" xml:space="preserve"><value>Treffer gefunden</value></data>
+  <data name="Step.ResultProperty.Confidence" xml:space="preserve"><value>Erkennungsqualität</value></data>
+  <data name="Step.ResultProperty.IsPredicted" xml:space="preserve"><value>Position wurde vorhergesagt</value></data>
+  <data name="Step.ResultProperty.HasImage" xml:space="preserve"><value>Bild vorhanden</value></data>
+  <data name="Step.ResultProperty.Image" xml:space="preserve"><value>Aufgenommenes Bild</value></data>
   <data name="Step.ResultProperty.OcrResult.Text" xml:space="preserve"><value>Erkannter Text</value></data>
   <data name="Step.ResultProperty.OcrResult.Found" xml:space="preserve"><value>Text gefunden</value></data>
   <data name="Step.ResultProperty.OcrResult.Confidence" xml:space="preserve"><value>Durchschnittliche Erkennungsqualität</value></data>
@@ -1849,33 +1837,15 @@ Fehlercode: {3}</value>
   <data name="Step.ResultValueType.Detection" xml:space="preserve"><value>Erkennung</value></data>
   <data name="Step.ResultValueType.Collection" xml:space="preserve"><value>Liste von {0}</value></data>
   <data name="Ui.Step.IfEditor.CompleteValue" xml:space="preserve"><value>Gesamter Wert</value></data>
-  <data name="Step.ResultProperty.Process" xml:space="preserve">
-    <value>Prozess</value>
-  </data>
-  <data name="Step.ResultProperty.Process.ProcessId" xml:space="preserve">
-    <value>Prozess / Prozess-ID</value>
-  </data>
-  <data name="Step.ResultProperty.Process.ProcessName" xml:space="preserve">
-    <value>Prozess / Prozessname</value>
-  </data>
-  <data name="Step.ResultProperty.Process.ExecutablePath" xml:space="preserve">
-    <value>Prozess / Programmpfad</value>
-  </data>
-  <data name="Step.ResultProperty.Process.StartTimeUtc" xml:space="preserve">
-    <value>Prozess / Startzeit</value>
-  </data>
-  <data name="Step.ResultProperty.Process.WindowHandle" xml:space="preserve">
-    <value>Prozess / Fenster-Handle</value>
-  </data>
-  <data name="Step.ResultProperty.IsRunning" xml:space="preserve">
-    <value>Prozess läuft</value>
-  </data>
-  <data name="Step.ResultProperty.IsActive" xml:space="preserve">
-    <value>Fenster aktiv</value>
-  </data>
-  <data name="Step.ResultProperty.Matches" xml:space="preserve">
-    <value>Übereinstimmung</value>
-  </data>
+  <data name="Step.ResultProperty.Process" xml:space="preserve"><value>Ermittelter Prozess</value></data>
+  <data name="Step.ResultProperty.Process.ProcessId" xml:space="preserve"><value>Prozess / Prozess-ID</value></data>
+  <data name="Step.ResultProperty.Process.ProcessName" xml:space="preserve"><value>Prozess / Prozessname</value></data>
+  <data name="Step.ResultProperty.Process.ExecutablePath" xml:space="preserve"><value>Prozess / Programmpfad</value></data>
+  <data name="Step.ResultProperty.Process.StartTimeUtc" xml:space="preserve"><value>Prozess / Startzeit (UTC)</value></data>
+  <data name="Step.ResultProperty.Process.WindowHandle" xml:space="preserve"><value>Prozess / Fensterkennung</value></data>
+  <data name="Step.ResultProperty.IsRunning" xml:space="preserve"><value>Prozess läuft</value></data>
+  <data name="Step.ResultProperty.IsActive" xml:space="preserve"><value>Fenster ist im Vordergrund</value></data>
+  <data name="Step.ResultProperty.Matches" xml:space="preserve"><value>Punktvergleich erfüllt</value></data>
   <data name="Macro.Record.Start" xml:space="preserve">
     <value>Aufnahme starten</value>
   </data>
@@ -2598,60 +2568,60 @@ Fehlercode: {3}</value>
   <data name="Ui.ReleaseNotes.Category.Added" xml:space="preserve"><value>Neu</value></data>
   <data name="Ui.ReleaseNotes.Category.Changed" xml:space="preserve"><value>Geändert</value></data>
   <data name="Ui.ReleaseNotes.Category.Fixed" xml:space="preserve"><value>Behoben</value></data>
-  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Name" xml:space="preserve"><value>Primärer Netzwerkadapter</value></data>
-  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Count" xml:space="preserve"><value>Aktive Netzwerkadapter</value></data>
-  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Items" xml:space="preserve"><value>Namen der aktiven Netzwerkadapter</value></data>
-  <data name="Step.ResultProperty.AudioDevicesQueryResult.Name" xml:space="preserve"><value>Erstes Audiogerät</value></data>
+  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Name" xml:space="preserve"><value>Name der Netzwerkschnittstelle</value></data>
+  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Count" xml:space="preserve"><value>Anzahl aktiver Netzwerkschnittstellen</value></data>
+  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Items" xml:space="preserve"><value>Aktive Netzwerkschnittstellen</value></data>
+  <data name="Step.ResultProperty.AudioDevicesQueryResult.Name" xml:space="preserve"><value>Erster gefundener Eintrag</value></data>
   <data name="Step.ResultProperty.AudioDevicesQueryResult.Count" xml:space="preserve"><value>Anzahl gefundener Audiogeräte</value></data>
   <data name="Step.ResultProperty.AudioDevicesQueryResult.Items" xml:space="preserve"><value>Gefundene Audiogeräte</value></data>
-  <data name="Step.ResultProperty.AudioVolumeQueryResult.Exists" xml:space="preserve"><value>Audioausgabegerät vorhanden</value></data>
+  <data name="Step.ResultProperty.AudioVolumeQueryResult.Exists" xml:space="preserve"><value>Audiogerät vorhanden</value></data>
   <data name="Step.ResultProperty.AudioVolumeQueryResult.Percentage" xml:space="preserve"><value>Lautstärke (%)</value></data>
-  <data name="Step.ResultProperty.AudioVolumeQueryResult.Id" xml:space="preserve"><value>ID des Audioausgabegeräts</value></data>
+  <data name="Step.ResultProperty.AudioVolumeQueryResult.Id" xml:space="preserve"><value>Kennung des Audiogeräts</value></data>
   <data name="Step.ResultProperty.AudioVolumeQueryResult.OnOffState" xml:space="preserve"><value>Status des Audioausgabegeräts</value></data>
-  <data name="Step.ResultProperty.SessionStateQueryResult.IsActive" xml:space="preserve"><value>Benutzersitzung aktiv</value></data>
-  <data name="Step.ResultProperty.SessionStateQueryResult.Name" xml:space="preserve"><value>Angemeldeter Benutzer</value></data>
-  <data name="Step.ResultProperty.SessionStateQueryResult.Id" xml:space="preserve"><value>Sitzungs-ID</value></data>
-  <data name="Step.ResultProperty.PowerStatusQueryResult.IsConnected" xml:space="preserve"><value>Netzteil angeschlossen</value></data>
+  <data name="Step.ResultProperty.SessionStateQueryResult.IsActive" xml:space="preserve"><value>Sitzung ist aktiv</value></data>
+  <data name="Step.ResultProperty.SessionStateQueryResult.Name" xml:space="preserve"><value>Name des angemeldeten Benutzers</value></data>
+  <data name="Step.ResultProperty.SessionStateQueryResult.Id" xml:space="preserve"><value>Windows-Sitzungs-ID</value></data>
+  <data name="Step.ResultProperty.PowerStatusQueryResult.IsConnected" xml:space="preserve"><value>Netzstrom angeschlossen</value></data>
   <data name="Step.ResultProperty.PowerStatusQueryResult.Percentage" xml:space="preserve"><value>Akkustand (%)</value></data>
-  <data name="Step.ResultProperty.MonitorCollectionQueryResult.IsConnected" xml:space="preserve"><value>Mindestens ein Monitor angeschlossen</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.IsConnected" xml:space="preserve"><value>Monitor vorhanden</value></data>
   <data name="Step.ResultProperty.MonitorCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl Monitore</value></data>
-  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Name" xml:space="preserve"><value>Primärer Monitor</value></data>
-  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Items" xml:space="preserve"><value>Angeschlossene Monitore</value></data>
-  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Exists" xml:space="preserve"><value>Passendes Gerät gefunden</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Name" xml:space="preserve"><value>Name des Hauptmonitors</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Items" xml:space="preserve"><value>Monitorinformationen</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Exists" xml:space="preserve"><value>Passender Eintrag vorhanden</value></data>
   <data name="Step.ResultProperty.DeviceCollectionQueryResult.IsConnected" xml:space="preserve"><value>Passendes Gerät verbunden</value></data>
-  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl passender Geräte</value></data>
-  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Name" xml:space="preserve"><value>Erstes passendes Gerät</value></data>
-  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Items" xml:space="preserve"><value>Passende Geräte</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl gefundener Geräte</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Name" xml:space="preserve"><value>Erster gefundener Eintrag</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Items" xml:space="preserve"><value>Gefundene Geräte</value></data>
   <data name="Step.ResultProperty.FileSystemPathQueryResult.Exists" xml:space="preserve"><value>Datei oder Ordner vorhanden</value></data>
-  <data name="Step.ResultProperty.FileSystemPathQueryResult.Count" xml:space="preserve"><value>Anzahl enthaltener Einträge</value></data>
+  <data name="Step.ResultProperty.FileSystemPathQueryResult.Count" xml:space="preserve"><value>Anzahl Pfadeinträge</value></data>
   <data name="Step.ResultProperty.FileSystemPathQueryResult.Value" xml:space="preserve"><value>Dateigröße (Bytes)</value></data>
   <data name="Step.ResultProperty.ProcessRunningQueryResult.Exists" xml:space="preserve"><value>Prozess läuft</value></data>
-  <data name="Step.ResultProperty.ProcessRunningQueryResult.Count" xml:space="preserve"><value>Anzahl laufender Instanzen</value></data>
+  <data name="Step.ResultProperty.ProcessRunningQueryResult.Count" xml:space="preserve"><value>Anzahl laufender Prozesse</value></data>
   <data name="Step.ResultProperty.ProcessRunningQueryResult.Name" xml:space="preserve"><value>Gesuchter Prozessname</value></data>
-  <data name="Step.ResultProperty.ProcessRunningQueryResult.Id" xml:space="preserve"><value>Prozess-ID der ersten Instanz</value></data>
+  <data name="Step.ResultProperty.ProcessRunningQueryResult.Id" xml:space="preserve"><value>Erste gefundene Prozess-ID</value></data>
   <data name="Step.ResultProperty.ForegroundWindowQueryResult.Exists" xml:space="preserve"><value>Vordergrundfenster vorhanden</value></data>
   <data name="Step.ResultProperty.ForegroundWindowQueryResult.Name" xml:space="preserve"><value>Prozess des Vordergrundfensters</value></data>
-  <data name="Step.ResultProperty.ForegroundWindowQueryResult.Text" xml:space="preserve"><value>Fenstertitel</value></data>
+  <data name="Step.ResultProperty.ForegroundWindowQueryResult.Text" xml:space="preserve"><value>Titel des Vordergrundfensters</value></data>
   <data name="Step.ResultProperty.ForegroundWindowQueryResult.Id" xml:space="preserve"><value>Prozess-ID des Vordergrundfensters</value></data>
   <data name="Step.ResultProperty.InputIdleQueryResult.IdleMilliseconds" xml:space="preserve"><value>Zeit seit letzter Eingabe (ms)</value></data>
   <data name="Step.ResultProperty.InputIdleQueryResult.IdleSeconds" xml:space="preserve"><value>Zeit seit letzter Eingabe (Sekunden)</value></data>
-  <data name="Step.ResultProperty.ClipboardContentQueryResult.Exists" xml:space="preserve"><value>Zwischenablage enthält Daten</value></data>
-  <data name="Step.ResultProperty.ClipboardContentQueryResult.Name" xml:space="preserve"><value>Inhaltstyp</value></data>
+  <data name="Step.ResultProperty.ClipboardContentQueryResult.Exists" xml:space="preserve"><value>Text oder Bild vorhanden</value></data>
+  <data name="Step.ResultProperty.ClipboardContentQueryResult.Name" xml:space="preserve"><value>Art des Zwischenablageinhalts</value></data>
   <data name="Step.ResultProperty.PrinterStatusQueryResult.Count" xml:space="preserve"><value>Anzahl gefundener Drucker</value></data>
-  <data name="Step.ResultProperty.PrinterStatusQueryResult.Name" xml:space="preserve"><value>Erster gefundener Drucker</value></data>
+  <data name="Step.ResultProperty.PrinterStatusQueryResult.Name" xml:space="preserve"><value>Erster gefundener Eintrag</value></data>
   <data name="Step.ResultProperty.PrinterStatusQueryResult.Items" xml:space="preserve"><value>Gefundene Drucker</value></data>
   <data name="Step.ResultProperty.StorageDrivesQueryResult.Exists" xml:space="preserve"><value>Passendes Laufwerk vorhanden</value></data>
-  <data name="Step.ResultProperty.StorageDrivesQueryResult.IsConnected" xml:space="preserve"><value>Passendes Laufwerk bereit</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.IsConnected" xml:space="preserve"><value>Passendes Laufwerk ist bereit</value></data>
   <data name="Step.ResultProperty.StorageDrivesQueryResult.Count" xml:space="preserve"><value>Anzahl bereiter Laufwerke</value></data>
   <data name="Step.ResultProperty.StorageDrivesQueryResult.Name" xml:space="preserve"><value>Erstes bereites Laufwerk</value></data>
-  <data name="Step.ResultProperty.StorageDrivesQueryResult.FreeSpaceGb" xml:space="preserve"><value>Gesamter freier Speicher (GB)</value></data>
-  <data name="Step.ResultProperty.StorageDrivesQueryResult.Items" xml:space="preserve"><value>Bereite Laufwerke</value></data>
-  <data name="Step.ResultProperty.SystemSettingsQueryResult.Name" xml:space="preserve"><value>Windows-Zeitzone</value></data>
-  <data name="Step.ResultProperty.SystemSettingsQueryResult.Text" xml:space="preserve"><value>Windows-Anzeigesprache</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.FreeSpaceGb" xml:space="preserve"><value>Freier Speicher gesamt (GiB)</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.Items" xml:space="preserve"><value>Laufwerkinformationen</value></data>
+  <data name="Step.ResultProperty.SystemSettingsQueryResult.Name" xml:space="preserve"><value>Zeitzone</value></data>
+  <data name="Step.ResultProperty.SystemSettingsQueryResult.Text" xml:space="preserve"><value>Sprache und Region</value></data>
   <data name="Step.ResultProperty.SystemSettingsQueryResult.IsEnabled" xml:space="preserve"><value>Dunkler App-Modus aktiviert</value></data>
-  <data name="Step.ResultProperty.SecurityStatusQueryResult.Exists" xml:space="preserve"><value>Windows-Firewalldienst vorhanden</value></data>
-  <data name="Step.ResultProperty.SecurityStatusQueryResult.IsEnabled" xml:space="preserve"><value>Windows-Firewalldienst aktiviert</value></data>
-  <data name="Step.ResultProperty.SecurityStatusQueryResult.OnOffState" xml:space="preserve"><value>Status des Windows-Firewalldiensts</value></data>
+  <data name="Step.ResultProperty.SecurityStatusQueryResult.Exists" xml:space="preserve"><value>Firewall-Dienst vorhanden</value></data>
+  <data name="Step.ResultProperty.SecurityStatusQueryResult.IsEnabled" xml:space="preserve"><value>Firewall-Dienst nicht deaktiviert</value></data>
+  <data name="Step.ResultProperty.SecurityStatusQueryResult.OnOffState" xml:space="preserve"><value>Startkonfiguration der Firewall</value></data>
   <data name="Step.ResultProperty.SystemLifecycleQueryResult.UptimeMilliseconds" xml:space="preserve"><value>Systemlaufzeit (ms)</value></data>
   <data name="Step.ResultProperty.SystemLifecycleQueryResult.UptimeSeconds" xml:space="preserve"><value>Systemlaufzeit (Sekunden)</value></data>
   <data name="Step.ResultProperty.SystemLifecycleQueryResult.OperatingSystemVersion" xml:space="preserve"><value>Windows-Version</value></data>
@@ -3047,8 +3017,8 @@ Fehlercode: {3}</value>
   <data name="Ui.Windows.Options.Failed" xml:space="preserve"><value>Die verfügbaren Optionen konnten nicht geladen werden: {0}</value></data>
   <data name="Step.Type.UserChoice" xml:space="preserve"><value>Benutzerauswahl abfragen</value></data>
   <data name="Step.Description.UserChoice" xml:space="preserve"><value>Öffnet während der Job-Ausführung ein Auswahlfenster und stellt die gewählte Antwort nachfolgenden Steps bereit.</value></data>
-  <data name="Ui.UserChoice.Title" xml:space="preserve"><value>Überschrift (optional)</value></data>
-  <data name="Ui.UserChoice.Question" xml:space="preserve"><value>Titel (optional)</value></data>
+  <data name="Ui.UserChoice.Title" xml:space="preserve"><value>Dialogtitel (optional)</value></data>
+  <data name="Ui.UserChoice.Question" xml:space="preserve"><value>Frage (optional)</value></data>
   <data name="Ui.UserChoice.Description" xml:space="preserve"><value>Beschreibung (optional)</value></data>
   <data name="Ui.UserChoice.Answers" xml:space="preserve"><value>Antwortmöglichkeiten (2 bis 18, verpflichtend)</value></data>
   <data name="Ui.UserChoice.AnswerTextRequired" xml:space="preserve"><value>Antworttext (verpflichtend)</value></data>
@@ -3783,4 +3753,653 @@ Step: {8} / {9}</value></data>
   <data name="Ui.Job.Steps.Inspector.Collapse" xml:space="preserve"><value>Step-Inspektor einklappen</value></data>
   <data name="Ui.Job.Steps.Inspector.Expand" xml:space="preserve"><value>Step-Inspektor ausklappen</value></data>
   <data name="Enum.JobExecutionState.WaitingForChildren" xml:space="preserve"><value>Wartet auf gestartete Ausführungen</value></data>
+  <data name="Step.ResultPropertyDescription.Found" xml:space="preserve"><value>Gibt an, ob die Suche einen passenden Treffer geliefert hat. Kein Treffer ist ein gültiges Ergebnis.</value></data>
+  <data name="Step.ResultProperty.Point" xml:space="preserve"><value>Erkannte Zielposition</value></data>
+  <data name="Step.ResultPropertyDescription.Point" xml:space="preserve"><value>Position des ausgewählten Treffers in Pixeln, verwendbar als Klickziel. Bei Bildschirmquellen ist der Desktopversatz bereits eingerechnet; bei Kameras bleiben es Bildkoordinaten. Fehlt ohne Treffer.</value></data>
+  <data name="Step.ResultProperty.BoundingBox" xml:space="preserve"><value>Erkannter Bereich</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox" xml:space="preserve"><value>Rechteck um den erkannten Inhalt in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Kann ohne Treffer fehlen.</value></data>
+  <data name="Step.ResultPropertyDescription.Confidence" xml:space="preserve"><value>Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.</value></data>
+  <data name="Step.ResultProperty.MinimumConfidence" xml:space="preserve"><value>Niedrigste Wortqualität</value></data>
+  <data name="Step.ResultPropertyDescription.MinimumConfidence" xml:space="preserve"><value>Niedrigste Erkennungsqualität aller Wörter von 0 bis 1. Ohne erkannte Wörter ist der Wert 0.</value></data>
+  <data name="Step.ResultProperty.AllDetections" xml:space="preserve"><value>Alle erkannten Treffer</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections" xml:space="preserve"><value>Liste aller gelieferten Treffer mit Position, Bereich und eigener Erkennungsqualität. Ohne Treffer ist die Liste leer.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi" xml:space="preserve"><value>Verwendeter Suchbereich</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi" xml:space="preserve"><value>Tatsächlich verwendeter Suchbereich in Pixeln. Bei Bildschirmquellen ist der Desktopversatz bereits eingerechnet, bei Kameras sind es Bildkoordinaten. Ohne Eingrenzung kann der Wert fehlen.</value></data>
+  <data name="Step.ResultProperty.UsedDynamicRoi" xml:space="preserve"><value>Dynamischer Suchbereich verwendet</value></data>
+  <data name="Step.ResultPropertyDescription.UsedDynamicRoi" xml:space="preserve"><value>Gibt an, ob für diese Suche ein dynamischer Suchbereich übernommen wurde.</value></data>
+  <data name="Step.ResultProperty.SourceCaptureIsFresh" xml:space="preserve"><value>Quellbild ist frisch</value></data>
+  <data name="Step.ResultPropertyDescription.SourceCaptureIsFresh" xml:space="preserve"><value>Frischezustand der Aufnahme, die für diese Erkennung verwendet wurde. false bedeutet, dass ein vorhandenes Bild wiederverwendet wurde.</value></data>
+  <data name="Step.ResultProperty.SourceCaptureTimestampUtc" xml:space="preserve"><value>Aufnahmezeit des Quellbilds (UTC)</value></data>
+  <data name="Step.ResultPropertyDescription.SourceCaptureTimestampUtc" xml:space="preserve"><value>UTC-Aufnahmezeit des Bildes, aus dem dieses Ergebnis berechnet wurde. Bei Wiederverwendung bleibt die ursprüngliche Aufnahmezeit erhalten.</value></data>
+  <data name="Step.ResultProperty.SourceFrameVersion" xml:space="preserve"><value>Quellbild-Version</value></data>
+  <data name="Step.ResultPropertyDescription.SourceFrameVersion" xml:space="preserve"><value>Laufende Bildkennung innerhalb derselben Aufnahmequelle. Hilft zu erkennen, ob zwei Ergebnisse auf demselben Bild beruhen; nicht zwischen unterschiedlichen Quellen vergleichen.</value></data>
+  <data name="Step.ResultProperty.SourceFrameTimestamp" xml:space="preserve"><value>Quellbild-Zeitstempel (Ticks)</value></data>
+  <data name="Step.ResultPropertyDescription.SourceFrameTimestamp" xml:space="preserve"><value>Monotoner Zeitstempel zur technischen Reihenfolgeprüfung. 0 bedeutet unbekannt. Kein Kalenderdatum und keine Millisekunden seit 1970.</value></data>
+  <data name="Step.ResultPropertyDescription.Image" xml:space="preserve"><value>Das aufgenommene Bild zur Weitergabe an Erkennung, Bildanzeige oder Speicherung. Kann fehlen, wenn kein Bild verfügbar ist.</value></data>
+  <data name="Step.ResultPropertyDescription.HasImage" xml:space="preserve"><value>Gibt an, ob diese Aufnahme ein Bild bereitstellt. Vor der Weiterverwendung des Bildes prüfbar.</value></data>
+  <data name="Step.ResultProperty.Bounds" xml:space="preserve"><value>Aufgenommener Bereich</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds" xml:space="preserve"><value>Bereich der Aufnahme in Pixeln. Bei Bildschirmaufnahmen Desktopkoordinaten, bei Kameraaufnahmen Bildkoordinaten ab (0, 0).</value></data>
+  <data name="Step.ResultProperty.Offset" xml:space="preserve"><value>Versatz zum Desktop</value></data>
+  <data name="Step.ResultPropertyDescription.Offset" xml:space="preserve"><value>Pixelversatz des Bildursprungs zum Desktop. Für bildlokale Punkte zu X und Y addieren; bei Kameras ist der Versatz (0, 0). Bereits globale Erkennungspunkte nicht erneut verschieben.</value></data>
+  <data name="Step.ResultProperty.IsFresh" xml:space="preserve"><value>Aufnahme ist frisch</value></data>
+  <data name="Step.ResultPropertyDescription.IsFresh" xml:space="preserve"><value>Gibt an, ob ein frisches Bild geliefert wurde. false kennzeichnet eine wiederverwendete Aufnahme.</value></data>
+  <data name="Step.ResultProperty.CaptureTimestampUtc" xml:space="preserve"><value>Aufnahmezeit (UTC)</value></data>
+  <data name="Step.ResultPropertyDescription.CaptureTimestampUtc" xml:space="preserve"><value>UTC-Zeitpunkt der Aufnahme. Bei einem wiederverwendeten Bild bleibt die ursprüngliche Aufnahmezeit erhalten.</value></data>
+  <data name="Step.ResultProperty.FrameVersion" xml:space="preserve"><value>Bildversion</value></data>
+  <data name="Step.ResultPropertyDescription.FrameVersion" xml:space="preserve"><value>Kennung des Bildes innerhalb dieser Aufnahmequelle. Gleiche Kennungen stehen für dasselbe Bild; Kennungen unterschiedlicher Quellen sind nicht vergleichbar.</value></data>
+  <data name="Step.ResultProperty.FrameTimestamp" xml:space="preserve"><value>Bildzeitstempel (Ticks)</value></data>
+  <data name="Step.ResultPropertyDescription.FrameTimestamp" xml:space="preserve"><value>Monotoner Bildzeitstempel zur Diagnose der zeitlichen Reihenfolge. 0 bedeutet unbekannt; kein Kalenderdatum.</value></data>
+  <data name="Step.ResultPropertyDescription.Process" xml:space="preserve"><value>Referenz auf die konkrete Prozessinstanz für nachfolgende Prozessaktionen. Enthält ID und Startzeit, damit eine später wiederverwendete Prozess-ID nicht verwechselt wird. Kann fehlen.</value></data>
+  <data name="Step.ResultPropertyDescription.Process.ProcessId" xml:space="preserve"><value>Windows-ID der ermittelten Prozessinstanz. Zusammen mit der Startzeit verwenden, um die Instanz eindeutig zu erkennen.</value></data>
+  <data name="Step.ResultPropertyDescription.Process.ProcessName" xml:space="preserve"><value>Name des ermittelten Prozesses, beispielsweise notepad. Geeignet zur Anzeige oder für einen Textvergleich.</value></data>
+  <data name="Step.ResultPropertyDescription.Process.ExecutablePath" xml:space="preserve"><value>Pfad der ausführbaren Programmdatei, soweit Windows ihn bereitstellt. Kann leer sein, etwa bei fehlenden Zugriffsrechten.</value></data>
+  <data name="Step.ResultPropertyDescription.Process.StartTimeUtc" xml:space="preserve"><value>UTC-Startzeit dieser Prozessinstanz. Unterscheidet zusammen mit der Prozess-ID verschiedene Starts desselben Programms.</value></data>
+  <data name="Step.ResultPropertyDescription.Process.WindowHandle" xml:space="preserve"><value>Technische Windows-Kennung des zugeordneten Fensters. 0 bedeutet, dass kein Fenster zugeordnet ist.</value></data>
+  <data name="Step.ResultPropertyDescription.IsRunning" xml:space="preserve"><value>Gibt an, ob mindestens ein Prozess die konfigurierte Suche erfüllt.</value></data>
+  <data name="Step.ResultProperty.MatchCount" xml:space="preserve"><value>Anzahl Treffer</value></data>
+  <data name="Step.ResultPropertyDescription.MatchCount" xml:space="preserve"><value>Anzahl der Elemente, die den konfigurierten Vergleich oder die Suche erfüllen. 0 bedeutet keinen Treffer.</value></data>
+  <data name="Step.ResultPropertyDescription.IsActive" xml:space="preserve"><value>Gibt an, ob das Vordergrundfenster die konfigurierte Suche erfüllt.</value></data>
+  <data name="Step.ResultProperty.WindowHandle" xml:space="preserve"><value>Fensterkennung</value></data>
+  <data name="Step.ResultPropertyDescription.WindowHandle" xml:space="preserve"><value>Technische Windows-Kennung des Vordergrundfensters. 0 bedeutet, dass keine passende Fensterkennung vorhanden ist.</value></data>
+  <data name="Step.ResultProperty.Text" xml:space="preserve"><value>Erkannter Text</value></data>
+  <data name="Step.ResultPropertyDescription.Text" xml:space="preserve"><value>Erkannter Gesamttext zur Anzeige oder für Textvergleiche. Ohne erkannten Text ist der Wert leer.</value></data>
+  <data name="Step.ResultProperty.LineCount" xml:space="preserve"><value>Anzahl erkannter Zeilen</value></data>
+  <data name="Step.ResultPropertyDescription.LineCount" xml:space="preserve"><value>Anzahl der erkannten Textzeilen. 0 bedeutet, dass keine Zeilen erkannt wurden.</value></data>
+  <data name="Step.ResultProperty.WordCount" xml:space="preserve"><value>Anzahl erkannter Wörter</value></data>
+  <data name="Step.ResultPropertyDescription.WordCount" xml:space="preserve"><value>Anzahl der erkannten Wörter. 0 bedeutet, dass keine Wörter erkannt wurden.</value></data>
+  <data name="Step.ResultProperty.Lines" xml:space="preserve"><value>Erkannte Zeilen</value></data>
+  <data name="Step.ResultPropertyDescription.Lines" xml:space="preserve"><value>Textzeilen mit Text, Bereich, Erkennungsqualität und Position. Ohne Text ist die Liste leer.</value></data>
+  <data name="Step.ResultProperty.Words" xml:space="preserve"><value>Erkannte Wörter</value></data>
+  <data name="Step.ResultPropertyDescription.Words" xml:space="preserve"><value>Wörter mit Text, Bereich, Erkennungsqualität und Position. Ohne Wörter ist die Liste leer.</value></data>
+  <data name="Step.ResultPropertyDescription.IsPredicted" xml:space="preserve"><value>Gibt an, ob die Zielposition aus einer Bewegungsvorhersage stammt.</value></data>
+  <data name="Step.ResultProperty.PredictedForUtc" xml:space="preserve"><value>Vorhersagezeitpunkt (UTC)</value></data>
+  <data name="Step.ResultPropertyDescription.PredictedForUtc" xml:space="preserve"><value>UTC-Zeitpunkt, für den die Position vorausberechnet wurde. Kann fehlen, wenn keine Vorhersage vorliegt.</value></data>
+  <data name="Step.ResultProperty.DeltaX" xml:space="preserve"><value>Horizontaler Zielversatz (px)</value></data>
+  <data name="Step.ResultPropertyDescription.DeltaX" xml:space="preserve"><value>Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen.</value></data>
+  <data name="Step.ResultProperty.DeltaY" xml:space="preserve"><value>Vertikaler Zielversatz (px)</value></data>
+  <data name="Step.ResultPropertyDescription.DeltaY" xml:space="preserve"><value>Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen.</value></data>
+  <data name="Step.ResultProperty.MovementFactorX" xml:space="preserve"><value>Horizontaler Bewegungsfaktor</value></data>
+  <data name="Step.ResultPropertyDescription.MovementFactorX" xml:space="preserve"><value>Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.</value></data>
+  <data name="Step.ResultProperty.MovementFactorY" xml:space="preserve"><value>Vertikaler Bewegungsfaktor</value></data>
+  <data name="Step.ResultPropertyDescription.MovementFactorY" xml:space="preserve"><value>Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.</value></data>
+  <data name="Step.ResultProperty.AppliedDeltaX" xml:space="preserve"><value>Horizontaler Mausversatz (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedDeltaX" xml:space="preserve"><value>Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.</value></data>
+  <data name="Step.ResultProperty.AppliedDeltaY" xml:space="preserve"><value>Vertikaler Mausversatz (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedDeltaY" xml:space="preserve"><value>Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.</value></data>
+  <data name="Step.ResultProperty.MovementBlocked" xml:space="preserve"><value>Bewegung und Klick unterdrückt</value></data>
+  <data name="Step.ResultPropertyDescription.MovementBlocked" xml:space="preserve"><value>Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden.</value></data>
+  <data name="Step.ResultProperty.Operation" xml:space="preserve"><value>Ausgeführte Dateiaktion</value></data>
+  <data name="Step.ResultPropertyDescription.Operation" xml:space="preserve"><value>Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.</value></data>
+  <data name="Step.ResultProperty.SourcePath" xml:space="preserve"><value>Verwendeter Quellpfad</value></data>
+  <data name="Step.ResultPropertyDescription.SourcePath" xml:space="preserve"><value>Quellpfad der ausgeführten Datei- oder Ordneraktion.</value></data>
+  <data name="Step.ResultProperty.TargetPath" xml:space="preserve"><value>Verwendeter Zielpfad</value></data>
+  <data name="Step.ResultPropertyDescription.TargetPath" xml:space="preserve"><value>Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein.</value></data>
+  <data name="Step.ResultProperty.ItemType" xml:space="preserve"><value>Art der betroffenen Elemente</value></data>
+  <data name="Step.ResultPropertyDescription.ItemType" xml:space="preserve"><value>Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.</value></data>
+  <data name="Step.ResultProperty.AffectedCount" xml:space="preserve"><value>Anzahl betroffener Elemente</value></data>
+  <data name="Step.ResultPropertyDescription.AffectedCount" xml:space="preserve"><value>Gesamtanzahl der von der Aktion erfassten Elemente.</value></data>
+  <data name="Step.ResultProperty.AffectedFileCount" xml:space="preserve"><value>Anzahl betroffener Dateien</value></data>
+  <data name="Step.ResultPropertyDescription.AffectedFileCount" xml:space="preserve"><value>Anzahl der von der Aktion erfassten Dateien.</value></data>
+  <data name="Step.ResultProperty.AffectedDirectoryCount" xml:space="preserve"><value>Anzahl betroffener Ordner</value></data>
+  <data name="Step.ResultPropertyDescription.AffectedDirectoryCount" xml:space="preserve"><value>Anzahl der von der Aktion erfassten Ordner.</value></data>
+  <data name="Step.ResultProperty.AffectedBytes" xml:space="preserve"><value>Betroffene Datenmenge (Bytes)</value></data>
+  <data name="Step.ResultPropertyDescription.AffectedBytes" xml:space="preserve"><value>Datenmenge der von der Aktion erfassten Dateien in Bytes.</value></data>
+  <data name="Step.ResultProperty.AffectedPaths" xml:space="preserve"><value>Betroffene Pfade</value></data>
+  <data name="Step.ResultPropertyDescription.AffectedPaths" xml:space="preserve"><value>Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.</value></data>
+  <data name="Step.ResultProperty.CompletedAtUtc" xml:space="preserve"><value>Abschlusszeit (UTC)</value></data>
+  <data name="Step.ResultPropertyDescription.CompletedAtUtc" xml:space="preserve"><value>UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde.</value></data>
+  <data name="Step.ResultProperty.FilePath" xml:space="preserve"><value>Pfad des gespeicherten Bildes</value></data>
+  <data name="Step.ResultPropertyDescription.FilePath" xml:space="preserve"><value>Vollständiger Pfad der gespeicherten Bilddatei, verwendbar für nachfolgende Dateiaktionen.</value></data>
+  <data name="Step.ResultProperty.FileName" xml:space="preserve"><value>Name der Bilddatei</value></data>
+  <data name="Step.ResultPropertyDescription.FileName" xml:space="preserve"><value>Name der gespeicherten Bilddatei ohne Ordnerpfad.</value></data>
+  <data name="Step.ResultProperty.Format" xml:space="preserve"><value>Gespeichertes Bildformat</value></data>
+  <data name="Step.ResultPropertyDescription.Format" xml:space="preserve"><value>Format der gespeicherten Datei, beispielsweise PNG oder JPEG.</value></data>
+  <data name="Step.ResultProperty.Width" xml:space="preserve"><value>Bildbreite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Width" xml:space="preserve"><value>Breite des gespeicherten Bildes in Pixeln.</value></data>
+  <data name="Step.ResultProperty.Height" xml:space="preserve"><value>Bildhöhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Height" xml:space="preserve"><value>Höhe des gespeicherten Bildes in Pixeln.</value></data>
+  <data name="Step.ResultProperty.FileSizeBytes" xml:space="preserve"><value>Dateigröße (Bytes)</value></data>
+  <data name="Step.ResultPropertyDescription.FileSizeBytes" xml:space="preserve"><value>Größe der gespeicherten Bilddatei in Bytes.</value></data>
+  <data name="Step.ResultProperty.SavedAtUtc" xml:space="preserve"><value>Speicherzeit (UTC)</value></data>
+  <data name="Step.ResultPropertyDescription.SavedAtUtc" xml:space="preserve"><value>UTC-Zeitpunkt, zu dem das Bild gespeichert wurde.</value></data>
+  <data name="Step.ResultProperty.RoiUpdated" xml:space="preserve"><value>Suchbereich aktualisiert</value></data>
+  <data name="Step.ResultPropertyDescription.RoiUpdated" xml:space="preserve"><value>Gibt an, ob der dynamische Suchbereich anhand eines Treffers aktualisiert wurde.</value></data>
+  <data name="Step.ResultProperty.RoiReset" xml:space="preserve"><value>Suchbereich zurückgesetzt</value></data>
+  <data name="Step.ResultPropertyDescription.RoiReset" xml:space="preserve"><value>Gibt an, ob der dynamische Suchbereich auf die vollständige Suche zurückgesetzt wurde.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds" xml:space="preserve"><value>Dynamischer Suchbereich</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds" xml:space="preserve"><value>Aktueller dynamischer Bereich in globalen Pixelkoordinaten. Kann fehlen, wenn noch kein Bereich ermittelt wurde oder die vollständige Suche aktiv ist.</value></data>
+  <data name="Step.ResultProperty.ConsecutiveMisses" xml:space="preserve"><value>Fehlende Treffer in Folge</value></data>
+  <data name="Step.ResultPropertyDescription.ConsecutiveMisses" xml:space="preserve"><value>Anzahl aufeinanderfolgender Suchen ohne passenden Treffer. Ein Treffer setzt den Zähler zurück.</value></data>
+  <data name="Step.ResultProperty.FullSearchInterval" xml:space="preserve"><value>Intervall der vollständigen Suche</value></data>
+  <data name="Step.ResultPropertyDescription.FullSearchInterval" xml:space="preserve"><value>Konfiguriertes Intervall für die erneute vollständige Suche, angegeben in Durchläufen.</value></data>
+  <data name="Step.ResultProperty.SelectedOptionId" xml:space="preserve"><value>Gewählte Antwort</value></data>
+  <data name="Step.ResultPropertyDescription.SelectedOptionId" xml:space="preserve"><value>Stabile ID der gewählten Antwort, geeignet für Bedingungen unabhängig vom angezeigten Namen. Bei Abbruch leer.</value></data>
+  <data name="Step.ResultProperty.SelectedLabel" xml:space="preserve"><value>Angezeigter Antwortname</value></data>
+  <data name="Step.ResultPropertyDescription.SelectedLabel" xml:space="preserve"><value>Sichtbarer Name der gewählten Antwort, geeignet für Rückmeldungen und Textanzeigen. Bei Abbruch leer.</value></data>
+  <data name="Step.ResultProperty.SelectedValue" xml:space="preserve"><value>Rückgabewert der Antwort</value></data>
+  <data name="Step.ResultPropertyDescription.SelectedValue" xml:space="preserve"><value>Konfigurierter Textwert der gewählten Antwort für nachfolgende Schritte oder Vergleiche. Bei Abbruch leer.</value></data>
+  <data name="Step.ResultProperty.SelectedIndex" xml:space="preserve"><value>Position der gewählten Antwort</value></data>
+  <data name="Step.ResultPropertyDescription.SelectedIndex" xml:space="preserve"><value>Position in der Antwortliste: 0 ist die erste Antwort. -1 bedeutet, dass keine Antwort gewählt wurde.</value></data>
+  <data name="Step.ResultProperty.WasCancelled" xml:space="preserve"><value>Auswahl abgebrochen</value></data>
+  <data name="Step.ResultPropertyDescription.WasCancelled" xml:space="preserve"><value>Gibt an, ob das Auswahlfenster ohne Antwort geschlossen wurde. Bedeutet allein nicht, dass der gesamte Job beendet wurde.</value></data>
+  <data name="Step.ResultPropertyDescription.Matches" xml:space="preserve"><value>Gibt an, ob der konfigurierte Punktvergleich insgesamt erfüllt ist.</value></data>
+  <data name="Step.ResultProperty.TotalCount" xml:space="preserve"><value>Anzahl geprüfter Punkte</value></data>
+  <data name="Step.ResultPropertyDescription.TotalCount" xml:space="preserve"><value>Gesamtanzahl der in diesem Vergleich geprüften Punkte.</value></data>
+  <data name="Step.ResultProperty.Status" xml:space="preserve"><value>Ergebnis der Windows-Aktion</value></data>
+  <data name="Step.ResultPropertyDescription.Status" xml:space="preserve"><value>Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.</value></data>
+  <data name="Step.ResultProperty.CapturedAt" xml:space="preserve"><value>Abfragezeit (UTC)</value></data>
+  <data name="Step.ResultPropertyDescription.CapturedAt" xml:space="preserve"><value>UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.</value></data>
+  <data name="Step.ResultProperty.ErrorCode" xml:space="preserve"><value>Technischer Fehlercode</value></data>
+  <data name="Step.ResultPropertyDescription.ErrorCode" xml:space="preserve"><value>Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.</value></data>
+  <data name="Step.ResultProperty.ErrorMessage" xml:space="preserve"><value>Fehlerbeschreibung</value></data>
+  <data name="Step.ResultPropertyDescription.ErrorMessage" xml:space="preserve"><value>Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.</value></data>
+  <data name="Step.ResultProperty.SettingId" xml:space="preserve"><value>Geänderte Windows-Einstellung</value></data>
+  <data name="Step.ResultPropertyDescription.SettingId" xml:space="preserve"><value>Stabile Kennung der angeforderten Windows-Einstellung.</value></data>
+  <data name="Step.ResultProperty.PreviousValue" xml:space="preserve"><value>Vorheriger Einstellungswert</value></data>
+  <data name="Step.ResultPropertyDescription.PreviousValue" xml:space="preserve"><value>Vor der Änderung ermittelter Wert, sofern Windows ihn bereitstellt.</value></data>
+  <data name="Step.ResultProperty.AppliedValue" xml:space="preserve"><value>Angewendeter Einstellungswert</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedValue" xml:space="preserve"><value>Von Windows als angewendet zurückgemeldeter Einstellungswert.</value></data>
+  <data name="Step.ResultProperty.RestartRequired" xml:space="preserve"><value>Neustart erforderlich</value></data>
+  <data name="Step.ResultPropertyDescription.RestartRequired" xml:space="preserve"><value>Gibt an, ob Windows zur vollständigen Übernahme der Einstellung einen Neustart benötigt.</value></data>
+  <data name="Step.ResultPropertyDescription.Success" xml:space="preserve"><value>Gibt an, ob Windows die Einstellung erfolgreich geändert hat.</value></data>
+  <data name="Step.ResultProperty.IdleMilliseconds" xml:space="preserve"><value>Zeit ohne Eingabe (ms)</value></data>
+  <data name="Step.ResultPropertyDescription.IdleMilliseconds" xml:space="preserve"><value>Vergangene Zeit seit der letzten Benutzereingabe in Millisekunden.</value></data>
+  <data name="Step.ResultProperty.IdleSeconds" xml:space="preserve"><value>Zeit ohne Eingabe (s)</value></data>
+  <data name="Step.ResultPropertyDescription.IdleSeconds" xml:space="preserve"><value>Vergangene Zeit seit der letzten Benutzereingabe in Sekunden.</value></data>
+  <data name="Step.ResultProperty.UptimeMilliseconds" xml:space="preserve"><value>Systemlaufzeit (ms)</value></data>
+  <data name="Step.ResultPropertyDescription.UptimeMilliseconds" xml:space="preserve"><value>Vergangene Zeit seit dem Systemstart in Millisekunden.</value></data>
+  <data name="Step.ResultProperty.UptimeSeconds" xml:space="preserve"><value>Systemlaufzeit (s)</value></data>
+  <data name="Step.ResultPropertyDescription.UptimeSeconds" xml:space="preserve"><value>Vergangene Zeit seit dem Systemstart in Sekunden.</value></data>
+  <data name="Step.ResultProperty.OperatingSystemVersion" xml:space="preserve"><value>Windows-Version</value></data>
+  <data name="Step.ResultPropertyDescription.OperatingSystemVersion" xml:space="preserve"><value>Von Windows gemeldete Betriebssystemversion.</value></data>
+  <data name="Step.ResultProperty.PendingRestart" xml:space="preserve"><value>Windows-Neustart steht aus</value></data>
+  <data name="Step.ResultPropertyDescription.PendingRestart" xml:space="preserve"><value>Gibt an, ob Windows einen ausstehenden Neustart meldet.</value></data>
+  <data name="Step.ResultProperty.FreeSpaceGb" xml:space="preserve"><value>Freier Speicher (GB)</value></data>
+  <data name="Step.ResultPropertyDescription.FreeSpaceGb" xml:space="preserve"><value>Freier Speicherplatz des abgefragten Laufwerks in Gigabyte gemäß Windows-Abfrage.</value></data>
+  <data name="Step.ResultProperty.Connectivity" xml:space="preserve"><value>Netzwerkzugriff</value></data>
+  <data name="Step.ResultPropertyDescription.Connectivity" xml:space="preserve"><value>Von Windows gemeldeter Grad der Netzwerkverbindung, etwa lokal oder mit Internetzugriff.</value></data>
+  <data name="Step.ResultProperty.ConnectionType" xml:space="preserve"><value>Verbindungsart</value></data>
+  <data name="Step.ResultPropertyDescription.ConnectionType" xml:space="preserve"><value>Art der ermittelten Verbindung, beispielsweise WLAN oder Ethernet.</value></data>
+  <data name="Step.ResultProperty.DeviceState" xml:space="preserve"><value>Gerätezustand</value></data>
+  <data name="Step.ResultPropertyDescription.DeviceState" xml:space="preserve"><value>Von Windows gemeldeter Zustand des abgefragten Geräts.</value></data>
+  <data name="Step.ResultProperty.OnOffState" xml:space="preserve"><value>Ein-/Aus-Zustand</value></data>
+  <data name="Step.ResultPropertyDescription.OnOffState" xml:space="preserve"><value>Von Windows gemeldeter Ein-/Aus-Zustand der abgefragten Funktion.</value></data>
+  <data name="Step.ResultProperty.SessionState" xml:space="preserve"><value>Sitzungszustand</value></data>
+  <data name="Step.ResultPropertyDescription.SessionState" xml:space="preserve"><value>Zustand der abgefragten Windows-Sitzung, beispielsweise aktiv oder getrennt.</value></data>
+  <data name="Step.ResultProperty.PowerSource" xml:space="preserve"><value>Stromquelle</value></data>
+  <data name="Step.ResultPropertyDescription.PowerSource" xml:space="preserve"><value>Gibt an, ob Windows Netzstrom, Akku oder eine unbekannte Stromquelle meldet.</value></data>
+  <data name="Step.ResultProperty.IsCharging" xml:space="preserve"><value>Akku wird geladen</value></data>
+  <data name="Step.ResultPropertyDescription.IsCharging" xml:space="preserve"><value>Gibt an, ob Windows einen laufenden Ladevorgang meldet.</value></data>
+  <data name="Step.ResultProperty.IsMuted" xml:space="preserve"><value>Ton ist stummgeschaltet</value></data>
+  <data name="Step.ResultPropertyDescription.IsMuted" xml:space="preserve"><value>Gibt an, ob das abgefragte Audiogerät stummgeschaltet ist.</value></data>
+  <data name="Step.ResultProperty.IsEnabled" xml:space="preserve"><value>Funktion ist aktiviert</value></data>
+  <data name="Step.ResultPropertyDescription.IsEnabled" xml:space="preserve"><value>Gibt an, ob die konfigurierte Windows-Funktion aktiviert ist. Bedeutung abhängig von der gewählten Abfrage.</value></data>
+  <data name="Step.ResultProperty.Exists" xml:space="preserve"><value>Gesuchtes Element vorhanden</value></data>
+  <data name="Step.ResultPropertyDescription.Exists" xml:space="preserve"><value>Gibt an, ob Windows das für diese Abfrage gesuchte Element gefunden hat.</value></data>
+  <data name="Step.ResultProperty.IsConnected" xml:space="preserve"><value>Verbindung vorhanden</value></data>
+  <data name="Step.ResultPropertyDescription.IsConnected" xml:space="preserve"><value>Gibt an, ob die konfigurierte Verbindung oder das abgefragte Gerät verbunden ist.</value></data>
+  <data name="Step.ResultProperty.Count" xml:space="preserve"><value>Anzahl gefundener Elemente</value></data>
+  <data name="Step.ResultPropertyDescription.Count" xml:space="preserve"><value>Anzahl der von der konfigurierten Windows-Abfrage gefundenen Elemente.</value></data>
+  <data name="Step.ResultProperty.Items" xml:space="preserve"><value>Gefundene Elemente</value></data>
+  <data name="Step.ResultPropertyDescription.Items" xml:space="preserve"><value>Textliste der von Windows zurückgegebenen Elemente. Ohne Treffer ist die Liste leer.</value></data>
+  <data name="Step.ResultProperty.Name" xml:space="preserve"><value>Ermittelter Name</value></data>
+  <data name="Step.ResultPropertyDescription.Name" xml:space="preserve"><value>Von Windows zurückgegebener Name des abgefragten Elements. Ohne verfügbaren Namen leer.</value></data>
+  <data name="Step.ResultProperty.Id" xml:space="preserve"><value>Ermittelte Kennung</value></data>
+  <data name="Step.ResultPropertyDescription.Id" xml:space="preserve"><value>Von Windows zurückgegebene Kennung des abgefragten Elements. Ohne verfügbare Kennung leer.</value></data>
+  <data name="Step.ResultProperty.Path" xml:space="preserve"><value>Abgefragter Pfad</value></data>
+  <data name="Step.ResultPropertyDescription.Path" xml:space="preserve"><value>Datei- oder Ordnerpfad, auf den sich die Windows-Abfrage bezieht.</value></data>
+  <data name="Step.ResultProperty.Value" xml:space="preserve"><value>Ermittelter Zahlenwert</value></data>
+  <data name="Step.ResultPropertyDescription.Value" xml:space="preserve"><value>Zahlenwert der konfigurierten Windows-Abfrage. Einheit und Bedeutung hängen von der ausgewählten Abfrage ab.</value></data>
+  <data name="Step.ResultProperty.Percentage" xml:space="preserve"><value>Ermittelter Prozentwert</value></data>
+  <data name="Step.ResultPropertyDescription.Percentage" xml:space="preserve"><value>Von Windows gemeldeter Prozentwert von 0 bis 100; 50 entspricht 50 %. Bedeutung abhängig von der Abfrage.</value></data>
+  <data name="Ui.ValueReference.ResultDiagnostics" xml:space="preserve"><value>Diagnose</value></data>
+  <data name="Ui.ValueReference.ResultExample" xml:space="preserve"><value>Beispiel: {0}</value></data>
+  <data name="Step.ResultProperty.GetProcessResult.Found" xml:space="preserve"><value>Prozess gefunden</value></data>
+  <data name="Step.ResultPropertyDescription.GetProcessResult.Found" xml:space="preserve"><value>Gibt an, ob die Prozesssuche einen passenden Prozess gefunden hat.</value></data>
+  <data name="Step.ResultPropertyDescription.OcrResult.Confidence" xml:space="preserve"><value>Durchschnittliche Erkennungsqualität des OCR-Ergebnisses von 0 bis 1. 0,92 entspricht 92 %. Ohne Text ist der Wert 0.</value></data>
+  <data name="Step.ResultPropertyDescription.OcrResult.Found" xml:space="preserve"><value>Gibt an, ob die Texterkennung Text geliefert hat. false bedeutet keinen erkannten Text.</value></data>
+  <data name="Step.ResultProperty.PointComparisonResult.MatchCount" xml:space="preserve"><value>Anzahl passender Punkte</value></data>
+  <data name="Step.ResultPropertyDescription.PointComparisonResult.MatchCount" xml:space="preserve"><value>Anzahl der Punkte, die den konfigurierten Vergleich erfüllen.</value></data>
+  <data name="Step.ResultPropertyDescription.AudioVolumeQueryResult.Percentage" xml:space="preserve"><value>Lautstärke des abgefragten Audiogeräts von 0 bis 100. Stummschaltung wird separat angegeben.</value></data>
+  <data name="Step.ResultPropertyDescription.AudioVolumeQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob das für die Lautstärkeabfrage benötigte Audiogerät vorhanden ist.</value></data>
+  <data name="Step.ResultPropertyDescription.AudioVolumeQueryResult.Id" xml:space="preserve"><value>Windows-Kennung des abgefragten Audiogeräts.</value></data>
+  <data name="Step.ResultPropertyDescription.PowerStatusQueryResult.Percentage" xml:space="preserve"><value>Von Windows gemeldeter Akkustand in Prozent. Nur zusammen mit dem Abfragestatus und der Stromquelle bewerten.</value></data>
+  <data name="Step.ResultPropertyDescription.PowerStatusQueryResult.IsConnected" xml:space="preserve"><value>Gibt an, ob Windows eine Verbindung zur externen Stromversorgung meldet.</value></data>
+  <data name="Step.ResultPropertyDescription.SessionStateQueryResult.IsActive" xml:space="preserve"><value>Gibt an, ob die abgefragte Windows-Sitzung aktiv ist.</value></data>
+  <data name="Step.ResultProperty.ClipboardContentQueryResult.Text" xml:space="preserve"><value>Text der Zwischenablage</value></data>
+  <data name="Step.ResultPropertyDescription.ClipboardContentQueryResult.Text" xml:space="preserve"><value>Textinhalt der Zwischenablage, sofern die konfigurierte Abfrage Text liefert. Andernfalls leer.</value></data>
+  <data name="Step.ResultPropertyDescription.ForegroundWindowQueryResult.Text" xml:space="preserve"><value>Titel des aktuell im Vordergrund befindlichen Fensters. Kann leer sein.</value></data>
+  <data name="Step.ResultPropertyDescription.SystemSettingsQueryResult.Text" xml:space="preserve"><value>Aktuelle Kulturkennung der Anwendung, beispielsweise de-DE.</value></data>
+  <data name="Step.ResultPropertyDescription.FileSystemPathQueryResult.Value" xml:space="preserve"><value>Größe der abgefragten Datei in Bytes. Bei Ordnern oder fehlendem Pfad 0; ist keine rekursive Ordnergröße.</value></data>
+  <data name="Step.ResultProperty.AffectedPaths.Count" xml:space="preserve"><value>Betroffene Pfade / Anzahl</value></data>
+  <data name="Step.ResultPropertyDescription.AffectedPaths.Count" xml:space="preserve"><value>Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0.</value></data>
+  <data name="Step.ResultProperty.AllDetections.Count" xml:space="preserve"><value>Alle erkannten Treffer / Anzahl</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections.Count" xml:space="preserve"><value>Anzahl der Elemente in „Alle erkannten Treffer“. Eine leere Liste hat die Anzahl 0.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox" xml:space="preserve"><value>Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Bottom" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Center" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Center.X" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Center.Y" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Height" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.IsEmpty" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Left" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Location" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Location.X" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Location.Y" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Right" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Top" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Width" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.X" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].BoundingBox.Y" xml:space="preserve"><value>Alle erkannten Treffer / Erkannter Bereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].BoundingBox.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].Center" xml:space="preserve"><value>Alle erkannten Treffer / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].Center.X" xml:space="preserve"><value>Alle erkannten Treffer / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].Center.Y" xml:space="preserve"><value>Alle erkannten Treffer / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AllDetections[].Confidence" xml:space="preserve"><value>Alle erkannten Treffer / Erkennungsqualität</value></data>
+  <data name="Step.ResultPropertyDescription.AllDetections[].Confidence" xml:space="preserve"><value>Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Bottom" xml:space="preserve"><value>Verwendeter Suchbereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Center" xml:space="preserve"><value>Verwendeter Suchbereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Center.X" xml:space="preserve"><value>Verwendeter Suchbereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Center.Y" xml:space="preserve"><value>Verwendeter Suchbereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Height" xml:space="preserve"><value>Verwendeter Suchbereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.IsEmpty" xml:space="preserve"><value>Verwendeter Suchbereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Left" xml:space="preserve"><value>Verwendeter Suchbereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Location" xml:space="preserve"><value>Verwendeter Suchbereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Location.X" xml:space="preserve"><value>Verwendeter Suchbereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Location.Y" xml:space="preserve"><value>Verwendeter Suchbereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Right" xml:space="preserve"><value>Verwendeter Suchbereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Top" xml:space="preserve"><value>Verwendeter Suchbereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Width" xml:space="preserve"><value>Verwendeter Suchbereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.X" xml:space="preserve"><value>Verwendeter Suchbereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.AppliedRoi.Y" xml:space="preserve"><value>Verwendeter Suchbereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.AppliedRoi.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Bottom" xml:space="preserve"><value>Erkannter Bereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Center" xml:space="preserve"><value>Erkannter Bereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Center.X" xml:space="preserve"><value>Erkannter Bereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Center.Y" xml:space="preserve"><value>Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Height" xml:space="preserve"><value>Erkannter Bereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.IsEmpty" xml:space="preserve"><value>Erkannter Bereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Left" xml:space="preserve"><value>Erkannter Bereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Location" xml:space="preserve"><value>Erkannter Bereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Location.X" xml:space="preserve"><value>Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Location.Y" xml:space="preserve"><value>Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Right" xml:space="preserve"><value>Erkannter Bereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Top" xml:space="preserve"><value>Erkannter Bereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Width" xml:space="preserve"><value>Erkannter Bereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.X" xml:space="preserve"><value>Erkannter Bereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.BoundingBox.Y" xml:space="preserve"><value>Erkannter Bereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.BoundingBox.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Bottom" xml:space="preserve"><value>Aufgenommener Bereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Center" xml:space="preserve"><value>Aufgenommener Bereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Center.X" xml:space="preserve"><value>Aufgenommener Bereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Center.Y" xml:space="preserve"><value>Aufgenommener Bereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Height" xml:space="preserve"><value>Aufgenommener Bereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.IsEmpty" xml:space="preserve"><value>Aufgenommener Bereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.Bounds.Left" xml:space="preserve"><value>Aufgenommener Bereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Location" xml:space="preserve"><value>Aufgenommener Bereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Location.X" xml:space="preserve"><value>Aufgenommener Bereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Location.Y" xml:space="preserve"><value>Aufgenommener Bereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Right" xml:space="preserve"><value>Aufgenommener Bereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Top" xml:space="preserve"><value>Aufgenommener Bereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Width" xml:space="preserve"><value>Aufgenommener Bereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.X" xml:space="preserve"><value>Aufgenommener Bereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Bounds.Y" xml:space="preserve"><value>Aufgenommener Bereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Bounds.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Bottom" xml:space="preserve"><value>Dynamischer Suchbereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Center" xml:space="preserve"><value>Dynamischer Suchbereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Center.X" xml:space="preserve"><value>Dynamischer Suchbereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Center.Y" xml:space="preserve"><value>Dynamischer Suchbereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Height" xml:space="preserve"><value>Dynamischer Suchbereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.IsEmpty" xml:space="preserve"><value>Dynamischer Suchbereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Left" xml:space="preserve"><value>Dynamischer Suchbereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Location" xml:space="preserve"><value>Dynamischer Suchbereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Location.X" xml:space="preserve"><value>Dynamischer Suchbereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Location.Y" xml:space="preserve"><value>Dynamischer Suchbereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Right" xml:space="preserve"><value>Dynamischer Suchbereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Top" xml:space="preserve"><value>Dynamischer Suchbereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Width" xml:space="preserve"><value>Dynamischer Suchbereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.X" xml:space="preserve"><value>Dynamischer Suchbereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.GlobalBounds.Y" xml:space="preserve"><value>Dynamischer Suchbereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.GlobalBounds.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Items.Count" xml:space="preserve"><value>Gefundene Elemente / Anzahl</value></data>
+  <data name="Step.ResultPropertyDescription.Items.Count" xml:space="preserve"><value>Anzahl der Elemente in „Gefundene Elemente“. Eine leere Liste hat die Anzahl 0.</value></data>
+  <data name="Step.ResultProperty.Lines.Count" xml:space="preserve"><value>Erkannte Zeilen / Anzahl</value></data>
+  <data name="Step.ResultPropertyDescription.Lines.Count" xml:space="preserve"><value>Anzahl der Elemente in „Erkannte Zeilen“. Eine leere Liste hat die Anzahl 0.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox" xml:space="preserve"><value>Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Bottom" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Center" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Center.X" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Center.Y" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Height" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.IsEmpty" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Left" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Location" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Location.X" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Location.Y" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Right" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Top" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Width" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.X" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].BoundingBox.Y" xml:space="preserve"><value>Erkannte Zeilen / Erkannter Bereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].BoundingBox.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Lines[].Confidence" xml:space="preserve"><value>Erkannte Zeilen / Erkennungsqualität</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].Confidence" xml:space="preserve"><value>Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.</value></data>
+  <data name="Step.ResultProperty.Lines[].Position" xml:space="preserve"><value>Erkannte Zeilen / Position im Text</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].Position" xml:space="preserve"><value>Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.</value></data>
+  <data name="Step.ResultProperty.Lines[].Text" xml:space="preserve"><value>Erkannte Zeilen / Text</value></data>
+  <data name="Step.ResultPropertyDescription.Lines[].Text" xml:space="preserve"><value>Text dieser erkannten Zeile beziehungsweise dieses Wortes.</value></data>
+  <data name="Step.ResultProperty.Offset.X" xml:space="preserve"><value>Versatz zum Desktop / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Offset.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Offset.Y" xml:space="preserve"><value>Versatz zum Desktop / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Offset.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Point.X" xml:space="preserve"><value>Erkannte Zielposition / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Point.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Point.Y" xml:space="preserve"><value>Erkannte Zielposition / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Point.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words.Count" xml:space="preserve"><value>Erkannte Wörter / Anzahl</value></data>
+  <data name="Step.ResultPropertyDescription.Words.Count" xml:space="preserve"><value>Anzahl der Elemente in „Erkannte Wörter“. Eine leere Liste hat die Anzahl 0.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox" xml:space="preserve"><value>Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Bottom" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Untere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Bottom" xml:space="preserve"><value>Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Center" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Mittelpunkt</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Center" xml:space="preserve"><value>Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Center.X" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Center.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Center.Y" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Center.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Height" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Höhe (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Height" xml:space="preserve"><value>Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.IsEmpty" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Bereich ist leer</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.IsEmpty" xml:space="preserve"><value>Gibt an, ob der Bereich keine positive Breite oder Höhe hat.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Left" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Linke Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Left" xml:space="preserve"><value>Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Location" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Linke obere Ecke</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Location" xml:space="preserve"><value>Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Location.X" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Location.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Location.Y" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Location.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Right" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Rechte Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Right" xml:space="preserve"><value>Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Top" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Obere Kante (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Top" xml:space="preserve"><value>Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Width" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Breite (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Width" xml:space="preserve"><value>Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.X" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / X-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.X" xml:space="preserve"><value>Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].BoundingBox.Y" xml:space="preserve"><value>Erkannte Wörter / Erkannter Bereich / Y-Koordinate (px)</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].BoundingBox.Y" xml:space="preserve"><value>Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.</value></data>
+  <data name="Step.ResultProperty.Words[].Confidence" xml:space="preserve"><value>Erkannte Wörter / Erkennungsqualität</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].Confidence" xml:space="preserve"><value>Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.</value></data>
+  <data name="Step.ResultProperty.Words[].LinePosition" xml:space="preserve"><value>Erkannte Wörter / Zugehörige Zeile</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].LinePosition" xml:space="preserve"><value>Position der zugehörigen Textzeile; 0 bezeichnet die erste Zeile. -1 bedeutet, dass keine Zeile zugeordnet werden konnte.</value></data>
+  <data name="Step.ResultProperty.Words[].Position" xml:space="preserve"><value>Erkannte Wörter / Position im Text</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].Position" xml:space="preserve"><value>Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.</value></data>
+  <data name="Step.ResultProperty.Words[].Text" xml:space="preserve"><value>Erkannte Wörter / Text</value></data>
+  <data name="Step.ResultPropertyDescription.Words[].Text" xml:space="preserve"><value>Text dieser erkannten Zeile beziehungsweise dieses Wortes.</value></data>
+  <data name="Step.ResultPropertyDescription.NetworkConnectivityQueryResult.Name" xml:space="preserve"><value>Name der ersten aktiven Netzwerkschnittstelle ohne Loopback; ohne Schnittstelle leer.</value></data>
+  <data name="Step.ResultPropertyDescription.NetworkConnectivityQueryResult.Count" xml:space="preserve"><value>Anzahl aktiver Netzwerkschnittstellen ohne Loopback.</value></data>
+  <data name="Step.ResultPropertyDescription.NetworkConnectivityQueryResult.Items" xml:space="preserve"><value>Namen der aktiven Netzwerkschnittstellen ohne Loopback. Ohne Schnittstellen leer.</value></data>
+  <data name="Step.ResultPropertyDescription.SessionStateQueryResult.Name" xml:space="preserve"><value>Benutzername der Sitzung, in der die Anwendung läuft.</value></data>
+  <data name="Step.ResultPropertyDescription.SessionStateQueryResult.Id" xml:space="preserve"><value>ID der Sitzung, in der die Anwendung läuft, als Text.</value></data>
+  <data name="Step.ResultPropertyDescription.FileSystemPathQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob am abgefragten Pfad eine Datei oder ein Ordner existiert.</value></data>
+  <data name="Step.ResultPropertyDescription.FileSystemPathQueryResult.Count" xml:space="preserve"><value>Bei Ordnern Anzahl direkter Einträge; bei einer Datei 1; bei fehlendem Pfad 0.</value></data>
+  <data name="Step.ResultPropertyDescription.ProcessRunningQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob mindestens ein Prozess mit dem gesuchten Namen läuft.</value></data>
+  <data name="Step.ResultPropertyDescription.ProcessRunningQueryResult.Name" xml:space="preserve"><value>Prozessname der Abfrage ohne Dateiendung.</value></data>
+  <data name="Step.ResultPropertyDescription.ProcessRunningQueryResult.Count" xml:space="preserve"><value>Anzahl laufender Prozesse mit dem gesuchten Namen.</value></data>
+  <data name="Step.ResultPropertyDescription.ProcessRunningQueryResult.Id" xml:space="preserve"><value>ID des ersten gefundenen Prozesses als Text. Ohne Treffer leer; ist keine vollständige Prozessreferenz.</value></data>
+  <data name="Step.ResultPropertyDescription.ForegroundWindowQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob Windows ein Vordergrundfenster bereitstellt.</value></data>
+  <data name="Step.ResultPropertyDescription.ForegroundWindowQueryResult.Name" xml:space="preserve"><value>Name des Prozesses, zu dem das Vordergrundfenster gehört. Kann bei fehlendem Zugriff leer sein.</value></data>
+  <data name="Step.ResultPropertyDescription.ForegroundWindowQueryResult.Id" xml:space="preserve"><value>ID des Prozesses des Vordergrundfensters als Text; keine Fensterkennung.</value></data>
+  <data name="Step.ResultPropertyDescription.ClipboardContentQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob die Zwischenablage Text oder ein Bild enthält. Andere Formate werden hier nicht erfasst.</value></data>
+  <data name="Step.ResultPropertyDescription.ClipboardContentQueryResult.Name" xml:space="preserve"><value>Text für Textinhalt, Image für ein Bild, sonst Unknown. Ein Bild wird hier nicht als Bildwert geliefert.</value></data>
+  <data name="Step.ResultPropertyDescription.MonitorCollectionQueryResult.Name" xml:space="preserve"><value>Windows-Gerätename des Hauptmonitors. Ohne Hauptmonitor leer.</value></data>
+  <data name="Step.ResultPropertyDescription.MonitorCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl der von Windows gemeldeten Monitore.</value></data>
+  <data name="Step.ResultPropertyDescription.MonitorCollectionQueryResult.IsConnected" xml:space="preserve"><value>Gibt an, ob Windows mindestens einen Monitor meldet.</value></data>
+  <data name="Step.ResultPropertyDescription.MonitorCollectionQueryResult.Items" xml:space="preserve"><value>Je Monitor ein Text mit Gerätename, Auflösung und Hauptmonitor-Markierung, getrennt durch das Pipe-Zeichen.</value></data>
+  <data name="Step.ResultPropertyDescription.StorageDrivesQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob ein Laufwerk zum optionalen Namensfilter passt, auch wenn es noch nicht bereit ist.</value></data>
+  <data name="Step.ResultPropertyDescription.StorageDrivesQueryResult.IsConnected" xml:space="preserve"><value>Gibt an, ob mindestens ein zum Filter passendes Laufwerk bereit ist.</value></data>
+  <data name="Step.ResultPropertyDescription.StorageDrivesQueryResult.Count" xml:space="preserve"><value>Anzahl zum Filter passender Laufwerke, die bereit sind.</value></data>
+  <data name="Step.ResultPropertyDescription.StorageDrivesQueryResult.Name" xml:space="preserve"><value>Name des ersten zum Filter passenden bereiten Laufwerks; ohne bereites Laufwerk leer.</value></data>
+  <data name="Step.ResultPropertyDescription.StorageDrivesQueryResult.FreeSpaceGb" xml:space="preserve"><value>Summe des verfügbaren Speicherplatzes aller passenden bereiten Laufwerke, in GiB (1 GiB = 1024³ Bytes).</value></data>
+  <data name="Step.ResultPropertyDescription.StorageDrivesQueryResult.Items" xml:space="preserve"><value>Je bereitem Laufwerk ein Text mit Name, Laufwerktyp und verfügbaren Bytes, getrennt durch das Pipe-Zeichen.</value></data>
+  <data name="Step.ResultPropertyDescription.SystemSettingsQueryResult.Name" xml:space="preserve"><value>Kennung der aktuellen lokalen Windows-Zeitzone.</value></data>
+  <data name="Step.ResultPropertyDescription.SystemSettingsQueryResult.IsEnabled" xml:space="preserve"><value>Gibt an, ob der Windows-Wert AppsUseLightTheme den dunklen App-Modus auswählt.</value></data>
+  <data name="Step.ResultPropertyDescription.SecurityStatusQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob die Windows-Konfiguration für den Firewall-Dienst mpssvc vorhanden ist.</value></data>
+  <data name="Step.ResultPropertyDescription.SecurityStatusQueryResult.IsEnabled" xml:space="preserve"><value>Gibt an, ob die Startkonfiguration des Firewall-Dienstes nicht deaktiviert ist. Belegt nicht, dass der Dienst läuft oder alle Firewall-Profile aktiv sind.</value></data>
+  <data name="Step.ResultPropertyDescription.SecurityStatusQueryResult.OnOffState" xml:space="preserve"><value>Ein-/Aus-Zustand aus der Startkonfiguration des Firewall-Dienstes. Kein vollständiger Sicherheitsstatus des Systems.</value></data>
+  <data name="Step.ResultPropertyDescription.AudioDevicesQueryResult.Count" xml:space="preserve"><value>Anzahl der zum konfigurierten Filter passenden Audiogeräte.</value></data>
+  <data name="Step.ResultPropertyDescription.AudioDevicesQueryResult.Name" xml:space="preserve"><value>Name beziehungsweise Kennung des ersten passenden Eintrags. Ohne Treffer leer.</value></data>
+  <data name="Step.ResultPropertyDescription.AudioDevicesQueryResult.Items" xml:space="preserve"><value>Liste der passenden Namen beziehungsweise Kennungen. Ohne Treffer leer.</value></data>
+  <data name="Step.ResultProperty.AudioDevicesQueryResult.Exists" xml:space="preserve"><value>Passender Eintrag vorhanden</value></data>
+  <data name="Step.ResultPropertyDescription.AudioDevicesQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob die Abfrage mindestens einen passenden Eintrag gefunden hat.</value></data>
+  <data name="Step.ResultPropertyDescription.DeviceCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl der zum konfigurierten Filter passenden Geräte.</value></data>
+  <data name="Step.ResultPropertyDescription.DeviceCollectionQueryResult.Name" xml:space="preserve"><value>Name beziehungsweise Kennung des ersten passenden Eintrags. Ohne Treffer leer.</value></data>
+  <data name="Step.ResultPropertyDescription.DeviceCollectionQueryResult.Items" xml:space="preserve"><value>Liste der passenden Namen beziehungsweise Kennungen. Ohne Treffer leer.</value></data>
+  <data name="Step.ResultPropertyDescription.DeviceCollectionQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob die Abfrage mindestens einen passenden Eintrag gefunden hat.</value></data>
+  <data name="Step.ResultPropertyDescription.PrinterStatusQueryResult.Count" xml:space="preserve"><value>Anzahl der zum konfigurierten Filter passenden Drucker.</value></data>
+  <data name="Step.ResultPropertyDescription.PrinterStatusQueryResult.Name" xml:space="preserve"><value>Name beziehungsweise Kennung des ersten passenden Eintrags. Ohne Treffer leer.</value></data>
+  <data name="Step.ResultPropertyDescription.PrinterStatusQueryResult.Items" xml:space="preserve"><value>Liste der passenden Namen beziehungsweise Kennungen. Ohne Treffer leer.</value></data>
+  <data name="Step.ResultProperty.PrinterStatusQueryResult.Exists" xml:space="preserve"><value>Passender Eintrag vorhanden</value></data>
+  <data name="Step.ResultPropertyDescription.PrinterStatusQueryResult.Exists" xml:space="preserve"><value>Gibt an, ob die Abfrage mindestens einen passenden Eintrag gefunden hat.</value></data>
+  <data name="Ui.Step.Camera.Camera.Help" xml:space="preserve"><value>Kamera, von der dieser Step ein Bild aufnimmt.</value></data>
+  <data name="Ui.Step.Capture.AllowCachedFallback.Help" xml:space="preserve"><value>Verwendet bei Ablauf des Zeitlimits das zuletzt verfügbare Bild. Dieses kann älter als der aktuelle Durchlauf sein.</value></data>
+  <data name="Ui.Step.Capture.WaitForNewFrame.Help" xml:space="preserve"><value>Wartet auf ein neues Bild statt sofort ein bereits vorhandenes Bild zu verwenden.</value></data>
+  <data name="Ui.Step.DynamicRoi.FullSearchInterval.Help" xml:space="preserve"><value>Anzahl der Durchläufe zwischen vollständigen Suchen. 0 deaktiviert die regelmäßige Vollbildsuche.</value></data>
+  <data name="Ui.Step.DynamicRoi.MinimumConfidence.Help" xml:space="preserve"><value>Mindestqualität der Erkennung, damit ihr Bereich für die nächste Suche verwendet wird.</value></data>
+  <data name="Ui.Step.DynamicRoi.Padding.Help" xml:space="preserve"><value>Zusätzlicher Rand um den erkannten Bereich in Pixeln.</value></data>
+  <data name="Ui.Step.DynamicRoi.ResetAfterMisses.Help" xml:space="preserve"><value>Anzahl erfolgloser Erkennungen bis zur Rückkehr zur vollständigen Suche. 0 deaktiviert dieses Zurücksetzen.</value></data>
+  <data name="Ui.Step.DynamicRoi.Source.Help" xml:space="preserve"><value>Erkennungsergebnis mit Position oder Bereich des gefundenen Ziels.</value></data>
+  <data name="Ui.Step.FileSystem.CreateParents.Help" xml:space="preserve"><value>Erstellt fehlende übergeordnete Ordner für das Ziel der Dateiaktion.</value></data>
+  <data name="Ui.Step.FileSystem.NewName.Help" xml:space="preserve"><value>Neuer Name für die umzubenennende Datei oder den Ordner.</value></data>
+  <data name="Ui.Step.FileSystem.Operation.Help" xml:space="preserve"><value>Wählt die Dateiaktion. Je nach Aktion werden Quelle, Ziel oder ein neuer Name benötigt.</value></data>
+  <data name="Ui.Step.FileSystem.RetryCount.Help" xml:space="preserve"><value>Anzahl zusätzlicher Versuche, wenn die Dateiaktion wegen einer Sperre nicht ausgeführt werden kann.</value></data>
+  <data name="Ui.Step.FileSystem.RetryDelay.Help" xml:space="preserve"><value>Wartezeit zwischen erneuten Versuchen in Millisekunden.</value></data>
+  <data name="Ui.Step.FileSystem.RetryLocked.Help" xml:space="preserve"><value>Versucht die Dateiaktion bei gesperrten Dateien erneut, entsprechend Anzahl und Wartezeit.</value></data>
+  <data name="Ui.Step.FileSystem.Source.Help" xml:space="preserve"><value>Datei oder Ordner, auf den die gewählte Aktion angewendet wird.</value></data>
+  <data name="Ui.Step.FileSystem.Target.Help" xml:space="preserve"><value>Zielpfad für die gewählte Dateiaktion.</value></data>
+  <data name="Ui.Step.Settings.Action.Help" xml:space="preserve"><value>Legt fest, welche der angebotenen Aktionen dieser Step ausführt.</value></data>
+  <data name="Ui.Step.Settings.Arguments.Help" xml:space="preserve"><value>Zusätzliche Startargumente für das Programm. Die erwartete Schreibweise richtet sich nach dem Programm.</value></data>
+  <data name="Ui.Step.Settings.AxisExpressions.Help" xml:space="preserve"><value>Bedingungen für den Vergleich der Koordinaten. Jede Zeile prüft den angegebenen Ausdruck.</value></data>
+  <data name="Ui.Step.Settings.CaptureMousePointer.Help" xml:space="preserve"><value>Nimmt den Mauszeiger in das erfasste Bildschirmbild auf.</value></data>
+  <data name="Ui.Step.Settings.ClickType.Help" xml:space="preserve"><value>Maustaste, mit der am Zielpunkt geklickt wird.</value></data>
+  <data name="Ui.Step.Settings.Color.Help" xml:space="preserve"><value>Farbe, nach der im Bild gesucht wird.</value></data>
+  <data name="Ui.Step.Settings.CombineWith.Help" xml:space="preserve"><value>Legt fest, wie die einzelnen Prüfungen miteinander verknüpft werden.</value></data>
+  <data name="Ui.Step.Settings.ConfidencePercent.Help" xml:space="preserve"><value>Mindestqualität, die ein Treffer erreichen muss. Höhere Werte akzeptieren nur sicherere Treffer.</value></data>
+  <data name="Ui.Step.Settings.DesktopIndex.Help" xml:space="preserve"><value>Monitor, auf den sich die Aufnahme oder Anzeige bezieht.</value></data>
+  <data name="Ui.Step.Settings.DisplayDurationMs.Help" xml:space="preserve"><value>Anzeigedauer der Einblendung in Millisekunden. 1000 ms entsprechen einer Sekunde.</value></data>
+  <data name="Ui.Step.Settings.DisplayText.Help" xml:space="preserve"><value>Text der Einblendung. Er kann direkt eingegeben oder aus einer kompatiblen Wertequelle übernommen werden.</value></data>
+  <data name="Ui.Step.Settings.DoubleClick.Help" xml:space="preserve"><value>Führt am Zielpunkt einen Doppelklick statt eines einzelnen Klicks aus.</value></data>
+  <data name="Ui.Step.Settings.Downscale.Help" xml:space="preserve"><value>Verkleinert das Bild für die Verarbeitung. Stärkere Verkleinerung reduziert Details und kann die Erkennung beeinflussen.</value></data>
+  <data name="Ui.Step.Settings.Evaluation.Help" xml:space="preserve"><value>Prüfungen, die entscheiden, ob die Bedingung erfüllt ist. Wähle passende Werte und Vergleichsoperatoren.</value></data>
+  <data name="Ui.Step.Settings.FileName.Help" xml:space="preserve"><value>Name der Ausgabedatei. Der Speicherpfad bestimmt den Zielordner.</value></data>
+  <data name="Ui.Step.Settings.FontColor.Help" xml:space="preserve"><value>Farbe des eingeblendeten Texts.</value></data>
+  <data name="Ui.Step.Settings.FontSizePt.Help" xml:space="preserve"><value>Schriftgröße des eingeblendeten Texts in Punkt.</value></data>
+  <data name="Ui.Step.Settings.ImageSource.Help" xml:space="preserve"><value>Bild, das dieser Step verarbeitet. Wähle beispielsweise die Ausgabe einer Bildschirm- oder Kameraaufnahme.</value></data>
+  <data name="Ui.Step.Settings.Job.Help" xml:space="preserve"><value>Gespeicherter Job, den dieser Step ausführt.</value></data>
+  <data name="Ui.Step.Settings.LoweSRatio01.Help" xml:space="preserve"><value>Grenze für den Abstand zum zweitbesten Merkmaltreffer. Kleinere Werte filtern mehr uneindeutige Zuordnungen heraus.</value></data>
+  <data name="Ui.Step.Settings.Macro.Help" xml:space="preserve"><value>Gespeichertes Makro, dessen Eingabeaktionen dieser Step ausführt.</value></data>
+  <data name="Ui.Step.Settings.MatchMode.Help" xml:space="preserve"><value>Wählt die Vergleichsmethode für diesen Step.</value></data>
+  <data name="Ui.Step.Settings.MaxAgeMs.Help" xml:space="preserve"><value>Messwerte, die älter als diese Zeit in Millisekunden sind, werden für die Vorhersage verworfen.</value></data>
+  <data name="Ui.Step.Settings.MaxFitError.Help" xml:space="preserve"><value>Maximal erlaubte Abweichung des Vorhersagemodells von den Messwerten in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.MaxPredictionDistance.Help" xml:space="preserve"><value>Maximal erlaubte Distanz zwischen letzter Messung und vorhergesagter Position in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.MaxSize.Help" xml:space="preserve"><value>Größte zulässige Fläche eines Treffers in Quadratpixeln.</value></data>
+  <data name="Ui.Step.Settings.MinHeight.Help" xml:space="preserve"><value>Kleinste zulässige Höhe eines Treffers in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.MinMatches.Help" xml:space="preserve"><value>Mindestanzahl übereinstimmender Merkmale für einen gültigen Treffer.</value></data>
+  <data name="Ui.Step.Settings.MinSize.Help" xml:space="preserve"><value>Kleinste zulässige Fläche eines Treffers in Quadratpixeln.</value></data>
+  <data name="Ui.Step.Settings.MinValues.Help" xml:space="preserve"><value>Mindestanzahl gültiger Messwerte, bevor eine Bewegungsvorhersage erstellt wird.</value></data>
+  <data name="Ui.Step.Settings.MinWidth.Help" xml:space="preserve"><value>Kleinste zulässige Breite eines Treffers in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.MinimumConfidencePercent.Help" xml:space="preserve"><value>Mindestqualität für ein akzeptiertes Ergebnis. Die Oberfläche zeigt die Qualität als Prozentwert.</value></data>
+  <data name="Ui.Step.Settings.Mode.Help" xml:space="preserve"><value>Legt die Arbeitsweise des Steps fest. Die Auswahl bestimmt, welche weiteren Einstellungen verwendet werden.</value></data>
+  <data name="Ui.Step.Settings.Model.Help" xml:space="preserve"><value>YOLO-Modell für die Objekterkennung. Das Modell bestimmt die verfügbaren Objektklassen.</value></data>
+  <data name="Ui.Step.Settings.Monitor.Help" xml:space="preserve"><value>Monitor für die Position, Aufnahme oder Einblendung.</value></data>
+  <data name="Ui.Step.Settings.MultiplePoints.Help" xml:space="preserve"><value>Gibt mehrere gefundene Treffer statt nur eines einzelnen Treffers zurück.</value></data>
+  <data name="Ui.Step.Settings.OcrLanguages.Help" xml:space="preserve"><value>Sprachen des zu erkennenden Texts. Die Auswahl beeinflusst die Texterkennung.</value></data>
+  <data name="Ui.Step.Settings.OcrLayout.Help" xml:space="preserve"><value>Erwartete Anordnung des Texts im Bild, zum Beispiel ein Textblock oder eine einzelne Zeile.</value></data>
+  <data name="Ui.Step.Settings.OpacityPercent.Help" xml:space="preserve"><value>Deckkraft der Einblendung. 100 % ist vollständig sichtbar, 0 % vollständig transparent.</value></data>
+  <data name="Ui.Step.Settings.Overlays.Help" xml:space="preserve"><value>Einblendungen für Erkennungsergebnisse oder Text. Jede Einblendung besitzt eigene Darstellungswerte.</value></data>
+  <data name="Ui.Step.Settings.PathProgram.Help" xml:space="preserve"><value>Pfad zur ausführbaren Programmdatei.</value></data>
+  <data name="Ui.Step.Settings.PointSource.Help" xml:space="preserve"><value>Quelle der Position, die dieser Step verarbeitet.</value></data>
+  <data name="Ui.Step.Settings.PointsToCheck.Help" xml:space="preserve"><value>Positionen oder Erkennungsergebnisse, die miteinander verglichen werden.</value></data>
+  <data name="Ui.Step.Settings.Position.Help" xml:space="preserve"><value>Position auf dem gewählten Monitor. X ist die horizontale, Y die vertikale Koordinate in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.PredictionModel.Help" xml:space="preserve"><value>Modell zur Bewegungsvorhersage aus bisherigen Positionsmessungen.</value></data>
+  <data name="Ui.Step.Settings.PredictionMs.Help" xml:space="preserve"><value>Zeitspanne in Millisekunden, für die die zukünftige Position vorhergesagt wird.</value></data>
+  <data name="Ui.Step.Settings.ProcessName.Help" xml:space="preserve"><value>Name des gesuchten Prozesses, beispielsweise notepad. Mehrere Instanzen können denselben Namen haben.</value></data>
+  <data name="Ui.Step.Settings.ProcessSource.Help" xml:space="preserve"><value>Suchmerkmale oder Referenz auf eine konkrete Programminstanz. Eine Prozessreferenz identifiziert die gewählte Instanz.</value></data>
+  <data name="Ui.Step.Settings.ROI.Help" xml:space="preserve"><value>Begrenzt die Bildverarbeitung auf einen ausgewählten Bereich. Ohne Begrenzung wird das vollständige Bild verwendet.</value></data>
+  <data name="Ui.Step.Settings.ReferenceSource.Help" xml:space="preserve"><value>Referenzergebnis, mit dem die anderen Positionen verglichen werden.</value></data>
+  <data name="Ui.Step.Settings.RemoveWhenJobEnds.Help" xml:space="preserve"><value>Entfernt diese Einblendung beim Ende des Jobs.</value></data>
+  <data name="Ui.Step.Settings.RequiredMatches.Help" xml:space="preserve"><value>Legt fest, ob alle Punktvergleiche oder mindestens einer erfüllt sein müssen.</value></data>
+  <data name="Ui.Step.Settings.ResetAtDistance.Help" xml:space="preserve"><value>Distanz in Pixeln, ab der eine neue Erkennung nicht mehr der bisherigen Bewegungsspur zugeordnet wird.</value></data>
+  <data name="Ui.Step.Settings.SafetyTimeoutSeconds.Help" xml:space="preserve"><value>Zeitgrenze in Sekunden für die automatische Aufhebung der Eingabesperre.</value></data>
+  <data name="Ui.Step.Settings.SavePath.Help" xml:space="preserve"><value>Zielordner für die Ausgabedatei.</value></data>
+  <data name="Ui.Step.Settings.ScriptPath.Help" xml:space="preserve"><value>Pfad zum Skript, das dieser Step ausführt.</value></data>
+  <data name="Ui.Step.Settings.Template.Help" xml:space="preserve"><value>Bildvorlage, nach der in der Bildquelle gesucht wird.</value></data>
+  <data name="Ui.Step.Settings.TimeBasis.Help" xml:space="preserve"><value>Bestimmt, ob die Vorhersage auf den Aufnahmezeitpunkt oder den Ausführungszeitpunkt bezogen ist.</value></data>
+  <data name="Ui.Step.Settings.TimeoutMs.Help" xml:space="preserve"><value>Zeitlimit der Operation in Millisekunden. 1000 ms entsprechen einer Sekunde.</value></data>
+  <data name="Ui.Step.Settings.WaitForCompletion.Help" xml:space="preserve"><value>Wartet auf das Ende der gestarteten Ausführung, bevor der Job mit dem nächsten Step fortfährt.</value></data>
+  <data name="Ui.Step.Settings.WaitTimeMs.Help" xml:space="preserve"><value>Pause in Millisekunden. 1000 ms entsprechen einer Sekunde. Eine Pause bestätigt nicht, dass ein anderes Programm bereit ist.</value></data>
+  <data name="Ui.Step.Settings.WindowMode.Help" xml:space="preserve"><value>Anzeigemodus des gestarteten Programmfensters, beispielsweise normal, minimiert oder maximiert.</value></data>
+  <data name="Ui.Step.Settings.WindowName.Help" xml:space="preserve"><value>Titel des Fensters, auf das sich die Aktion bezieht.</value></data>
+  <data name="Ui.Step.Settings.WindowTitleContains.Help" xml:space="preserve"><value>Optionaler Teil des Fenstertitels zum Eingrenzen der Suche. Leerer Text setzt diesen Filter nicht.</value></data>
+  <data name="Ui.Step.Settings.WorkingDirectory.Help" xml:space="preserve"><value>Arbeitsordner des gestarteten Programms. Relative Dateipfade des Programms können sich darauf beziehen.</value></data>
+  <data name="Ui.Step.Settings.X.Help" xml:space="preserve"><value>Horizontale Koordinate in Pixeln im Koordinatensystem der gewählten Quelle.</value></data>
+  <data name="Ui.Step.Settings.XOffsetPixels.Help" xml:space="preserve"><value>Horizontaler Versatz der Zielposition in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.Y.Help" xml:space="preserve"><value>Vertikale Koordinate in Pixeln im Koordinatensystem der gewählten Quelle.</value></data>
+  <data name="Ui.Step.Settings.YOffsetPixels.Help" xml:space="preserve"><value>Vertikaler Versatz der Zielposition in Pixeln.</value></data>
+  <data name="Ui.UserChoice.Answers.Help" xml:space="preserve"><value>Antworten, die im Dialog angeboten werden. Jede Antwort besitzt eine Beschriftung und einen zurückgegebenen Wert.</value></data>
+  <data name="Ui.UserChoice.Description.Help" xml:space="preserve"><value>Optionaler ergänzender Text im Auswahldialog. Mehrzeilige Eingaben sind möglich.</value></data>
+  <data name="Ui.UserChoice.Question.Help" xml:space="preserve"><value>Frage, die dem Nutzer im Auswahldialog gestellt wird. Mehrzeilige Eingaben sind möglich.</value></data>
+  <data name="Ui.UserChoice.Title.Help" xml:space="preserve"><value>Optionale Fensterüberschrift des Auswahldialogs.</value></data>
+  <data name="Ui.Windows.Capability.Help" xml:space="preserve"><value>Windows-Funktion, die abgefragt oder geändert wird. Die Auswahl bestimmt die weiteren verfügbaren Felder.</value></data>
+  <data name="Ui.Step.Settings.Width.Help" xml:space="preserve"><value>Breite des ausgewählten Bildbereichs in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.Height.Help" xml:space="preserve"><value>Höhe des ausgewählten Bildbereichs in Pixeln.</value></data>
+  <data name="Ui.Step.Settings.EnableROI.Help" xml:space="preserve"><value>Aktiviert die Begrenzung der Bildverarbeitung auf den angegebenen Bereich.</value></data>
+  <data name="Ui.Step.Settings.Class.Help" xml:space="preserve"><value>Objektklasse, die mit dem ausgewählten YOLO-Modell erkannt werden soll.</value></data>
+  <data name="Ui.Common.XCoordinate.Help" xml:space="preserve"><value>Horizontale Position in Pixeln im Koordinatensystem der Quelle.</value></data>
+  <data name="Ui.Common.YCoordinate.Help" xml:space="preserve"><value>Vertikale Position in Pixeln im Koordinatensystem der Quelle.</value></data>
+  <data name="Ui.UserChoice.AnswerTextRequired.Help" xml:space="preserve"><value>Beschriftung dieser Antwort im Dialog. Die Beschriftung ist erforderlich.</value></data>
+  <data name="Ui.UserChoice.AnswerValueOptional.Help" xml:space="preserve"><value>Wert, den diese Antwort nach der Auswahl zurückgibt und den spätere Steps verwenden können.</value></data>
+  <data name="Ui.Step.Camera.Quality.Help" xml:space="preserve"><value>Auflösung und Bildrate der Kameraaufnahme. Es werden die von der gewählten Kamera angebotenen Formate verwendet.</value></data>
+  <data name="Ui.Step.Settings.AllAND.Help" xml:space="preserve"><value>Die Bedingung ist erfüllt, wenn alle enthaltenen Prüfungen erfüllt sind.</value></data>
+  <data name="Ui.Step.Settings.OneOR.Help" xml:space="preserve"><value>Die Bedingung ist erfüllt, wenn mindestens eine enthaltene Prüfung erfüllt ist.</value></data>
+  <data name="Windows.Parameter.action.Help" xml:space="preserve"><value>Aktion für die gewählte Windows-Funktion, zum Beispiel Verbinden oder Trennen.</value></data>
+  <data name="Windows.Parameter.connection_name.Help" xml:space="preserve"><value>Name einer bereits eingerichteten VPN-Verbindung.</value></data>
+  <data name="Windows.Parameter.device_name.Help" xml:space="preserve"><value>Audiogerät, auf das die Einstellung angewendet wird.</value></data>
+  <data name="Windows.Parameter.display_name.Help" xml:space="preserve"><value>Bildschirm, der als Hauptbildschirm verwendet werden soll.</value></data>
+  <data name="Windows.Parameter.filter_value.Help" xml:space="preserve"><value>Filterwert zum Eingrenzen der abgefragten oder beobachteten Einträge.</value></data>
+  <data name="Windows.Parameter.include_subdirectories.Help" xml:space="preserve"><value>Bezieht auch Dateien und Ereignisse in Unterordnern ein.</value></data>
+  <data name="Windows.Parameter.minutes.Help" xml:space="preserve"><value>Zeit bis zum Standby in Minuten.</value></data>
+  <data name="Windows.Parameter.mode.Help" xml:space="preserve"><value>Modus der gewählten Windows-Funktion. Wähle einen der angebotenen Werte.</value></data>
+  <data name="Windows.Parameter.ProcessName.Help" xml:space="preserve"><value>Name des Prozesses, dessen Status abgefragt wird.</value></data>
+  <data name="Windows.Parameter.Drive.Help" xml:space="preserve"><value>Laufwerk, auf das sich die Abfrage bezieht.</value></data>
+  <data name="Windows.Parameter.path.Help" xml:space="preserve"><value>Datei- oder Ordnerpfad für die gewählte Windows-Funktion.</value></data>
+  <data name="Windows.Parameter.power_source.Help" xml:space="preserve"><value>Stromversorgung, für die die Energieeinstellung gilt: Netzbetrieb oder Akku.</value></data>
+  <data name="Windows.Parameter.printer_name.Help" xml:space="preserve"><value>Installierter Drucker, der als Standarddrucker verwendet werden soll.</value></data>
+  <data name="Windows.Parameter.profile.Help" xml:space="preserve"><value>Name eines bereits gespeicherten WLAN-Profils.</value></data>
+  <data name="Windows.Parameter.scheme.Help" xml:space="preserve"><value>Energieschema, das aktiviert werden soll.</value></data>
+  <data name="Windows.Parameter.ssid.Help" xml:space="preserve"><value>Name des WLANs, auf das die Abfrage oder Beobachtung eingeschränkt wird.</value></data>
+  <data name="Windows.Parameter.state.Help" xml:space="preserve"><value>Gewünschter Zustand der gewählten Funktion, beispielsweise Stummschaltung ein oder aus.</value></data>
+  <data name="Windows.Parameter.theme.Help" xml:space="preserve"><value>Helle oder dunkle Darstellung in Windows.</value></data>
+  <data name="Windows.Parameter.threshold_ms.Help" xml:space="preserve"><value>Dauer ohne Benutzereingabe in Millisekunden, ab der die Leerlaufbedingung erfüllt ist.</value></data>
+  <data name="Windows.Parameter.value.Help" xml:space="preserve"><value>Gewünschter Einstellungswert. Bei der Lautstärke liegt er zwischen 0 und 100.</value></data>
+  <data name="Ui.Step.Axis.Axis.Help" xml:space="preserve"><value>Koordinatenachse, auf der der Vergleich durchgeführt wird.</value></data>
+  <data name="Ui.Step.Axis.Operator.Help" xml:space="preserve"><value>Vergleich zwischen der ermittelten Koordinate und dem angegebenen Wert.</value></data>
+  <data name="Ui.Step.Axis.Value.Help" xml:space="preserve"><value>Vergleichswert für die ausgewählte Koordinatenachse.</value></data>
+  <data name="Ui.Step.PointComparison.XTolerance.Help" xml:space="preserve"><value>Maximal erlaubter horizontaler Abstand zum Referenzpunkt in Pixeln.</value></data>
+  <data name="Ui.Step.PointComparison.YTolerance.Help" xml:space="preserve"><value>Maximal erlaubter vertikaler Abstand zum Referenzpunkt in Pixeln.</value></data>
+  <data name="Ui.Step.IfEditor.ResultPath.Help" xml:space="preserve"><value>Wert oder Eigenschaft, die diese Bedingung prüft. Die gewählte Quelle bestimmt die verfügbaren Vergleichsoperatoren.</value></data>
+  <data name="Ui.Step.Settings.Operator.Help" xml:space="preserve"><value>Prüfung, die auf die gewählte Quelle angewendet wird, zum Beispiel Gleichheit oder größer als.</value></data>
+  <data name="Ui.Step.Settings.Value.Help" xml:space="preserve"><value>Wert, mit dem die Quelle verglichen wird. Sein Typ muss zum gewählten Vergleich passen.</value></data>
+  <data name="StepValidation.WindowsSettingRemoved" xml:space="preserve"><value>Diese Windows-Einstellung kann nicht mehr automatisch geändert werden. Entferne diesen Step oder wähle eine unterstützte Einstellung.</value></data>
 </root>

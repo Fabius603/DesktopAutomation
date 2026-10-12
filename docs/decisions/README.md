@@ -9,6 +9,16 @@ history to make an old decision look current.
 
 ## Records
 
+- [2026-10-12 — Use supported Windows APIs with MSIX virtualization](2026-10-12-use-supported-windows-apis-with-msix-virtualization.md)
+
+- [2026-10-12 — Remove legacy input contract adapters](2026-10-12-remove-legacy-input-contract-adapters.md)
+
+- [2026-10-12 — Unify semantic input contracts (superseded)](2026-10-12-unify-semantic-input-contracts.md)
+
+- [2026-10-12 — Share field and nested source compatibility](2026-10-12-share-field-and-nested-source-compatibility.md)
+
+- [2026-10-12 — Convert displayable values for text inputs](2026-10-12-convert-displayable-values-for-text-inputs.md)
+
 - [2026-10-08 — Use risk-based local validation](2026-10-08-use-risk-based-local-validation.md)
 
 - [2026-10-08 — Isolate step state and failure policies (proposed)](2026-10-08-isolate-step-state-and-failure-policies.md)

@@ -755,9 +755,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         ?? ScreenPointEditor?.WholeValueSource;
     public bool HasWholeValueSource => WholeValueSource is not null;
     public string Label => Loc.Get(Descriptor.LabelKey);
-    public string Description => string.IsNullOrWhiteSpace(Descriptor.DescriptionKey)
-        ? string.Empty
-        : Loc.Get(Descriptor.DescriptionKey);
+    public string Description => StepInputHelp.Description(Descriptor);
     public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
     private StepValueKind EffectiveValueKind => Descriptor.ValueKind == StepValueKind.ResultBinding
         && IsInlineStepValue
@@ -1579,7 +1577,7 @@ public sealed class GeneratedWindowsCapabilityEditorViewModel
     public WindowsCapabilityPickerViewModel Picker { get; }
 
     public StepWindowsCapabilitySelectionValue ToValue() => new(
-        Picker.SelectedCapability?.Id ?? string.Empty,
+        Picker.SelectedId,
         Picker.ToDictionary());
 }
 
@@ -2851,8 +2849,8 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
 public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChanged, IGeneratedCompositeInputEditor
 {
     private readonly IReadOnlyList<SourceStepItem> _sources;
-    private readonly StepInputDescriptor _detectionInputContract;
-    private readonly StepInputDescriptor _textInputContract;
+    private readonly InputContractNode _detectionInputContract;
+    private readonly InputContractNode _textInputContract;
     private readonly Action<TextOverlayRowViewModel>? _chooseMonitor;
     private readonly IReadOnlyList<JobVariable> _variables;
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
@@ -2865,8 +2863,8 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
     public GeneratedVisualOverlayEditorViewModel(
         JsonNode? value,
         IReadOnlyList<SourceStepItem> sources,
-        StepInputDescriptor detectionInputContract,
-        StepInputDescriptor textInputContract,
+        InputContractNode detectionInputContract,
+        InputContractNode textInputContract,
         bool showDesktopOptions,
         Action<TextOverlayRowViewModel>? chooseMonitor = null,
         IReadOnlyList<JobVariable>? variables = null,

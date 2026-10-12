@@ -27,7 +27,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
                 EditorHint: StepEditorHints.ValueReferencePicker, Order: 0, InputContractId: "points"),
             new(OriginFieldId, "Ui.Step.Settings.Origin", StepValueKind.Object, true,
                 JsonSerializer.SerializeToNode(new StepScreenPointSelectionValue(0, 0, 0, KlickOnPoint3DSettings.MonitorLocalCoordinates)),
-                "Ui.Step.Settings.OriginLocalHelp", StepEditorHints.ScreenPointPicker, Order: 1,
+                "Ui.Step.Settings.OriginLocalHelp", StepEditorHints.ScreenPointPicker, InputSchemaId: InputSchemaIds.ScreenPoint, Order: 1,
                 ScreenPointPickerOptions: new(true)),
             new(ClickTypeFieldId, "Ui.Step.Settings.ClickType", StepValueKind.Enum, true, JsonValue.Create("left"),
                 Constraints: new(AllowedValues: ClickTypes), Order: 2,

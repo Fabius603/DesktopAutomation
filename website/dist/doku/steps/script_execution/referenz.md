@@ -7,7 +7,7 @@ Abbildung: [Detailansicht: Skript ausführen. Markierte Beschriftungen zeigen di
 
 1. Skriptpfad: Pfad zur vorhandenen .ps1-, .py- oder Batch-Datei. Der entsprechende Interpreter muss auf dem Zielrechner verfügbar sein.
 2. Auf Beendigung warten: true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts. Ohne sofortiges Warten bleibt besessene Skriptarbeit bis zum Job-Ende zugeordnet.
-3. Argumente: Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen.
+3. Argumente: Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 ### errors
 
 Ein nicht vorhandener Interpreter oder Skriptpfad, ein fehlerhafter Exit beziehungsweise ein fehlgeschlagener Hintergrundprozess kann den Job fehlschlagen lassen. Der Verlauf enthält Kontext und bereinigte Diagnose, nicht automatisch den vollständigen Skriptinhalt oder dessen Argumente.
@@ -18,7 +18,7 @@ Ein selbst erstelltes .ps1-Skript mit einem Testordner als Argument wählen und 
 
 ### field.arguments
 
-Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen.
+Argumentzeichenfolge für das Programm oder Skript. Passe Anführungszeichen an den Interpreter an; Argumente werden nicht als vollständiger Inhalt in den Verlauf übernommen. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.script_path
 
@@ -58,11 +58,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -112,6 +112,8 @@ true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts. Ohne 
     {
       "id": "script_path",
       "name": "Skriptpfad",
+      "helpKey": "Ui.Step.Settings.ScriptPath.Help",
+      "help": "Pfad zum Skript, das dieser Step ausführt.",
       "descriptor": {
         "Id": "script_path",
         "LabelKey": "Ui.Step.Settings.ScriptPath",
@@ -136,12 +138,17 @@ true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts. Ohne 
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "wait_for_exit",
       "name": "Auf Beendigung warten",
+      "helpKey": "Ui.Step.Settings.WaitForCompletion.Help",
+      "help": "Wartet auf das Ende der gestarteten Ausführung, bevor der Job mit dem nächsten Step fortfährt.",
       "descriptor": {
         "Id": "wait_for_exit",
         "LabelKey": "Ui.Step.Settings.WaitForCompletion",
@@ -166,12 +173,17 @@ true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts. Ohne 
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "arguments",
       "name": "Argumente",
+      "helpKey": "Ui.Step.Settings.Arguments.Help",
+      "help": "Zusätzliche Startargumente für das Programm. Die erwartete Schreibweise richtet sich nach dem Programm.",
       "descriptor": {
         "Id": "arguments",
         "LabelKey": "Ui.Step.Settings.Arguments",
@@ -196,7 +208,10 @@ true wartet an diesem Step auf das Ende des gestarteten Programms/Skripts. Ohne 
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],

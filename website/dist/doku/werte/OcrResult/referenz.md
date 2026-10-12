@@ -17,339 +17,339 @@ Typisierter Ergebnisvertrag OcrResult. Wird von Text erkennen geliefert. Die sta
 
 ### result.applied_roi
 
-Tatsächlich angewendeter Suchbereich. Damit lässt sich prüfen, ob eine direkte oder dynamische Eingrenzung aktiv war. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Tatsächlich verwendeter Suchbereich in Pixeln. Bei Bildschirmquellen ist der Desktopversatz bereits eingerechnet, bei Kameras sind es Bildkoordinaten. Ohne Eingrenzung kann der Wert fehlen. Beispiel: {X=10,Y=20,Width=300,Height=200}.
 
 ### result.applied_roi.bottom
 
-Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.center
 
-Mittelpunkt einer einzelnen Erkennung in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.applied_roi.center.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.center.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.is_empty
 
-Ob die Zwischenablage im abgefragten Kontext leer ist. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Gibt an, ob der Bereich keine positive Breite oder Höhe hat. Beispiel: true.
 
 ### result.applied_roi.left
 
-Linke Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.location
 
-Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.applied_roi.location.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.location.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.right
 
-Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.top
 
-Obere Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.width
 
-Breite des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.applied_roi.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box
 
-Begrenzendes Rechteck eines Treffers; bei fehlender Erkennung kann ein optionales Rechteck fehlen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Rechteck um den erkannten Inhalt in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Kann ohne Treffer fehlen. Beispiel: {X=10,Y=20,Width=300,Height=200}.
 
 ### result.bounding_box.bottom
 
-Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.center
 
-Mittelpunkt einer einzelnen Erkennung in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.bounding_box.center.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.center.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.is_empty
 
-Ob die Zwischenablage im abgefragten Kontext leer ist. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Gibt an, ob der Bereich keine positive Breite oder Höhe hat. Beispiel: true.
 
 ### result.bounding_box.left
 
-Linke Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.location
 
-Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.bounding_box.location.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.location.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.right
 
-Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.top
 
-Obere Rechteckkante in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.width
 
-Breite des Ergebnisrechtecks in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounding_box.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.confidence
 
-Normalisierte Trefferkonfidenz zwischen 0 und 1. 0.9 entspricht 90 %; mehrere Treffer können unterschiedliche Konfidenzen besitzen. Einzelwert dieses Ergebnisses.
+Durchschnittliche Erkennungsqualität des OCR-Ergebnisses von 0 bis 1. 0,92 entspricht 92 %. Ohne Text ist der Wert 0. Beispiel: 0.92.
 
 ### result.found
 
-Ob die Erkennung/Suche in diesem Lauf einen passenden Treffer geliefert hat. false ist ein fachliches Ergebnis und nicht automatisch ein Step-Fehler. Einzelwert dieses Ergebnisses.
+Gibt an, ob die Texterkennung Text geliefert hat. false bedeutet keinen erkannten Text. Beispiel: true.
 
 ### result.line_count
 
-Anzahl erkannter Textzeilen der OCR-Auswertung. Einzelwert dieses Ergebnisses.
+Anzahl der erkannten Textzeilen. 0 bedeutet, dass keine Zeilen erkannt wurden. Beispiel: 3.
 
 ### result.lines.bounding_box
 
-Begrenzendes Rechteck eines Treffers; bei fehlender Erkennung kann ein optionales Rechteck fehlen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.
 
 ### result.lines.bounding_box.bottom
 
-Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.center
 
-Mittelpunkt einer einzelnen Erkennung in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.center.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.center.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.is_empty
 
-Ob die Zwischenablage im abgefragten Kontext leer ist. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Gibt an, ob der Bereich keine positive Breite oder Höhe hat.
 
 ### result.lines.bounding_box.left
 
-Linke Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.location
 
-Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.location.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.location.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.right
 
-Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.top
 
-Obere Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.width
 
-Breite des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.bounding_box.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.lines.confidence
 
-Normalisierte Trefferkonfidenz zwischen 0 und 1. 0.9 entspricht 90 %; mehrere Treffer können unterschiedliche Konfidenzen besitzen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.
 
 ### result.lines.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl der Elemente in „Erkannte Zeilen“. Eine leere Liste hat die Anzahl 0. Beispiel: 3.
 
 ### result.lines.position
 
-Position des Punktes/Fensters im Ergebnis-Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.
 
 ### result.lines.text
 
-Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfung vor einem nachfolgenden Vergleich beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Text dieser erkannten Zeile beziehungsweise dieses Wortes. Beispiel: ABC 123.
 
 ### result.minimum_confidence
 
-Für diese Berechnung verwendete Mindestkonfidenz als Anteil von 0 bis 1. Einzelwert dieses Ergebnisses.
+Niedrigste Erkennungsqualität aller Wörter von 0 bis 1. Ohne erkannte Wörter ist der Wert 0. Beispiel: 0.92.
 
 ### result.source_capture_is_fresh
 
-Frischezustand der verwendeten Aufnahme, unverändert in das Erkennungsergebnis übernommen. Einzelwert dieses Ergebnisses.
+Frischezustand der Aufnahme, die für diese Erkennung verwendet wurde. false bedeutet, dass ein vorhandenes Bild wiederverwendet wurde. Beispiel: true.
 
 ### result.source_capture_timestamp_utc
 
-UTC-Aufnahmezeit der Bildquelle, aus der dieses Ergebnis berechnet wurde. Einzelwert dieses Ergebnisses.
+UTC-Aufnahmezeit des Bildes, aus dem dieses Ergebnis berechnet wurde. Bei Wiederverwendung bleibt die ursprüngliche Aufnahmezeit erhalten. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.source_frame_timestamp
 
-Monotoner Zeitstempel des zugrunde liegenden Frames. 0 bedeutet unbekannte zeitliche Herkunft. Einzelwert dieses Ergebnisses.
+Monotoner Zeitstempel zur technischen Reihenfolgeprüfung. 0 bedeutet unbekannt. Kein Kalenderdatum und keine Millisekunden seit 1970. Beispiel: 3. In der App unter Diagnose aufgeführt.
 
 ### result.source_frame_version
 
-Frame-Identität der verwendeten Bildquelle; auch ein Erkennungsfehlschlag behält die Herkunftsinformation. Einzelwert dieses Ergebnisses.
+Laufende Bildkennung innerhalb derselben Aufnahmequelle. Hilft zu erkennen, ob zwei Ergebnisse auf demselben Bild beruhen; nicht zwischen unterschiedlichen Quellen vergleichen. Beispiel: 3. In der App unter Diagnose aufgeführt.
 
 ### result.text
 
-Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfung vor einem nachfolgenden Vergleich beachten. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Erkannter Gesamttext zur Anzeige oder für Textvergleiche. Ohne erkannten Text ist der Wert leer. Beispiel: ABC 123.
 
 ### result.used_dynamic_roi
 
-Ob für diese Auswertung ein dynamischer Suchbereich verwendet wurde. Einzelwert dieses Ergebnisses.
+Gibt an, ob für diese Suche ein dynamischer Suchbereich übernommen wurde. Beispiel: true.
 
 ### result.word_count
 
-Anzahl erkannter Wörter im betrachteten Textbereich. Einzelwert dieses Ergebnisses.
+Anzahl der erkannten Wörter. 0 bedeutet, dass keine Wörter erkannt wurden. Beispiel: 3.
 
 ### result.words.bounding_box
 
-Begrenzendes Rechteck eines Treffers; bei fehlender Erkennung kann ein optionales Rechteck fehlen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.
 
 ### result.words.bounding_box.bottom
 
-Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.center
 
-Mittelpunkt einer einzelnen Erkennung in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.center.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.center.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.is_empty
 
-Ob die Zwischenablage im abgefragten Kontext leer ist. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Gibt an, ob der Bereich keine positive Breite oder Höhe hat.
 
 ### result.words.bounding_box.left
 
-Linke Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.location
 
-Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.location.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.location.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.right
 
-Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.top
 
-Obere Rechteckkante in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.width
 
-Breite des Ergebnisrechtecks in Pixeln. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.bounding_box.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.
 
 ### result.words.confidence
 
-Normalisierte Trefferkonfidenz zwischen 0 und 1. 0.9 entspricht 90 %; mehrere Treffer können unterschiedliche Konfidenzen besitzen. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.
 
 ### result.words.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl der Elemente in „Erkannte Wörter“. Eine leere Liste hat die Anzahl 0. Beispiel: 3.
 
 ### result.words.line_position
 
-Position beziehungsweise Zuordnung des OCR-Treffers innerhalb seiner Zeile. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Position der zugehörigen Textzeile; 0 bezeichnet die erste Zeile. -1 bedeutet, dass keine Zeile zugeordnet werden konnte.
 
 ### result.words.position
 
-Position des Punktes/Fensters im Ergebnis-Koordinatenraum. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.
 
 ### result.words.text
 
-Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfung vor einem nachfolgenden Vergleich beachten. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Text dieser erkannten Zeile beziehungsweise dieses Wortes. Beispiel: ABC 123.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -362,345 +362,369 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
     "Properties": [
       {
         "Name": "Found",
-        "DisplayName": "Found",
+        "DisplayName": "Text gefunden",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob die Texterkennung Text geliefert hat. false bedeutet keinen erkannten Text.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "found",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "found"
       },
       {
         "Name": "Text",
-        "DisplayName": "Text",
+        "DisplayName": "Erkannter Text",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Erkannter Gesamttext zur Anzeige oder für Textvergleiche. Ohne erkannten Text ist der Wert leer.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "ABC 123",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "text",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "text"
       },
       {
         "Name": "Confidence",
-        "DisplayName": "Confidence",
+        "DisplayName": "Durchschnittliche Erkennungsqualität",
         "DataType": "Number",
-        "Description": "Number",
+        "Description": "Durchschnittliche Erkennungsqualität des OCR-Ergebnisses von 0 bis 1. 0,92 entspricht 92 %. Ohne Text ist der Wert 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "0.92",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "confidence",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "confidence"
       },
       {
         "Name": "MinimumConfidence",
-        "DisplayName": "Minimum Confidence",
+        "DisplayName": "Niedrigste Wortqualität",
         "DataType": "Number",
-        "Description": "Number",
+        "Description": "Niedrigste Erkennungsqualität aller Wörter von 0 bis 1. Ohne erkannte Wörter ist der Wert 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "0.92",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "minimum_confidence",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "minimum_confidence"
       },
       {
         "Name": "BoundingBox",
-        "DisplayName": "Bounding Box",
+        "DisplayName": "Erkannter Bereich",
         "DataType": "Rectangle",
-        "Description": "Rectangle, kann leer sein",
+        "Description": "Rechteck um den erkannten Inhalt in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Kann ohne Treffer fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "{X=10,Y=20,Width=300,Height=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box"
       },
       {
         "Name": "BoundingBox.X",
-        "DisplayName": "Bounding Box / X",
+        "DisplayName": "Erkannter Bereich / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.x"
       },
       {
         "Name": "BoundingBox.Y",
-        "DisplayName": "Bounding Box / Y",
+        "DisplayName": "Erkannter Bereich / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.y"
       },
       {
         "Name": "BoundingBox.Width",
-        "DisplayName": "Bounding Box / Width",
+        "DisplayName": "Erkannter Bereich / Breite (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.width"
       },
       {
         "Name": "BoundingBox.Height",
-        "DisplayName": "Bounding Box / Height",
+        "DisplayName": "Erkannter Bereich / Höhe (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.height"
       },
       {
         "Name": "BoundingBox.Left",
-        "DisplayName": "Bounding Box / Left",
+        "DisplayName": "Erkannter Bereich / Linke Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.left",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.left"
       },
       {
         "Name": "BoundingBox.Top",
-        "DisplayName": "Bounding Box / Top",
+        "DisplayName": "Erkannter Bereich / Obere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.top",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.top"
       },
       {
         "Name": "BoundingBox.Right",
-        "DisplayName": "Bounding Box / Right",
+        "DisplayName": "Erkannter Bereich / Rechte Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.right",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.right"
       },
       {
         "Name": "BoundingBox.Bottom",
-        "DisplayName": "Bounding Box / Bottom",
+        "DisplayName": "Erkannter Bereich / Untere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.bottom",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.bottom"
       },
       {
         "Name": "BoundingBox.IsEmpty",
-        "DisplayName": "Bounding Box / Is Empty",
+        "DisplayName": "Erkannter Bereich / Bereich ist leer",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.is_empty",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.is_empty"
       },
       {
         "Name": "BoundingBox.Location",
-        "DisplayName": "Bounding Box / Location",
+        "DisplayName": "Erkannter Bereich / Linke obere Ecke",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.location",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.location"
       },
       {
         "Name": "BoundingBox.Location.X",
-        "DisplayName": "Bounding Box / Location / X",
+        "DisplayName": "Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.location.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.location.x"
       },
       {
         "Name": "BoundingBox.Location.Y",
-        "DisplayName": "Bounding Box / Location / Y",
+        "DisplayName": "Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.location.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.location.y"
       },
       {
         "Name": "BoundingBox.Center",
-        "DisplayName": "Bounding Box / Center",
+        "DisplayName": "Erkannter Bereich / Mittelpunkt",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.center",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.center"
       },
       {
         "Name": "BoundingBox.Center.X",
-        "DisplayName": "Bounding Box / Center / X",
+        "DisplayName": "Erkannter Bereich / Mittelpunkt / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.center.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.center.x"
       },
       {
         "Name": "BoundingBox.Center.Y",
-        "DisplayName": "Bounding Box / Center / Y",
+        "DisplayName": "Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounding_box.center.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounding_box.center.y"
       },
       {
         "Name": "LineCount",
-        "DisplayName": "Line Count",
+        "DisplayName": "Anzahl Zeilen",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der erkannten Textzeilen. 0 bedeutet, dass keine Zeilen erkannt wurden.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "line_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "line_count"
       },
       {
         "Name": "WordCount",
-        "DisplayName": "Word Count",
+        "DisplayName": "Anzahl Wörter",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der erkannten Wörter. 0 bedeutet, dass keine Wörter erkannt wurden.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "word_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "word_count"
       },
       {
         "Name": "Lines.Count",
-        "DisplayName": "Lines / Count",
+        "DisplayName": "Erkannte Zeilen / Anzahl",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der Elemente in „Erkannte Zeilen“. Eine leere Liste hat die Anzahl 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "lines.count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.count"
       },
       {
         "Name": "Lines[].Text",
-        "DisplayName": "Lines[] / Text",
+        "DisplayName": "Text",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Text dieser erkannten Zeile beziehungsweise dieses Wortes.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "ABC 123",
         "Cardinality": "Collection",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "lines.text",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.text"
       },
       {
         "Name": "Lines[].Confidence",
-        "DisplayName": "Lines[] / Confidence",
+        "DisplayName": "Erkennungsqualität",
         "DataType": "Number",
-        "Description": "Number",
+        "Description": "Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -708,13 +732,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.confidence",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.confidence"
       },
       {
         "Name": "Lines[].BoundingBox",
-        "DisplayName": "Lines[] / Bounding Box",
+        "DisplayName": "Bereich",
         "DataType": "Rectangle",
-        "Description": "Rectangle",
+        "Description": "Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -722,13 +747,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box"
       },
       {
         "Name": "Lines[].BoundingBox.X",
-        "DisplayName": "Lines[] / Bounding Box / X",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -736,13 +762,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.x"
       },
       {
         "Name": "Lines[].BoundingBox.Y",
-        "DisplayName": "Lines[] / Bounding Box / Y",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -750,13 +777,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.y"
       },
       {
         "Name": "Lines[].BoundingBox.Width",
-        "DisplayName": "Lines[] / Bounding Box / Width",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Breite (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -764,13 +792,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.width"
       },
       {
         "Name": "Lines[].BoundingBox.Height",
-        "DisplayName": "Lines[] / Bounding Box / Height",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Höhe (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -778,13 +807,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.height"
       },
       {
         "Name": "Lines[].BoundingBox.Left",
-        "DisplayName": "Lines[] / Bounding Box / Left",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -792,13 +822,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.left",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.left"
       },
       {
         "Name": "Lines[].BoundingBox.Top",
-        "DisplayName": "Lines[] / Bounding Box / Top",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Obere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -806,13 +837,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.top",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.top"
       },
       {
         "Name": "Lines[].BoundingBox.Right",
-        "DisplayName": "Lines[] / Bounding Box / Right",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Rechte Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -820,13 +852,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.right",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.right"
       },
       {
         "Name": "Lines[].BoundingBox.Bottom",
-        "DisplayName": "Lines[] / Bounding Box / Bottom",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Untere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -834,13 +867,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.bottom",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.bottom"
       },
       {
         "Name": "Lines[].BoundingBox.IsEmpty",
-        "DisplayName": "Lines[] / Bounding Box / Is Empty",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Bereich ist leer",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -848,13 +882,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.is_empty",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.is_empty"
       },
       {
         "Name": "Lines[].BoundingBox.Location",
-        "DisplayName": "Lines[] / Bounding Box / Location",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -862,13 +897,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.location",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.location"
       },
       {
         "Name": "Lines[].BoundingBox.Location.X",
-        "DisplayName": "Lines[] / Bounding Box / Location / X",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -876,13 +912,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.location.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.location.x"
       },
       {
         "Name": "Lines[].BoundingBox.Location.Y",
-        "DisplayName": "Lines[] / Bounding Box / Location / Y",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -890,13 +927,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.location.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.location.y"
       },
       {
         "Name": "Lines[].BoundingBox.Center",
-        "DisplayName": "Lines[] / Bounding Box / Center",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Mittelpunkt",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -904,13 +942,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.center",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.center"
       },
       {
         "Name": "Lines[].BoundingBox.Center.X",
-        "DisplayName": "Lines[] / Bounding Box / Center / X",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -918,13 +957,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.center.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.center.x"
       },
       {
         "Name": "Lines[].BoundingBox.Center.Y",
-        "DisplayName": "Lines[] / Bounding Box / Center / Y",
+        "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -932,13 +972,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.bounding_box.center.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.bounding_box.center.y"
       },
       {
         "Name": "Lines[].Position",
-        "DisplayName": "Lines[] / Position",
+        "DisplayName": "Position",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -946,41 +987,44 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "lines.position",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "lines.position"
       },
       {
         "Name": "Words.Count",
-        "DisplayName": "Words / Count",
+        "DisplayName": "Erkannte Wörter / Anzahl",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der Elemente in „Erkannte Wörter“. Eine leere Liste hat die Anzahl 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "words.count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.count"
       },
       {
         "Name": "Words[].Text",
-        "DisplayName": "Words[] / Text",
+        "DisplayName": "Text",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Text dieser erkannten Zeile beziehungsweise dieses Wortes.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "ABC 123",
         "Cardinality": "Collection",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "words.text",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.text"
       },
       {
         "Name": "Words[].Confidence",
-        "DisplayName": "Words[] / Confidence",
+        "DisplayName": "Erkennungsqualität",
         "DataType": "Number",
-        "Description": "Number",
+        "Description": "Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -988,13 +1032,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.confidence",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.confidence"
       },
       {
         "Name": "Words[].BoundingBox",
-        "DisplayName": "Words[] / Bounding Box",
+        "DisplayName": "Bereich",
         "DataType": "Rectangle",
-        "Description": "Rectangle",
+        "Description": "Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1002,13 +1047,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box"
       },
       {
         "Name": "Words[].BoundingBox.X",
-        "DisplayName": "Words[] / Bounding Box / X",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1016,13 +1062,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.x"
       },
       {
         "Name": "Words[].BoundingBox.Y",
-        "DisplayName": "Words[] / Bounding Box / Y",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1030,13 +1077,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.y"
       },
       {
         "Name": "Words[].BoundingBox.Width",
-        "DisplayName": "Words[] / Bounding Box / Width",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Breite (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1044,13 +1092,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.width"
       },
       {
         "Name": "Words[].BoundingBox.Height",
-        "DisplayName": "Words[] / Bounding Box / Height",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Höhe (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1058,13 +1107,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.height"
       },
       {
         "Name": "Words[].BoundingBox.Left",
-        "DisplayName": "Words[] / Bounding Box / Left",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1072,13 +1122,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.left",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.left"
       },
       {
         "Name": "Words[].BoundingBox.Top",
-        "DisplayName": "Words[] / Bounding Box / Top",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Obere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1086,13 +1137,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.top",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.top"
       },
       {
         "Name": "Words[].BoundingBox.Right",
-        "DisplayName": "Words[] / Bounding Box / Right",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Rechte Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1100,13 +1152,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.right",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.right"
       },
       {
         "Name": "Words[].BoundingBox.Bottom",
-        "DisplayName": "Words[] / Bounding Box / Bottom",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Untere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1114,13 +1167,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.bottom",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.bottom"
       },
       {
         "Name": "Words[].BoundingBox.IsEmpty",
-        "DisplayName": "Words[] / Bounding Box / Is Empty",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Bereich ist leer",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1128,13 +1182,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.is_empty",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.is_empty"
       },
       {
         "Name": "Words[].BoundingBox.Location",
-        "DisplayName": "Words[] / Bounding Box / Location",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke obere Ecke",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1142,13 +1197,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.location",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.location"
       },
       {
         "Name": "Words[].BoundingBox.Location.X",
-        "DisplayName": "Words[] / Bounding Box / Location / X",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1156,13 +1212,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.location.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.location.x"
       },
       {
         "Name": "Words[].BoundingBox.Location.Y",
-        "DisplayName": "Words[] / Bounding Box / Location / Y",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1170,13 +1227,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.location.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.location.y"
       },
       {
         "Name": "Words[].BoundingBox.Center",
-        "DisplayName": "Words[] / Bounding Box / Center",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Mittelpunkt",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1184,13 +1242,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.center",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.center"
       },
       {
         "Name": "Words[].BoundingBox.Center.X",
-        "DisplayName": "Words[] / Bounding Box / Center / X",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1198,13 +1257,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.center.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.center.x"
       },
       {
         "Name": "Words[].BoundingBox.Center.Y",
-        "DisplayName": "Words[] / Bounding Box / Center / Y",
+        "DisplayName": "Erkannte Wörter / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1212,13 +1272,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.bounding_box.center.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.bounding_box.center.y"
       },
       {
         "Name": "Words[].Position",
-        "DisplayName": "Words[] / Position",
+        "DisplayName": "Position",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1226,13 +1287,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.position",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.position"
       },
       {
         "Name": "Words[].LinePosition",
-        "DisplayName": "Words[] / Line Position",
+        "DisplayName": "Zeilenposition",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Position der zugehörigen Textzeile; 0 bezeichnet die erste Zeile. -1 bedeutet, dass keine Zeile zugeordnet werden konnte.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1240,13 +1302,14 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "words.line_position",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "words.line_position"
       },
       {
         "Name": "AppliedRoi",
-        "DisplayName": "Applied Roi",
+        "DisplayName": "Verwendeter Suchbereich",
         "DataType": "Rectangle",
-        "Description": "Rectangle, kann leer sein",
+        "Description": "Tatsächlich verwendeter Suchbereich in Pixeln. Bei Bildschirmquellen ist der Desktopversatz bereits eingerechnet, bei Kameras sind es Bildkoordinaten. Ohne Eingrenzung kann der Wert fehlen.",
         "IsNullable": true,
         "Example": "{X=10,Y=20,Width=300,Height=200}",
         "Cardinality": "OptionalSingle",
@@ -1254,607 +1317,645 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
         "EnumValues": null,
         "Id": "applied_roi",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi"
       },
       {
         "Name": "AppliedRoi.X",
-        "DisplayName": "Applied Roi / X",
+        "DisplayName": "Verwendeter Suchbereich / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.x"
       },
       {
         "Name": "AppliedRoi.Y",
-        "DisplayName": "Applied Roi / Y",
+        "DisplayName": "Verwendeter Suchbereich / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.y"
       },
       {
         "Name": "AppliedRoi.Width",
-        "DisplayName": "Applied Roi / Width",
+        "DisplayName": "Verwendeter Suchbereich / Breite (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.width"
       },
       {
         "Name": "AppliedRoi.Height",
-        "DisplayName": "Applied Roi / Height",
+        "DisplayName": "Verwendeter Suchbereich / Höhe (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.height"
       },
       {
         "Name": "AppliedRoi.Left",
-        "DisplayName": "Applied Roi / Left",
+        "DisplayName": "Verwendeter Suchbereich / Linke Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.left",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.left"
       },
       {
         "Name": "AppliedRoi.Top",
-        "DisplayName": "Applied Roi / Top",
+        "DisplayName": "Verwendeter Suchbereich / Obere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.top",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.top"
       },
       {
         "Name": "AppliedRoi.Right",
-        "DisplayName": "Applied Roi / Right",
+        "DisplayName": "Verwendeter Suchbereich / Rechte Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.right",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.right"
       },
       {
         "Name": "AppliedRoi.Bottom",
-        "DisplayName": "Applied Roi / Bottom",
+        "DisplayName": "Verwendeter Suchbereich / Untere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.bottom",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.bottom"
       },
       {
         "Name": "AppliedRoi.IsEmpty",
-        "DisplayName": "Applied Roi / Is Empty",
+        "DisplayName": "Verwendeter Suchbereich / Bereich ist leer",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.is_empty",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.is_empty"
       },
       {
         "Name": "AppliedRoi.Location",
-        "DisplayName": "Applied Roi / Location",
+        "DisplayName": "Verwendeter Suchbereich / Linke obere Ecke",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.location",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.location"
       },
       {
         "Name": "AppliedRoi.Location.X",
-        "DisplayName": "Applied Roi / Location / X",
+        "DisplayName": "Verwendeter Suchbereich / Linke obere Ecke / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.location.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.location.x"
       },
       {
         "Name": "AppliedRoi.Location.Y",
-        "DisplayName": "Applied Roi / Location / Y",
+        "DisplayName": "Verwendeter Suchbereich / Linke obere Ecke / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.location.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.location.y"
       },
       {
         "Name": "AppliedRoi.Center",
-        "DisplayName": "Applied Roi / Center",
+        "DisplayName": "Verwendeter Suchbereich / Mittelpunkt",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.center",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.center"
       },
       {
         "Name": "AppliedRoi.Center.X",
-        "DisplayName": "Applied Roi / Center / X",
+        "DisplayName": "Verwendeter Suchbereich / Mittelpunkt / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.center.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.center.x"
       },
       {
         "Name": "AppliedRoi.Center.Y",
-        "DisplayName": "Applied Roi / Center / Y",
+        "DisplayName": "Verwendeter Suchbereich / Mittelpunkt / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "applied_roi.center.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "applied_roi.center.y"
       },
       {
         "Name": "UsedDynamicRoi",
-        "DisplayName": "Used Dynamic Roi",
+        "DisplayName": "Dynamischer Suchbereich verwendet",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob für diese Suche ein dynamischer Suchbereich übernommen wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "used_dynamic_roi",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "used_dynamic_roi"
       },
       {
         "Name": "SourceCaptureIsFresh",
-        "DisplayName": "Source Capture Is Fresh",
+        "DisplayName": "Quellbild ist frisch",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Frischezustand der Aufnahme, die für diese Erkennung verwendet wurde. false bedeutet, dass ein vorhandenes Bild wiederverwendet wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "source_capture_is_fresh",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "source_capture_is_fresh"
       },
       {
         "Name": "SourceCaptureTimestampUtc",
-        "DisplayName": "Source Capture Timestamp Utc",
+        "DisplayName": "Aufnahmezeit des Quellbilds (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Aufnahmezeit des Bildes, aus dem dieses Ergebnis berechnet wurde. Bei Wiederverwendung bleibt die ursprüngliche Aufnahmezeit erhalten.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "source_capture_timestamp_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "source_capture_timestamp_utc"
       },
       {
         "Name": "SourceFrameVersion",
-        "DisplayName": "Source Frame Version",
+        "DisplayName": "Quellbild-Version",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Laufende Bildkennung innerhalb derselben Aufnahmequelle. Hilft zu erkennen, ob zwei Ergebnisse auf demselben Bild beruhen; nicht zwischen unterschiedlichen Quellen vergleichen.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "source_frame_version",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "source_frame_version"
       },
       {
         "Name": "SourceFrameTimestamp",
-        "DisplayName": "Source Frame Timestamp",
+        "DisplayName": "Quellbild-Zeitstempel (Ticks)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Monotoner Zeitstempel zur technischen Reihenfolgeprüfung. 0 bedeutet unbekannt. Kein Kalenderdatum und keine Millisekunden seit 1970.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "source_frame_timestamp",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "source_frame_timestamp"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Found",
-        "DisplayName": "Found",
+        "DisplayName": "Text gefunden",
         "Property": {
           "Name": "Found",
-          "DisplayName": "Found",
+          "DisplayName": "Text gefunden",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob die Texterkennung Text geliefert hat. false bedeutet keinen erkannten Text.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "found",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "found"
         },
         "Children": []
       },
       {
         "Segment": "Text",
-        "DisplayName": "Text",
+        "DisplayName": "Erkannter Text",
         "Property": {
           "Name": "Text",
-          "DisplayName": "Text",
+          "DisplayName": "Erkannter Text",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Erkannter Gesamttext zur Anzeige oder für Textvergleiche. Ohne erkannten Text ist der Wert leer.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "ABC 123",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "text",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "text"
         },
         "Children": []
       },
       {
         "Segment": "Confidence",
-        "DisplayName": "Confidence",
+        "DisplayName": "Durchschnittliche Erkennungsqualität",
         "Property": {
           "Name": "Confidence",
-          "DisplayName": "Confidence",
+          "DisplayName": "Durchschnittliche Erkennungsqualität",
           "DataType": "Number",
-          "Description": "Number",
+          "Description": "Durchschnittliche Erkennungsqualität des OCR-Ergebnisses von 0 bis 1. 0,92 entspricht 92 %. Ohne Text ist der Wert 0.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "0.92",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "confidence",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "confidence"
         },
         "Children": []
       },
       {
         "Segment": "MinimumConfidence",
-        "DisplayName": "Minimum Confidence",
+        "DisplayName": "Niedrigste Wortqualität",
         "Property": {
           "Name": "MinimumConfidence",
-          "DisplayName": "Minimum Confidence",
+          "DisplayName": "Niedrigste Wortqualität",
           "DataType": "Number",
-          "Description": "Number",
+          "Description": "Niedrigste Erkennungsqualität aller Wörter von 0 bis 1. Ohne erkannte Wörter ist der Wert 0.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "0.92",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "minimum_confidence",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "minimum_confidence"
         },
         "Children": []
       },
       {
         "Segment": "BoundingBox",
-        "DisplayName": "Bounding Box",
+        "DisplayName": "Erkannter Bereich",
         "Property": {
           "Name": "BoundingBox",
-          "DisplayName": "Bounding Box",
+          "DisplayName": "Erkannter Bereich",
           "DataType": "Rectangle",
-          "Description": "Rectangle, kann leer sein",
+          "Description": "Rechteck um den erkannten Inhalt in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Kann ohne Treffer fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "{X=10,Y=20,Width=300,Height=200}",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "bounding_box",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "bounding_box"
         },
         "Children": [
           {
             "Segment": "X",
-            "DisplayName": "X",
+            "DisplayName": "X-Koordinate (px)",
             "Property": {
               "Name": "BoundingBox.X",
-              "DisplayName": "Bounding Box / X",
+              "DisplayName": "Erkannter Bereich / X-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.x",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.x"
             },
             "Children": []
           },
           {
             "Segment": "Y",
-            "DisplayName": "Y",
+            "DisplayName": "Y-Koordinate (px)",
             "Property": {
               "Name": "BoundingBox.Y",
-              "DisplayName": "Bounding Box / Y",
+              "DisplayName": "Erkannter Bereich / Y-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.y",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.y"
             },
             "Children": []
           },
           {
             "Segment": "Width",
-            "DisplayName": "Width",
+            "DisplayName": "Breite (px)",
             "Property": {
               "Name": "BoundingBox.Width",
-              "DisplayName": "Bounding Box / Width",
+              "DisplayName": "Erkannter Bereich / Breite (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.width",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.width"
             },
             "Children": []
           },
           {
             "Segment": "Height",
-            "DisplayName": "Height",
+            "DisplayName": "Höhe (px)",
             "Property": {
               "Name": "BoundingBox.Height",
-              "DisplayName": "Bounding Box / Height",
+              "DisplayName": "Erkannter Bereich / Höhe (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.height",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.height"
             },
             "Children": []
           },
           {
             "Segment": "Left",
-            "DisplayName": "Left",
+            "DisplayName": "Linke Kante (px)",
             "Property": {
               "Name": "BoundingBox.Left",
-              "DisplayName": "Bounding Box / Left",
+              "DisplayName": "Erkannter Bereich / Linke Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.left",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.left"
             },
             "Children": []
           },
           {
             "Segment": "Top",
-            "DisplayName": "Top",
+            "DisplayName": "Obere Kante (px)",
             "Property": {
               "Name": "BoundingBox.Top",
-              "DisplayName": "Bounding Box / Top",
+              "DisplayName": "Erkannter Bereich / Obere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.top",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.top"
             },
             "Children": []
           },
           {
             "Segment": "Right",
-            "DisplayName": "Right",
+            "DisplayName": "Rechte Kante (px)",
             "Property": {
               "Name": "BoundingBox.Right",
-              "DisplayName": "Bounding Box / Right",
+              "DisplayName": "Erkannter Bereich / Rechte Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.right",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.right"
             },
             "Children": []
           },
           {
             "Segment": "Bottom",
-            "DisplayName": "Bottom",
+            "DisplayName": "Untere Kante (px)",
             "Property": {
               "Name": "BoundingBox.Bottom",
-              "DisplayName": "Bounding Box / Bottom",
+              "DisplayName": "Erkannter Bereich / Untere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.bottom",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.bottom"
             },
             "Children": []
           },
           {
             "Segment": "IsEmpty",
-            "DisplayName": "Is Empty",
+            "DisplayName": "Bereich ist leer",
             "Property": {
               "Name": "BoundingBox.IsEmpty",
-              "DisplayName": "Bounding Box / Is Empty",
+              "DisplayName": "Erkannter Bereich / Bereich ist leer",
               "DataType": "Boolean",
-              "Description": "Boolean",
+              "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "true",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.is_empty",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.is_empty"
             },
             "Children": []
           },
           {
             "Segment": "Location",
-            "DisplayName": "Location",
+            "DisplayName": "Linke obere Ecke",
             "Property": {
               "Name": "BoundingBox.Location",
-              "DisplayName": "Bounding Box / Location",
+              "DisplayName": "Erkannter Bereich / Linke obere Ecke",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.location",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.location"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "BoundingBox.Location.X",
-                  "DisplayName": "Bounding Box / Location / X",
+                  "DisplayName": "Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounding_box.location.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounding_box.location.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "BoundingBox.Location.Y",
-                  "DisplayName": "Bounding Box / Location / Y",
+                  "DisplayName": "Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounding_box.location.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounding_box.location.y"
                 },
                 "Children": []
@@ -1863,56 +1964,59 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
           },
           {
             "Segment": "Center",
-            "DisplayName": "Center",
+            "DisplayName": "Mittelpunkt",
             "Property": {
               "Name": "BoundingBox.Center",
-              "DisplayName": "Bounding Box / Center",
+              "DisplayName": "Erkannter Bereich / Mittelpunkt",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounding_box.center",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounding_box.center"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "BoundingBox.Center.X",
-                  "DisplayName": "Bounding Box / Center / X",
+                  "DisplayName": "Erkannter Bereich / Mittelpunkt / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounding_box.center.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounding_box.center.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "BoundingBox.Center.Y",
-                  "DisplayName": "Bounding Box / Center / Y",
+                  "DisplayName": "Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounding_box.center.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounding_box.center.y"
                 },
                 "Children": []
@@ -1923,62 +2027,65 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
       },
       {
         "Segment": "LineCount",
-        "DisplayName": "Line Count",
+        "DisplayName": "Anzahl Zeilen",
         "Property": {
           "Name": "LineCount",
-          "DisplayName": "Line Count",
+          "DisplayName": "Anzahl Zeilen",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der erkannten Textzeilen. 0 bedeutet, dass keine Zeilen erkannt wurden.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "line_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "line_count"
         },
         "Children": []
       },
       {
         "Segment": "WordCount",
-        "DisplayName": "Word Count",
+        "DisplayName": "Anzahl Wörter",
         "Property": {
           "Name": "WordCount",
-          "DisplayName": "Word Count",
+          "DisplayName": "Anzahl Wörter",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der erkannten Wörter. 0 bedeutet, dass keine Wörter erkannt wurden.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "word_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "word_count"
         },
         "Children": []
       },
       {
         "Segment": "Lines",
-        "DisplayName": "Lines",
+        "DisplayName": "Erkannte Zeilen",
         "Property": null,
         "Children": [
           {
             "Segment": "Count",
-            "DisplayName": "Count",
+            "DisplayName": "Anzahl",
             "Property": {
               "Name": "Lines.Count",
-              "DisplayName": "Lines / Count",
+              "DisplayName": "Erkannte Zeilen / Anzahl",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Anzahl der Elemente in „Erkannte Zeilen“. Eine leere Liste hat die Anzahl 0.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "lines.count",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "lines.count"
             },
             "Children": []
@@ -1988,28 +2095,29 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
             "DisplayName": "Text",
             "Property": {
               "Name": "Lines[].Text",
-              "DisplayName": "Lines[] / Text",
+              "DisplayName": "Text",
               "DataType": "Text",
-              "Description": "Text, kann leer sein",
+              "Description": "Text dieser erkannten Zeile beziehungsweise dieses Wortes.",
               "IsNullable": true,
-              "Example": null,
+              "Example": "ABC 123",
               "Cardinality": "Collection",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "lines.text",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "lines.text"
             },
             "Children": []
           },
           {
             "Segment": "Confidence",
-            "DisplayName": "Confidence",
+            "DisplayName": "Erkennungsqualität",
             "Property": {
               "Name": "Lines[].Confidence",
-              "DisplayName": "Lines[] / Confidence",
+              "DisplayName": "Erkennungsqualität",
               "DataType": "Number",
-              "Description": "Number",
+              "Description": "Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2017,18 +2125,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "lines.confidence",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "lines.confidence"
             },
             "Children": []
           },
           {
             "Segment": "BoundingBox",
-            "DisplayName": "Bounding Box",
+            "DisplayName": "Bereich",
             "Property": {
               "Name": "Lines[].BoundingBox",
-              "DisplayName": "Lines[] / Bounding Box",
+              "DisplayName": "Bereich",
               "DataType": "Rectangle",
-              "Description": "Rectangle",
+              "Description": "Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2036,17 +2145,18 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "lines.bounding_box",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "lines.bounding_box"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.X",
-                  "DisplayName": "Lines[] / Bounding Box / X",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2054,18 +2164,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Y",
-                  "DisplayName": "Lines[] / Bounding Box / Y",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2073,18 +2184,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.y"
                 },
                 "Children": []
               },
               {
                 "Segment": "Width",
-                "DisplayName": "Width",
+                "DisplayName": "Breite (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Width",
-                  "DisplayName": "Lines[] / Bounding Box / Width",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Breite (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2092,18 +2204,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.width",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.width"
                 },
                 "Children": []
               },
               {
                 "Segment": "Height",
-                "DisplayName": "Height",
+                "DisplayName": "Höhe (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Height",
-                  "DisplayName": "Lines[] / Bounding Box / Height",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Höhe (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2111,18 +2224,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.height",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.height"
                 },
                 "Children": []
               },
               {
                 "Segment": "Left",
-                "DisplayName": "Left",
+                "DisplayName": "Linke Kante (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Left",
-                  "DisplayName": "Lines[] / Bounding Box / Left",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2130,18 +2244,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.left",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.left"
                 },
                 "Children": []
               },
               {
                 "Segment": "Top",
-                "DisplayName": "Top",
+                "DisplayName": "Obere Kante (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Top",
-                  "DisplayName": "Lines[] / Bounding Box / Top",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Obere Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2149,18 +2264,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.top",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.top"
                 },
                 "Children": []
               },
               {
                 "Segment": "Right",
-                "DisplayName": "Right",
+                "DisplayName": "Rechte Kante (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Right",
-                  "DisplayName": "Lines[] / Bounding Box / Right",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Rechte Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2168,18 +2284,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.right",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.right"
                 },
                 "Children": []
               },
               {
                 "Segment": "Bottom",
-                "DisplayName": "Bottom",
+                "DisplayName": "Untere Kante (px)",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Bottom",
-                  "DisplayName": "Lines[] / Bounding Box / Bottom",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Untere Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2187,18 +2304,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.bottom",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.bottom"
                 },
                 "Children": []
               },
               {
                 "Segment": "IsEmpty",
-                "DisplayName": "Is Empty",
+                "DisplayName": "Bereich ist leer",
                 "Property": {
                   "Name": "Lines[].BoundingBox.IsEmpty",
-                  "DisplayName": "Lines[] / Bounding Box / Is Empty",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Bereich ist leer",
                   "DataType": "Boolean",
-                  "Description": "Boolean",
+                  "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2206,18 +2324,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.is_empty",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.is_empty"
                 },
                 "Children": []
               },
               {
                 "Segment": "Location",
-                "DisplayName": "Location",
+                "DisplayName": "Linke obere Ecke",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Location",
-                  "DisplayName": "Lines[] / Bounding Box / Location",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke",
                   "DataType": "Point",
-                  "Description": "Point",
+                  "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2225,17 +2344,18 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.location",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.location"
                 },
                 "Children": [
                   {
                     "Segment": "X",
-                    "DisplayName": "X",
+                    "DisplayName": "X-Koordinate (px)",
                     "Property": {
                       "Name": "Lines[].BoundingBox.Location.X",
-                      "DisplayName": "Lines[] / Bounding Box / Location / X",
+                      "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2243,18 +2363,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "lines.bounding_box.location.x",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "lines.bounding_box.location.x"
                     },
                     "Children": []
                   },
                   {
                     "Segment": "Y",
-                    "DisplayName": "Y",
+                    "DisplayName": "Y-Koordinate (px)",
                     "Property": {
                       "Name": "Lines[].BoundingBox.Location.Y",
-                      "DisplayName": "Lines[] / Bounding Box / Location / Y",
+                      "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2262,6 +2383,7 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "lines.bounding_box.location.y",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "lines.bounding_box.location.y"
                     },
                     "Children": []
@@ -2270,12 +2392,12 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               },
               {
                 "Segment": "Center",
-                "DisplayName": "Center",
+                "DisplayName": "Mittelpunkt",
                 "Property": {
                   "Name": "Lines[].BoundingBox.Center",
-                  "DisplayName": "Lines[] / Bounding Box / Center",
+                  "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Mittelpunkt",
                   "DataType": "Point",
-                  "Description": "Point",
+                  "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2283,17 +2405,18 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "lines.bounding_box.center",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "lines.bounding_box.center"
                 },
                 "Children": [
                   {
                     "Segment": "X",
-                    "DisplayName": "X",
+                    "DisplayName": "X-Koordinate (px)",
                     "Property": {
                       "Name": "Lines[].BoundingBox.Center.X",
-                      "DisplayName": "Lines[] / Bounding Box / Center / X",
+                      "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2301,18 +2424,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "lines.bounding_box.center.x",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "lines.bounding_box.center.x"
                     },
                     "Children": []
                   },
                   {
                     "Segment": "Y",
-                    "DisplayName": "Y",
+                    "DisplayName": "Y-Koordinate (px)",
                     "Property": {
                       "Name": "Lines[].BoundingBox.Center.Y",
-                      "DisplayName": "Lines[] / Bounding Box / Center / Y",
+                      "DisplayName": "Erkannte Zeilen / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2320,6 +2444,7 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "lines.bounding_box.center.y",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "lines.bounding_box.center.y"
                     },
                     "Children": []
@@ -2333,9 +2458,9 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
             "DisplayName": "Position",
             "Property": {
               "Name": "Lines[].Position",
-              "DisplayName": "Lines[] / Position",
+              "DisplayName": "Position",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2343,6 +2468,7 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "lines.position",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "lines.position"
             },
             "Children": []
@@ -2351,24 +2477,25 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
       },
       {
         "Segment": "Words",
-        "DisplayName": "Words",
+        "DisplayName": "Erkannte Wörter",
         "Property": null,
         "Children": [
           {
             "Segment": "Count",
-            "DisplayName": "Count",
+            "DisplayName": "Anzahl",
             "Property": {
               "Name": "Words.Count",
-              "DisplayName": "Words / Count",
+              "DisplayName": "Erkannte Wörter / Anzahl",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Anzahl der Elemente in „Erkannte Wörter“. Eine leere Liste hat die Anzahl 0.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "words.count",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "words.count"
             },
             "Children": []
@@ -2378,28 +2505,29 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
             "DisplayName": "Text",
             "Property": {
               "Name": "Words[].Text",
-              "DisplayName": "Words[] / Text",
+              "DisplayName": "Text",
               "DataType": "Text",
-              "Description": "Text, kann leer sein",
+              "Description": "Text dieser erkannten Zeile beziehungsweise dieses Wortes.",
               "IsNullable": true,
-              "Example": null,
+              "Example": "ABC 123",
               "Cardinality": "Collection",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "words.text",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "words.text"
             },
             "Children": []
           },
           {
             "Segment": "Confidence",
-            "DisplayName": "Confidence",
+            "DisplayName": "Erkennungsqualität",
             "Property": {
               "Name": "Words[].Confidence",
-              "DisplayName": "Words[] / Confidence",
+              "DisplayName": "Erkennungsqualität",
               "DataType": "Number",
-              "Description": "Number",
+              "Description": "Bewertung der Erkennung von 0 bis 1. Höhere Werte bedeuten höhere Erkennungsqualität; 0,92 entspricht 92 %. Keine Garantie für einen richtigen Treffer.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2407,18 +2535,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "words.confidence",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "words.confidence"
             },
             "Children": []
           },
           {
             "Segment": "BoundingBox",
-            "DisplayName": "Bounding Box",
+            "DisplayName": "Bereich",
             "Property": {
               "Name": "Words[].BoundingBox",
-              "DisplayName": "Words[] / Bounding Box",
+              "DisplayName": "Bereich",
               "DataType": "Rectangle",
-              "Description": "Rectangle",
+              "Description": "Bereich dieses Treffers in Pixeln. Bildschirmquellen verwenden Desktopkoordinaten, Kameras Bildkoordinaten. Bei einer leeren Trefferliste werden keine Bereiche geliefert.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2426,17 +2555,18 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "words.bounding_box",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "words.bounding_box"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.X",
-                  "DisplayName": "Words[] / Bounding Box / X",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2444,18 +2574,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Y",
-                  "DisplayName": "Words[] / Bounding Box / Y",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2463,18 +2594,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.y"
                 },
                 "Children": []
               },
               {
                 "Segment": "Width",
-                "DisplayName": "Width",
+                "DisplayName": "Breite (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Width",
-                  "DisplayName": "Words[] / Bounding Box / Width",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Breite (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2482,18 +2614,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.width",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.width"
                 },
                 "Children": []
               },
               {
                 "Segment": "Height",
-                "DisplayName": "Height",
+                "DisplayName": "Höhe (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Height",
-                  "DisplayName": "Words[] / Bounding Box / Height",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Höhe (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2501,18 +2634,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.height",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.height"
                 },
                 "Children": []
               },
               {
                 "Segment": "Left",
-                "DisplayName": "Left",
+                "DisplayName": "Linke Kante (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Left",
-                  "DisplayName": "Words[] / Bounding Box / Left",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2520,18 +2654,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.left",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.left"
                 },
                 "Children": []
               },
               {
                 "Segment": "Top",
-                "DisplayName": "Top",
+                "DisplayName": "Obere Kante (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Top",
-                  "DisplayName": "Words[] / Bounding Box / Top",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Obere Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2539,18 +2674,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.top",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.top"
                 },
                 "Children": []
               },
               {
                 "Segment": "Right",
-                "DisplayName": "Right",
+                "DisplayName": "Rechte Kante (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Right",
-                  "DisplayName": "Words[] / Bounding Box / Right",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Rechte Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2558,18 +2694,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.right",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.right"
                 },
                 "Children": []
               },
               {
                 "Segment": "Bottom",
-                "DisplayName": "Bottom",
+                "DisplayName": "Untere Kante (px)",
                 "Property": {
                   "Name": "Words[].BoundingBox.Bottom",
-                  "DisplayName": "Words[] / Bounding Box / Bottom",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Untere Kante (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2577,18 +2714,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.bottom",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.bottom"
                 },
                 "Children": []
               },
               {
                 "Segment": "IsEmpty",
-                "DisplayName": "Is Empty",
+                "DisplayName": "Bereich ist leer",
                 "Property": {
                   "Name": "Words[].BoundingBox.IsEmpty",
-                  "DisplayName": "Words[] / Bounding Box / Is Empty",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Bereich ist leer",
                   "DataType": "Boolean",
-                  "Description": "Boolean",
+                  "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2596,18 +2734,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.is_empty",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.is_empty"
                 },
                 "Children": []
               },
               {
                 "Segment": "Location",
-                "DisplayName": "Location",
+                "DisplayName": "Linke obere Ecke",
                 "Property": {
                   "Name": "Words[].BoundingBox.Location",
-                  "DisplayName": "Words[] / Bounding Box / Location",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke obere Ecke",
                   "DataType": "Point",
-                  "Description": "Point",
+                  "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2615,17 +2754,18 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.location",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.location"
                 },
                 "Children": [
                   {
                     "Segment": "X",
-                    "DisplayName": "X",
+                    "DisplayName": "X-Koordinate (px)",
                     "Property": {
                       "Name": "Words[].BoundingBox.Location.X",
-                      "DisplayName": "Words[] / Bounding Box / Location / X",
+                      "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke obere Ecke / X-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2633,18 +2773,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "words.bounding_box.location.x",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "words.bounding_box.location.x"
                     },
                     "Children": []
                   },
                   {
                     "Segment": "Y",
-                    "DisplayName": "Y",
+                    "DisplayName": "Y-Koordinate (px)",
                     "Property": {
                       "Name": "Words[].BoundingBox.Location.Y",
-                      "DisplayName": "Words[] / Bounding Box / Location / Y",
+                      "DisplayName": "Erkannte Wörter / Erkannter Bereich / Linke obere Ecke / Y-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2652,6 +2793,7 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "words.bounding_box.location.y",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "words.bounding_box.location.y"
                     },
                     "Children": []
@@ -2660,12 +2802,12 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               },
               {
                 "Segment": "Center",
-                "DisplayName": "Center",
+                "DisplayName": "Mittelpunkt",
                 "Property": {
                   "Name": "Words[].BoundingBox.Center",
-                  "DisplayName": "Words[] / Bounding Box / Center",
+                  "DisplayName": "Erkannte Wörter / Erkannter Bereich / Mittelpunkt",
                   "DataType": "Point",
-                  "Description": "Point",
+                  "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
                   "Example": null,
                   "Cardinality": "Collection",
@@ -2673,17 +2815,18 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                   "EnumValues": null,
                   "Id": "words.bounding_box.center",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "words.bounding_box.center"
                 },
                 "Children": [
                   {
                     "Segment": "X",
-                    "DisplayName": "X",
+                    "DisplayName": "X-Koordinate (px)",
                     "Property": {
                       "Name": "Words[].BoundingBox.Center.X",
-                      "DisplayName": "Words[] / Bounding Box / Center / X",
+                      "DisplayName": "Erkannte Wörter / Erkannter Bereich / Mittelpunkt / X-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2691,18 +2834,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "words.bounding_box.center.x",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "words.bounding_box.center.x"
                     },
                     "Children": []
                   },
                   {
                     "Segment": "Y",
-                    "DisplayName": "Y",
+                    "DisplayName": "Y-Koordinate (px)",
                     "Property": {
                       "Name": "Words[].BoundingBox.Center.Y",
-                      "DisplayName": "Words[] / Bounding Box / Center / Y",
+                      "DisplayName": "Erkannte Wörter / Erkannter Bereich / Mittelpunkt / Y-Koordinate (px)",
                       "DataType": "Integer",
-                      "Description": "Integer",
+                      "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                       "IsNullable": false,
                       "Example": null,
                       "Cardinality": "Collection",
@@ -2710,6 +2854,7 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
                       "EnumValues": null,
                       "Id": "words.bounding_box.center.y",
                       "EnumDisplayNames": null,
+                      "IsDiagnostic": false,
                       "StableId": "words.bounding_box.center.y"
                     },
                     "Children": []
@@ -2723,9 +2868,9 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
             "DisplayName": "Position",
             "Property": {
               "Name": "Words[].Position",
-              "DisplayName": "Words[] / Position",
+              "DisplayName": "Position",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Position dieser Zeile beziehungsweise dieses Wortes in der Erkennungsreihenfolge; beginnt bei 0.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2733,18 +2878,19 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "words.position",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "words.position"
             },
             "Children": []
           },
           {
             "Segment": "LinePosition",
-            "DisplayName": "Line Position",
+            "DisplayName": "Zeilenposition",
             "Property": {
               "Name": "Words[].LinePosition",
-              "DisplayName": "Words[] / Line Position",
+              "DisplayName": "Zeilenposition",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Position der zugehörigen Textzeile; 0 bezeichnet die erste Zeile. -1 bedeutet, dass keine Zeile zugeordnet werden konnte.",
               "IsNullable": false,
               "Example": null,
               "Cardinality": "Collection",
@@ -2752,6 +2898,7 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
               "EnumValues": null,
               "Id": "words.line_position",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "words.line_position"
             },
             "Children": []
@@ -2760,12 +2907,12 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
       },
       {
         "Segment": "AppliedRoi",
-        "DisplayName": "Applied Roi",
+        "DisplayName": "Verwendeter Suchbereich",
         "Property": {
           "Name": "AppliedRoi",
-          "DisplayName": "Applied Roi",
+          "DisplayName": "Verwendeter Suchbereich",
           "DataType": "Rectangle",
-          "Description": "Rectangle, kann leer sein",
+          "Description": "Tatsächlich verwendeter Suchbereich in Pixeln. Bei Bildschirmquellen ist der Desktopversatz bereits eingerechnet, bei Kameras sind es Bildkoordinaten. Ohne Eingrenzung kann der Wert fehlen.",
           "IsNullable": true,
           "Example": "{X=10,Y=20,Width=300,Height=200}",
           "Cardinality": "OptionalSingle",
@@ -2773,232 +2920,245 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
           "EnumValues": null,
           "Id": "applied_roi",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "applied_roi"
         },
         "Children": [
           {
             "Segment": "X",
-            "DisplayName": "X",
+            "DisplayName": "X-Koordinate (px)",
             "Property": {
               "Name": "AppliedRoi.X",
-              "DisplayName": "Applied Roi / X",
+              "DisplayName": "Verwendeter Suchbereich / X-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.x",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.x"
             },
             "Children": []
           },
           {
             "Segment": "Y",
-            "DisplayName": "Y",
+            "DisplayName": "Y-Koordinate (px)",
             "Property": {
               "Name": "AppliedRoi.Y",
-              "DisplayName": "Applied Roi / Y",
+              "DisplayName": "Verwendeter Suchbereich / Y-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.y",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.y"
             },
             "Children": []
           },
           {
             "Segment": "Width",
-            "DisplayName": "Width",
+            "DisplayName": "Breite (px)",
             "Property": {
               "Name": "AppliedRoi.Width",
-              "DisplayName": "Applied Roi / Width",
+              "DisplayName": "Verwendeter Suchbereich / Breite (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.width",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.width"
             },
             "Children": []
           },
           {
             "Segment": "Height",
-            "DisplayName": "Height",
+            "DisplayName": "Höhe (px)",
             "Property": {
               "Name": "AppliedRoi.Height",
-              "DisplayName": "Applied Roi / Height",
+              "DisplayName": "Verwendeter Suchbereich / Höhe (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.height",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.height"
             },
             "Children": []
           },
           {
             "Segment": "Left",
-            "DisplayName": "Left",
+            "DisplayName": "Linke Kante (px)",
             "Property": {
               "Name": "AppliedRoi.Left",
-              "DisplayName": "Applied Roi / Left",
+              "DisplayName": "Verwendeter Suchbereich / Linke Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.left",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.left"
             },
             "Children": []
           },
           {
             "Segment": "Top",
-            "DisplayName": "Top",
+            "DisplayName": "Obere Kante (px)",
             "Property": {
               "Name": "AppliedRoi.Top",
-              "DisplayName": "Applied Roi / Top",
+              "DisplayName": "Verwendeter Suchbereich / Obere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.top",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.top"
             },
             "Children": []
           },
           {
             "Segment": "Right",
-            "DisplayName": "Right",
+            "DisplayName": "Rechte Kante (px)",
             "Property": {
               "Name": "AppliedRoi.Right",
-              "DisplayName": "Applied Roi / Right",
+              "DisplayName": "Verwendeter Suchbereich / Rechte Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.right",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.right"
             },
             "Children": []
           },
           {
             "Segment": "Bottom",
-            "DisplayName": "Bottom",
+            "DisplayName": "Untere Kante (px)",
             "Property": {
               "Name": "AppliedRoi.Bottom",
-              "DisplayName": "Applied Roi / Bottom",
+              "DisplayName": "Verwendeter Suchbereich / Untere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.bottom",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.bottom"
             },
             "Children": []
           },
           {
             "Segment": "IsEmpty",
-            "DisplayName": "Is Empty",
+            "DisplayName": "Bereich ist leer",
             "Property": {
               "Name": "AppliedRoi.IsEmpty",
-              "DisplayName": "Applied Roi / Is Empty",
+              "DisplayName": "Verwendeter Suchbereich / Bereich ist leer",
               "DataType": "Boolean",
-              "Description": "Boolean",
+              "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "true",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.is_empty",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.is_empty"
             },
             "Children": []
           },
           {
             "Segment": "Location",
-            "DisplayName": "Location",
+            "DisplayName": "Linke obere Ecke",
             "Property": {
               "Name": "AppliedRoi.Location",
-              "DisplayName": "Applied Roi / Location",
+              "DisplayName": "Verwendeter Suchbereich / Linke obere Ecke",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.location",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.location"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "AppliedRoi.Location.X",
-                  "DisplayName": "Applied Roi / Location / X",
+                  "DisplayName": "Verwendeter Suchbereich / Linke obere Ecke / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "applied_roi.location.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "applied_roi.location.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "AppliedRoi.Location.Y",
-                  "DisplayName": "Applied Roi / Location / Y",
+                  "DisplayName": "Verwendeter Suchbereich / Linke obere Ecke / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "applied_roi.location.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "applied_roi.location.y"
                 },
                 "Children": []
@@ -3007,56 +3167,59 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
           },
           {
             "Segment": "Center",
-            "DisplayName": "Center",
+            "DisplayName": "Mittelpunkt",
             "Property": {
               "Name": "AppliedRoi.Center",
-              "DisplayName": "Applied Roi / Center",
+              "DisplayName": "Verwendeter Suchbereich / Mittelpunkt",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "OptionalSingle",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "applied_roi.center",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "applied_roi.center"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "AppliedRoi.Center.X",
-                  "DisplayName": "Applied Roi / Center / X",
+                  "DisplayName": "Verwendeter Suchbereich / Mittelpunkt / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "applied_roi.center.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "applied_roi.center.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "AppliedRoi.Center.Y",
-                  "DisplayName": "Applied Roi / Center / Y",
+                  "DisplayName": "Verwendeter Suchbereich / Mittelpunkt / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "OptionalSingle",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "applied_roi.center.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "applied_roi.center.y"
                 },
                 "Children": []
@@ -3067,95 +3230,100 @@ Erkannter oder abgefragter Text. Er kann leer sein; Datentyp und Leerheitsprüfu
       },
       {
         "Segment": "UsedDynamicRoi",
-        "DisplayName": "Used Dynamic Roi",
+        "DisplayName": "Dynamischer Suchbereich verwendet",
         "Property": {
           "Name": "UsedDynamicRoi",
-          "DisplayName": "Used Dynamic Roi",
+          "DisplayName": "Dynamischer Suchbereich verwendet",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob für diese Suche ein dynamischer Suchbereich übernommen wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "used_dynamic_roi",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "used_dynamic_roi"
         },
         "Children": []
       },
       {
         "Segment": "SourceCaptureIsFresh",
-        "DisplayName": "Source Capture Is Fresh",
+        "DisplayName": "Quellbild ist frisch",
         "Property": {
           "Name": "SourceCaptureIsFresh",
-          "DisplayName": "Source Capture Is Fresh",
+          "DisplayName": "Quellbild ist frisch",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Frischezustand der Aufnahme, die für diese Erkennung verwendet wurde. false bedeutet, dass ein vorhandenes Bild wiederverwendet wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "source_capture_is_fresh",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "source_capture_is_fresh"
         },
         "Children": []
       },
       {
         "Segment": "SourceCaptureTimestampUtc",
-        "DisplayName": "Source Capture Timestamp Utc",
+        "DisplayName": "Aufnahmezeit des Quellbilds (UTC)",
         "Property": {
           "Name": "SourceCaptureTimestampUtc",
-          "DisplayName": "Source Capture Timestamp Utc",
+          "DisplayName": "Aufnahmezeit des Quellbilds (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Aufnahmezeit des Bildes, aus dem dieses Ergebnis berechnet wurde. Bei Wiederverwendung bleibt die ursprüngliche Aufnahmezeit erhalten.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "source_capture_timestamp_utc",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "source_capture_timestamp_utc"
         },
         "Children": []
       },
       {
         "Segment": "SourceFrameVersion",
-        "DisplayName": "Source Frame Version",
+        "DisplayName": "Quellbild-Version",
         "Property": {
           "Name": "SourceFrameVersion",
-          "DisplayName": "Source Frame Version",
+          "DisplayName": "Quellbild-Version",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Laufende Bildkennung innerhalb derselben Aufnahmequelle. Hilft zu erkennen, ob zwei Ergebnisse auf demselben Bild beruhen; nicht zwischen unterschiedlichen Quellen vergleichen.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "source_frame_version",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "source_frame_version"
         },
         "Children": []
       },
       {
         "Segment": "SourceFrameTimestamp",
-        "DisplayName": "Source Frame Timestamp",
+        "DisplayName": "Quellbild-Zeitstempel (Ticks)",
         "Property": {
           "Name": "SourceFrameTimestamp",
-          "DisplayName": "Source Frame Timestamp",
+          "DisplayName": "Quellbild-Zeitstempel (Ticks)",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Monotoner Zeitstempel zur technischen Reihenfolgeprüfung. 0 bedeutet unbekannt. Kein Kalenderdatum und keine Millisekunden seit 1970.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "source_frame_timestamp",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "source_frame_timestamp"
         },
         "Children": []

@@ -15,6 +15,8 @@
       {
         "id": "image_source",
         "name": "Bildquelle",
+        "helpKey": "Ui.Step.Settings.ImageSource.Help",
+        "help": "Bild, das dieser Step verarbeitet. Wähle beispielsweise die Ausgabe einer Bildschirm- oder Kameraaufnahme.",
         "descriptor": {
           "Id": "image_source",
           "LabelKey": "Ui.Step.Settings.ImageSource",
@@ -39,12 +41,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "save_path",
         "name": "Speicherpfad",
+        "helpKey": "Ui.Step.Settings.SavePath.Help",
+        "help": "Zielordner für die Ausgabedatei.",
         "descriptor": {
           "Id": "save_path",
           "LabelKey": "Ui.Step.Settings.SavePath",
@@ -72,12 +79,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "file_name",
         "name": "Dateiname",
+        "helpKey": "Ui.Step.Settings.FileName.Help",
+        "help": "Name der Ausgabedatei. Der Speicherpfad bestimmt den Zielordner.",
         "descriptor": {
           "Id": "file_name",
           "LabelKey": "Ui.Step.Settings.FileName",
@@ -102,12 +114,17 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": null,
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       },
       {
         "id": "overlay",
         "name": "Einblendungen",
+        "helpKey": "Ui.Step.Settings.Overlays.Help",
+        "help": "Einblendungen für Erkennungsergebnisse oder Text. Jede Einblendung besitzt eigene Darstellungswerte.",
         "descriptor": {
           "Id": "overlay",
           "LabelKey": "Ui.Step.Settings.Overlays",
@@ -139,7 +156,10 @@
           "WindowsCapabilityPickerOptions": null,
           "ScreenPointPickerOptions": null,
           "AllowsDirectValue": null,
-          "MonitorDeviceNameFieldId": null
+          "MonitorDeviceNameFieldId": null,
+          "InputSchemaId": "desktopautomation.visual-overlay/v1",
+          "OwnsStructuredInputContract": false,
+          "InputValueKind": null
         }
       }
     ],
@@ -676,56 +696,40 @@
             "ValueKind": "Text",
             "Cardinalities": [
               "Single",
-              "OptionalSingle"
+              "OptionalSingle",
+              "Collection"
             ]
           },
           {
             "ValueKind": "Boolean",
             "Cardinalities": [
               "Single",
-              "OptionalSingle"
+              "OptionalSingle",
+              "Collection"
             ]
           },
           {
             "ValueKind": "Integer",
             "Cardinalities": [
               "Single",
-              "OptionalSingle"
+              "OptionalSingle",
+              "Collection"
             ]
           },
           {
             "ValueKind": "Number",
             "Cardinalities": [
               "Single",
-              "OptionalSingle"
+              "OptionalSingle",
+              "Collection"
             ]
           },
           {
             "ValueKind": "DateTime",
             "Cardinalities": [
               "Single",
-              "OptionalSingle"
-            ]
-          },
-          {
-            "ValueKind": "Color",
-            "Cardinalities": [
-              "Single",
-              "OptionalSingle"
-            ]
-          },
-          {
-            "ValueKind": "FilePath",
-            "Cardinalities": [
-              "Single",
-              "OptionalSingle"
-            ]
-          },
-          {
-            "ValueKind": "Enum",
-            "Cardinalities": [
-              "Single",
-              "OptionalSingle"
+              "OptionalSingle",
+              "Collection"
             ]
           },
           {
@@ -759,6 +763,54 @@
               "OptionalSingle",
               "Collection"
             ]
+          },
+          {
+            "ValueKind": "ResultObject",
+            "Cardinalities": [
+              "Single",
+              "OptionalSingle",
+              "Collection"
+            ]
+          },
+          {
+            "ValueKind": "Enum",
+            "Cardinalities": [
+              "Single",
+              "OptionalSingle",
+              "Collection"
+            ]
+          },
+          {
+            "ValueKind": "JobReference",
+            "Cardinalities": [
+              "Single",
+              "OptionalSingle",
+              "Collection"
+            ]
+          },
+          {
+            "ValueKind": "MacroReference",
+            "Cardinalities": [
+              "Single",
+              "OptionalSingle",
+              "Collection"
+            ]
+          },
+          {
+            "ValueKind": "Color",
+            "Cardinalities": [
+              "Single",
+              "OptionalSingle",
+              "Collection"
+            ]
+          },
+          {
+            "ValueKind": "FilePath",
+            "Cardinalities": [
+              "Single",
+              "OptionalSingle",
+              "Collection"
+            ]
           }
         ],
         "AllowedProviderIds": [
@@ -768,7 +820,7 @@
         "LegacyAllowedProviderIds": [
           "secret"
         ],
-        "AllowsDirectValue": false,
+        "AllowsDirectValue": true,
         "LegacyAcceptedShapes": []
       }
     ],
@@ -785,8 +837,8 @@
     "errors": "Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.",
     "field.image_source": "Bildobjekt eines Aufnahme-Steps. Ein Dateipfad als Text ist nicht automatisch eine kompatible Bildquelle.",
     "field.save_path": "Ordner für die Bild-/Videoausgabe. Er muss auf dem Zielrechner erreichbar und beschreibbar sein.",
-    "field.file_name": "Dateiname der Bild-/Videoausgabe. Wähle ein zur Ausgabe passendes Format und prüfe vorhandene Dateien am Ziel.",
-    "field.overlay": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Die zugrunde liegenden Ergebnisse müssen vorher erzeugt worden sein.",
+    "field.file_name": "Dateiname der Bild-/Videoausgabe. Wähle ein zur Ausgabe passendes Format und prüfe vorhandene Dateien am Ziel. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.",
+    "field.overlay": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Ab dem kommenden Update 1.6.2 können Textzeilen direkt eingegebene lokale Werte, gemeinsame Job-Werte oder vorherige Step-Ergebnisse anzeigen. Ergebnisquellen müssen vorher erzeugt worden sein. Ab dem kommenden Update 1.6.2 sind die direkt erzeugten Standardwerte für Schriftgröße und Deckkraft gültig; passende optionale Einzelwerte lassen sich für die Einstellungen auswählen.",
     "schema.id": "Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.",
     "schema.inputs": "Zuordnung von UI-Feld-ID zu typisierter Wertequelle. Bei vorhandenen inputs serialisiert der kanonische Job-Serializer settings nicht zusätzlich. Leere inputs mit settings bleiben als Legacy-/direkte Konfiguration lesbar.",
     "schema.inputs.items": "Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.",
@@ -794,8 +846,8 @@
     "schema.inputs.property_path": "Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.",
     "schema.inputs.source_step_id": "Kompatibilitätsfeld älterer Referenzen. Neue Referenzen verwenden provider_id=step_result und die versionierte source_id.",
     "schema.inputs.members": "Benannte Unterbindungen eines strukturierten Werts. Jeder Schlüssel ist eine stabile Mitglied-ID des Feldschemas; Unterbindungen können Werte einer Basisquelle gezielt überschreiben.",
-    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.",
-    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.",
+    "schema.inputs.provider_id": "Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.",
+    "schema.inputs.schema_id": "Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.",
     "schema.inputs.source_id": "Anbieterbezogene Identität. Bei step_result: v1/<URI-kodierte-Step-ID>/<URI-kodierte-stabile-Ergebnis-ID>; bei lokalen Werten und Jobvariablen deren GUID. Dies ist nicht nur die rohe Step-ID.",
     "schema.inputs.value_path": "Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierten Objektmitglied. Er ändert den Quellanbieter nicht; der ausgewählte Unterwert muss kompatibel sein.",
     "schema.is_enabled": "true führt den Step aus; false deaktiviert ihn. Blockmarker können in der UI nicht beliebig deaktiviert werden, weil ihre Struktur erhalten bleiben muss.",
@@ -836,13 +888,13 @@
     "schema.settings.overlay.text_results.clear_on_job_end": "Entfernt die durch diesen Job erzeugte Anzeige beim regulären Aufräumen.",
     "schema.settings.overlay.text_results.desktop_index": "Nullbasierter Zielmonitor der Desktop-Anzeige oder Benutzerauswahl. Prüfe ihn auf dem Zielrechner.",
     "schema.settings.overlay.text_results.duration_ms": "Anzeigedauer in Millisekunden. Beachte die vom Editor angebotenen Grenzen und die zusätzliche Entfernung beim Job-Ende.",
-    "schema.settings.overlay.text_results.font_color": "Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund.",
+    "schema.settings.overlay.text_results.font_color": "Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund. Ab dem kommenden Update 1.6.2 bleiben vorhandene Text-Farbreferenzen mit gültigem Farbtoken auch in verschachtelten Einblendungen zulässig. Neue Farbquellen verwenden Color.",
     "schema.settings.overlay.text_results.font_size": "Schriftgröße der Textanzeige in Punkten. Prüfe Lesbarkeit auf dem tatsächlichen Monitor und dessen Skalierung.",
     "schema.settings.overlay.text_results.id": "Stabile Identität dieses Eintrags. In einem Job müssen Step-IDs eindeutig sein; beim Kopieren eines eigenständigen Jobs/Makros eine neue Objekt-GUID erzeugen und interne Referenzen gezielt anpassen.",
     "schema.settings.overlay.text_results.offset_x": "Zusätzlicher horizontaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung.",
     "schema.settings.overlay.text_results.offset_y": "Zusätzlicher vertikaler Versatz in Pixeln relativ zum ermittelten Punkt, Referenzpunkt oder Anzeigeursprung.",
     "schema.settings.overlay.text_results.opacity": "Deckkraft als Anteil von 0 bis 1, auch im referenzierten localValues-Wert. 1 bedeutet vollständig sichtbar, 0 unsichtbar. Der Editor zeigt Prozent an.",
-    "schema.settings.overlay.text_results.result": "Typisierte Ergebnisreferenz für den betreffenden Wert; Quelle und Ergebnis-ID auswählen und die Ausführungsreihenfolge beachten.",
+    "schema.settings.overlay.text_results.result": "Typisierte Bindung der Textzeile. Ab dem kommenden Update 1.6.2 kann provider_id=local_value mit source_id=<GUID aus localValues> einen direkt eingegebenen Text referenzieren. Alternativ job_variable oder step_result verwenden. Bei Step-Ergebnissen die Ausführungsreihenfolge beachten.",
     "schema.settings.overlay.text_results.result.items": "Geordnete Unterbindungen einer Liste. Die Reihenfolge ist Teil der Eingabe; Elemente müssen das Listenelement-Schema erfüllen.",
     "schema.settings.overlay.text_results.result.property_id": "Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in source_id; nicht mit einem CLR-Propertynamen oder dem UI-Label verwechseln.",
     "schema.settings.overlay.text_results.result.property_path": "Älterer Pfad zu einem Ergebnis-Unterwert. Bestehende Dateien bleiben lesbar; neue Referenzen verwenden stabile Ergebnis-IDs und gegebenenfalls value_path.",
@@ -855,7 +907,7 @@
     "schema.settings.save_path": "Ordner für die Bild-/Videoausgabe. Er muss auf dem Zielrechner erreichbar und beschreibbar sein.",
     "input.image": "Bildobjekt einer Aufnahme. Fehlende erforderliche Werte führen zum Fehler. Es wird kein beliebiges Listenelement ausgewählt. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.",
     "input.detections": "Einblendungsquellen mit Geometrie. Eine gültige, aber noch nicht verfügbare optionale Step-Quelle kann den Verbraucher mit NoInput überspringen; malformed Referenzen bleiben Fehler. Alle kompatiblen Listeneinträge werden verarbeitet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.",
-    "input.text": "Text beziehungsweise darstellbarer Wert. Eine gültige, aber noch nicht verfügbare optionale Step-Quelle kann den Verbraucher mit NoInput überspringen; malformed Referenzen bleiben Fehler. Alle kompatiblen Listeneinträge werden verarbeitet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung."
+    "input.text": "Text beziehungsweise darstellbarer Wert. Ab dem kommenden Update 1.6.2 sind lokale Werte (local_value), gemeinsame Job-Werte (job_variable) und vorherige Step-Ergebnisse (step_result) erlaubt. Typ und Kardinalität müssen passen. Eine gültige, noch nicht verfügbare optionale Step-Quelle kann zum Überspringen führen; ungültige Referenzen bleiben Fehler. Ab dem kommenden Update 1.6.2 werden alle darstellbaren Werttypen einschließlich strukturierter Objekte und Listen akzeptiert. Listen erscheinen zeilenweise vollständig, Objekte als JSON und Zahlen im aktuellen Zahlenformat. Bilddaten sind ausgeschlossen."
   },
   "template": {
     "type": "video_creation",
@@ -903,7 +955,7 @@
           "inputs": [
             {
               "kind": "reference",
-              "value": "Ergebnisvariablen → Schritt 1: Bildschirm aufnehmen  →  Bild"
+              "value": "Ergebnisvariablen → Schritt 1: Bildschirm aufnehmen → Aufgenommenes Bild"
             }
           ],
           "explanation": "Bildobjekt eines Aufnahme-Steps. Ein Dateipfad als Text ist nicht automatisch eine kompatible Bildquelle."
@@ -940,7 +992,7 @@
               "value": "output.mp4"
             }
           ],
-          "explanation": "Dateiname der Bild-/Videoausgabe. Wähle ein zur Ausgabe passendes Format und prüfe vorhandene Dateien am Ziel."
+          "explanation": "Dateiname der Bild-/Videoausgabe. Wähle ein zur Ausgabe passendes Format und prüfe vorhandene Dateien am Ziel. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle."
         },
         {
           "number": 4,
@@ -954,14 +1006,14 @@
           "inputs": [
             {
               "kind": "reference",
-              "value": "Ergebnisvariablen → Schritt 2: Farberkennung  →  Alle Erkennungen"
+              "value": "Ergebnisvariablen → Schritt 2: Farberkennung → Alle erkannten Treffer"
             },
             {
               "kind": "text",
               "value": "Bearbeitung abgeschlossen"
             }
           ],
-          "explanation": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Die zugrunde liegenden Ergebnisse müssen vorher erzeugt worden sein."
+          "explanation": "Zusammengesetzte Darstellungseinstellungen für Erkennungen und Text. Ab dem kommenden Update 1.6.2 können Textzeilen direkt eingegebene lokale Werte, gemeinsame Job-Werte oder vorherige Step-Ergebnisse anzeigen. Ergebnisquellen müssen vorher erzeugt worden sein. Ab dem kommenden Update 1.6.2 sind die direkt erzeugten Standardwerte für Schriftgröße und Deckkraft gültig; passende optionale Einzelwerte lassen sich für die Einstellungen auswählen."
         }
       ]
     }

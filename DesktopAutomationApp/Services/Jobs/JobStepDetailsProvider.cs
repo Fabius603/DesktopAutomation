@@ -1065,13 +1065,18 @@ public sealed class JobStepDetailsProvider
 
     private static StepResultDetails? CreateResultDetails(JobStep step)
     {
-        var descriptor = StepResultMetadata.GetResultTypeForStep(step);
-        if (descriptor is null) return null;
-
-        var properties = descriptor.PropertyTree
+        var contract = StepResultMetadata.GetResultTypeForStep(step);
+        if (contract is null) return null;
+        var descriptor = StepLocalization.ResultType(contract);
+        var properties = descriptor.PropertyTree.Where(node => node.Property?.IsDiagnostic != true)
             .Select(node => CreateResultPropertyDetails(node, string.Empty, descriptor.TypeName))
-            .ToArray();
-        if (properties.Length == 0) return null;
+            .ToList();
+        var diagnostic = descriptor.PropertyTree.Where(node => node.Property?.IsDiagnostic == true)
+            .Select(node => CreateResultPropertyDetails(node, string.Empty, descriptor.TypeName)).ToArray();
+        if (diagnostic.Length > 0)
+            properties.Add(new StepResultPropertyDetails(Loc.Get("Ui.ValueReference.ResultDiagnostics"),
+                string.Empty, string.Empty, diagnostic));
+        if (properties.Count == 0) return null;
         return new StepResultDetails(descriptor.DisplayName, properties);
     }
 
@@ -1084,39 +1089,19 @@ public sealed class JobStepDetailsProvider
             ? node.Segment
             : $"{parentPath}.{node.Segment}";
         return new StepResultPropertyDetails(
-            StepLocalization.PropertyPath(resultTypeName, path),
+            node.DisplayName,
             node.Property is null ? string.Empty : FriendlyType(node.Property),
             node.Property is null
-                ? string.Empty
-                : StepLocalization.PropertyDescription(resultTypeName, node.Property),
+                ? StepLocalization.PropertyGroupDescription(resultTypeName, path)
+                : StepLocalization.PropertyHelp(node.Property) ?? string.Empty,
             node.Children.Select(child => CreateResultPropertyDetails(child, path, resultTypeName)).ToArray());
     }
 
     private static string FriendlyType(ResultPropertyDescriptor property)
     {
-        var semanticType = property.DataType switch
-        {
-            ResultValueKind.Boolean => Loc.Get("Ui.Job.Steps.ResultType.Boolean"),
-            ResultValueKind.Integer => Loc.Get("Ui.Job.Steps.ResultType.Integer"),
-            ResultValueKind.Number => Loc.Get("Ui.Job.Steps.ResultType.Number"),
-            ResultValueKind.Text => Loc.Get("Ui.Job.Steps.ResultType.Text"),
-            ResultValueKind.DateTime => Loc.Get("Ui.Job.Steps.ResultType.DateTime"),
-            ResultValueKind.Image => Loc.Get("Ui.Job.Steps.ResultType.Image"),
-            ResultValueKind.Point => Loc.Get("Ui.Job.Steps.ResultType.Point"),
-            ResultValueKind.Rectangle => Loc.Get("Ui.Job.Steps.ResultType.Rectangle"),
-            ResultValueKind.Color => Loc.Get("Ui.Job.Steps.ResultType.Color"),
-            ResultValueKind.FilePath => Loc.Get("Ui.Job.Steps.ResultType.FilePath"),
-            ResultValueKind.Detection => Loc.Get("Ui.Job.Steps.ResultType.Detection"),
-            ResultValueKind.ProcessReference => Loc.Get("Ui.Job.Steps.ResultType.Process"),
-            ResultValueKind.Enum => Loc.Get("Ui.Job.Steps.ResultType.Enum"),
-            _ => Loc.Get("Ui.Job.Steps.ResultType.Object")
-        };
-        return property.Cardinality switch
-        {
-            ResultCardinality.Collection => $"{Loc.Get("Ui.Job.Steps.ResultType.List")}<{semanticType}>",
-            ResultCardinality.OptionalSingle => $"{semanticType} ({Loc.Get("Ui.Job.Steps.ResultType.Optional")})",
-            _ => semanticType
-        };
+        var type = StepLocalization.ResultValueType(property);
+        return property.Cardinality == ResultCardinality.OptionalSingle
+            ? $"{type} ({Loc.Get("Ui.Job.Steps.ResultType.Optional")})" : type;
     }
 
     private static string LocalizedPropertyName(string path) => StepLocalization.PropertyPath(path);

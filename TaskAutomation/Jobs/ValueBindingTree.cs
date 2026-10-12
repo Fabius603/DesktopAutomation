@@ -80,7 +80,7 @@ public static class ValueBindingTree
         foreach (var field in fields)
         {
             if (!inputs.TryGetValue(field.Id, out var root)) continue;
-            var schemaId = ValueBindingSchemaRegistry.ForField(field);
+            var schemaId = InputContractRegistry.SchemaForField(field);
             if (schemaId is null) continue;
             ApplySchema(root, schemaId);
         }
@@ -136,10 +136,10 @@ public static class ValueBindingTree
     {
         if (!string.IsNullOrEmpty(binding.SchemaId) && binding.SchemaId != schemaId) return;
         binding.SchemaId = schemaId;
-        if (!ValueBindingSchemaRegistry.TryGet(schemaId, out var schema)) return;
+        if (!InputContractRegistry.TryGetSchema(schemaId, out var schema)) return;
         if (binding.Members is not null)
             foreach (var (memberId, child) in binding.Members)
-                if (schema.Members.GetValueOrDefault(memberId)?.NestedSchemaId is { } nested)
+                if (schema.Members.GetValueOrDefault(memberId)?.SchemaId is { } nested)
                     ApplySchema(child, nested);
         if (binding.Items is not null && schema.ItemSchemaId is { } itemSchema)
             foreach (var item in binding.Items) ApplySchema(item, itemSchema);
@@ -149,127 +149,3 @@ public static class ValueBindingTree
         path.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
 
-public sealed record ValueBindingMemberDescriptor(
-    ResultValueKind ValueKind,
-    ResultCardinality Cardinality = ResultCardinality.Single,
-    string? NestedSchemaId = null,
-    IReadOnlySet<string>? AllowedProviderIds = null)
-{
-    public IReadOnlySet<string> LegacyAllowedProviderIds { get; init; } = new HashSet<string>();
-
-    public bool AllowsProvider(string providerId, bool includeLegacy = true) =>
-        AllowedProviderIds?.Contains(providerId) != false
-        || includeLegacy && LegacyAllowedProviderIds.Contains(providerId);
-
-    public bool AcceptsSource(string providerId, ResultPropertyDescriptor property) =>
-        AllowsProvider(providerId) && property.DataType == ValueKind
-        && (property.Cardinality == Cardinality
-            || Cardinality == ResultCardinality.Single && property.Cardinality == ResultCardinality.OptionalSingle);
-}
-
-public sealed record ValueBindingSchemaDescriptor(
-    string Id,
-    IReadOnlyDictionary<string, ValueBindingMemberDescriptor> Members,
-    string? ItemSchemaId = null);
-
-public static class ValueBindingSchemaRegistry
-{
-    public const string Roi = "desktopautomation.roi/v1";
-    public const string ScreenPoint = "desktopautomation.screen-point/v1";
-    public const string ProcessTarget = "desktopautomation.process-target/v1";
-    public const string YoloSelection = "desktopautomation.yolo-selection/v1";
-    public const string UserChoiceOptions = "desktopautomation.user-choice-options/v1";
-    public const string UserChoiceOption = "desktopautomation.user-choice-option/v1";
-    public const string PointEntries = "desktopautomation.point-entries/v1";
-    public const string PointEntry = "desktopautomation.point-entry/v1";
-    public const string VisualOverlay = "desktopautomation.visual-overlay/v1";
-    public const string VisualOverlayTextEntries = "desktopautomation.visual-overlay-text-entries/v1";
-    public const string VisualOverlayTextEntry = "desktopautomation.visual-overlay-text-entry/v1";
-
-    private static readonly IReadOnlySet<string> ReusableProviders = new HashSet<string>(StringComparer.Ordinal)
-    {
-        ValueProviderIds.LocalValue, ValueProviderIds.JobVariable, ValueProviderIds.StepResult
-    };
-
-    private static readonly IReadOnlySet<string> DirectProviders = new HashSet<string>(StringComparer.Ordinal)
-    {
-        ValueProviderIds.LocalValue
-    };
-
-    private static readonly IReadOnlyDictionary<string, ValueBindingSchemaDescriptor> Schemas =
-        new Dictionary<string, ValueBindingSchemaDescriptor>(StringComparer.Ordinal)
-        {
-            [Roi] = Object(Roi,
-                ("enabled", ResultValueKind.Boolean), ("x", ResultValueKind.Integer),
-                ("y", ResultValueKind.Integer), ("width", ResultValueKind.Integer),
-                ("height", ResultValueKind.Integer)),
-            [ScreenPoint] = Object(ScreenPoint,
-                ("monitor_index", ResultValueKind.Integer), ("x", ResultValueKind.Integer),
-                ("y", ResultValueKind.Integer)),
-            [ProcessTarget] = Object(ProcessTarget,
-                ("process_name", ResultValueKind.Text), ("executable_path", ResultValueKind.Text),
-                ("window_title_contains", ResultValueKind.Text)),
-            [YoloSelection] = DirectObject(YoloSelection,
-                ("model", ResultValueKind.Text), ("class_name", ResultValueKind.Text)),
-            [UserChoiceOptions] = new(UserChoiceOptions,
-                new Dictionary<string, ValueBindingMemberDescriptor>(), UserChoiceOption),
-            [UserChoiceOption] = Object(UserChoiceOption,
-                ("label", ResultValueKind.Text), ("value", ResultValueKind.Text)),
-            [PointEntries] = new(PointEntries,
-                new Dictionary<string, ValueBindingMemberDescriptor>(), PointEntry),
-            [PointEntry] = Object(PointEntry,
-                ("manual_x", ResultValueKind.Integer), ("manual_y", ResultValueKind.Integer)),
-            [VisualOverlay] = new(VisualOverlay,
-                new Dictionary<string, ValueBindingMemberDescriptor>(StringComparer.Ordinal)
-                {
-                    ["text_results"] = new(ResultValueKind.ResultObject, ResultCardinality.Collection,
-                        NestedSchemaId: VisualOverlayTextEntries,
-                        AllowedProviderIds: ReusableProviders)
-                }),
-            [VisualOverlayTextEntries] = new(VisualOverlayTextEntries,
-                new Dictionary<string, ValueBindingMemberDescriptor>(), VisualOverlayTextEntry),
-            [VisualOverlayTextEntry] = Object(VisualOverlayTextEntry,
-                ("font_size", ResultValueKind.Number), ("font_color", ResultValueKind.Color),
-                ("opacity", ResultValueKind.Number), ("desktop_index", ResultValueKind.Integer),
-                ("offset_x", ResultValueKind.Integer), ("offset_y", ResultValueKind.Integer),
-                ("duration_ms", ResultValueKind.Integer), ("clear_on_job_end", ResultValueKind.Boolean))
-        };
-
-    public static ValueBindingMemberDescriptor ItemContract(string itemSchemaId) =>
-        new(ResultValueKind.ResultObject, NestedSchemaId: itemSchemaId, AllowedProviderIds: ReusableProviders);
-
-    public static bool TryGet(string schemaId, out ValueBindingSchemaDescriptor schema) =>
-        Schemas.TryGetValue(schemaId, out schema!);
-
-    public static string? ForField(StepFieldDescriptor field) => field.EditorHint switch
-    {
-        StepEditorHints.RoiPicker => Roi,
-        StepEditorHints.ScreenPointPicker => ScreenPoint,
-        StepEditorHints.ProcessTargetPicker or StepEditorHints.ExecutableProcessTargetPicker => ProcessTarget,
-        StepEditorHints.YoloPicker => YoloSelection,
-        StepEditorHints.UserChoiceOptions => UserChoiceOptions,
-        StepEditorHints.PointEntryList => PointEntries,
-        StepEditorHints.VisualOverlay => VisualOverlay,
-        _ => null
-    };
-
-    private static ValueBindingSchemaDescriptor Object(
-        string id,
-        params (string Id, ResultValueKind Kind)[] members) => new(
-        id,
-        members.ToDictionary(member => member.Id,
-            member => new ValueBindingMemberDescriptor(member.Kind, AllowedProviderIds: ReusableProviders)
-            {
-                LegacyAllowedProviderIds = StepInputContractRegistry.LegacyProvidersFor(member.Kind)
-            },
-            StringComparer.Ordinal));
-
-    private static ValueBindingSchemaDescriptor DirectObject(
-        string id,
-        params (string Id, ResultValueKind Kind)[] members) => new(
-        id,
-        members.ToDictionary(member => member.Id,
-            member => new ValueBindingMemberDescriptor(member.Kind, AllowedProviderIds: DirectProviders),
-            StringComparer.Ordinal));
-
-}

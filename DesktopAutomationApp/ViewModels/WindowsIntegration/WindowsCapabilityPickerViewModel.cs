@@ -23,6 +23,7 @@ public sealed class WindowsParameterValueViewModel : INotifyPropertyChanged
     public string? Value { get => _value; set { if (_value == value) return; _value = value; OnPropertyChanged(); ValueChanged?.Invoke(); } }
     public string DisplayName => WindowsCapabilityLocalization.ParameterName(Descriptor) + (Descriptor.Required ? " *" : string.Empty);
     public string? Placeholder => WindowsCapabilityLocalization.ParameterPlaceholder(Descriptor);
+    public string Description => WindowsCapabilityLocalization.ParameterDescription(Descriptor);
     public ObservableCollection<WindowsParameterOptionViewModel> Options { get; } = [];
     public bool IsBoolean => Descriptor.Type == WindowsParameterType.Boolean;
     public bool BooleanValue
@@ -121,7 +122,7 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
     public WindowsEventCategory? SelectedCategory
     {
         get => _selectedCategory;
-        set { if (_selectedCategory == value) return; _selectedCategory = value; OnPropertyChanged(); RefreshCapabilities(); Changed?.Invoke(); }
+        set { if (_selectedCategory == value) return; _unavailableId = null; _selectedCategory = value; OnPropertyChanged(); RefreshCapabilities(); Changed?.Invoke(); }
     }
 
     public WindowsCapabilityDescriptor? SelectedCapability
@@ -130,6 +131,7 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
         set
         {
             if (_selectedCapability == value) return;
+            _unavailableId = null;
             _selectedCapability = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectedCapabilityDescription));
@@ -140,9 +142,13 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
 
     public bool IsValid => WindowsCapabilitySelectionRules.HasRequiredParameters(
         SelectedCapability, ToDictionary());
+    private string? _unavailableId;
+    private Dictionary<string, string?> _unavailableValues = new(StringComparer.OrdinalIgnoreCase);
+    public string SelectedId => SelectedCapability?.Id ?? _unavailableId ?? string.Empty;
     public bool RequiresElevation => SelectedCapability?.Requirements?.RequiresElevation == true;
     public string SelectedCapabilityDescription => SelectedCapability is null
-        ? string.Empty
+        ? (_unavailableId is not null ? Loc.Get(RetiredWindowsSettings.Contains(_unavailableId)
+            ? "StepValidation.WindowsSettingRemoved" : "StepValidation.Invalid") : string.Empty)
         : WindowsCapabilityLocalization.Description(SelectedCapability, _mode);
     public string AvailabilityHint => RequiresElevation
         ? Loc.Get("Ui.Windows.RequiresElevation")
@@ -158,17 +164,21 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
         foreach (var category in catalog.Capabilities.Where(IsSupported).Select(x => x.Category).Distinct().OrderBy(x => x.ToString()))
             Categories.Add(category);
         var selected = string.IsNullOrWhiteSpace(selectedId) ? null : catalog.Find(selectedId);
+        _unavailableId = selected is null && !string.IsNullOrWhiteSpace(selectedId) ? selectedId : null;
+        _unavailableValues = new(values ?? new Dictionary<string, string?>(), StringComparer.OrdinalIgnoreCase);
         _selectedCategory = selected?.Category ?? Categories.FirstOrDefault();
         RefreshCapabilities(selected, values);
     }
 
-    public Dictionary<string, string?> ToDictionary() => Parameters
+    public Dictionary<string, string?> ToDictionary() => _unavailableId is not null ? new(_unavailableValues, StringComparer.OrdinalIgnoreCase) : Parameters
         .Where(x => x.IsVisible && !string.IsNullOrWhiteSpace(x.Value))
         .ToDictionary(x => x.Descriptor.Name, x => x.Value, StringComparer.OrdinalIgnoreCase);
 
     public void Load(string? id, IReadOnlyDictionary<string, string?>? values)
     {
         var selected = string.IsNullOrWhiteSpace(id) ? null : _catalog.Find(id);
+        _unavailableId = selected is null && !string.IsNullOrWhiteSpace(id) ? id : null;
+        _unavailableValues = new(values ?? new Dictionary<string, string?>(), StringComparer.OrdinalIgnoreCase);
         _selectedCategory = selected?.Category ?? Categories.FirstOrDefault();
         OnPropertyChanged(nameof(SelectedCategory));
         RefreshCapabilities(selected, values);
@@ -190,7 +200,8 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
             foreach (var capability in _catalog.Capabilities.Where(x => x.Category == SelectedCategory && IsSupported(x))
                          .OrderBy(WindowsCapabilityLocalization.DisplayName))
                 Capabilities.Add(capability);
-        _selectedCapability = selected is not null && Capabilities.Contains(selected) ? selected : Capabilities.FirstOrDefault();
+        _selectedCapability = _unavailableId is not null ? null :
+            selected is not null && Capabilities.Contains(selected) ? selected : Capabilities.FirstOrDefault();
         OnPropertyChanged(nameof(SelectedCapability));
         OnPropertyChanged(nameof(SelectedCapabilityDescription));
         RefreshParameters(values);

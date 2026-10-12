@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 using TaskAutomation.Steps.Definitions;
@@ -182,7 +183,7 @@ public sealed class JobValidationTests
         };
         step.Inputs["roi"] = new ResultBinding
         {
-            SchemaId = ValueBindingSchemaRegistry.Roi,
+            SchemaId = InputSchemaIds.Roi,
             Members = new Dictionary<string, ResultBinding>
             {
                 ["enabled"] = new(),
@@ -388,8 +389,8 @@ public sealed class JobValidationTests
         {
             OwnerStepId = step.Id,
             InputPath = $"{ActiveProcessStepDefinition.ProcessTargetFieldId}.window_title_contains",
-            ValueKind = ResultValueKind.Boolean,
-            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+            ValueKind = ResultValueKind.Image,
+            Value = System.Text.Json.Nodes.JsonValue.Create("preview.png")
         };
         job.LocalValues.Add(invalidTitle);
         ValueBindingTree.Set(step.Inputs, invalidTitle.InputPath, new ResultBinding

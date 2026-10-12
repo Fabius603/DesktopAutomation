@@ -1,19 +1,52 @@
 using System.Globalization;
 using TaskAutomation.Steps;
+using TaskAutomation.Contracts.Steps;
 
 namespace TaskAutomation.Jobs;
 
 public static class ConditionRules
 {
     public const int MinimumConditions = 1;
-    public static StepInputDescriptor ComparisonInputContract(
-        StepInputDescriptor contract, ResultPropertyDescriptor property) =>
+    public static InputContractNode SourceInputContract() => new(
+        "condition", null,
+        Enum.GetValues<ResultValueKind>().Where(kind => GetOperators(kind).Count > 0)
+            .Select(kind => new AcceptedResultShape(kind, ResultCardinality.Single, ResultCardinality.OptionalSingle)).ToArray(),
+        allowedProviderIds: new HashSet<string> { ValueProviderIds.JobVariable, ValueProviderIds.StepResult },
+        required: true, missingValuePolicy: MissingValuePolicy.FailStep);
+    public static bool IsConditionSource(ResultPropertyDescriptor property) =>
+        InputCompatibilityEvaluator.EvaluateShape(SourceInputContract(), property.DataType, property.Cardinality).IsAccepted;
+    public static bool CanCompare(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
+        InputCompatibilityEvaluator.Evaluate(ComparisonContract(left), ValueProviderIds.StepResult, right).IsAccepted;
+
+    public static InputContractNode ComparisonContract(ResultPropertyDescriptor left, bool allowTextConversion = true) => new(left.StableId, left.DataType,
+        InputContractRegistry.AcceptedSourceShapes(left.DataType, left.Cardinality == ResultCardinality.Collection
+            ? ResultCardinality.Collection : ResultCardinality.Single, allowTextConversion),
+        conversion: left.DataType == ResultValueKind.Text && allowTextConversion ? InputConversion.DisplayText : InputConversion.Exact,
+        enumTypeName: string.IsNullOrWhiteSpace(left.EnumTypeName) ? null : left.EnumTypeName,
+        enumPropertyId: left.DataType == ResultValueKind.Enum ? left.StableId : null);
+    public static InputContractNode ComparisonInputContract(
+        InputContractNode contract, ResultPropertyDescriptor property) =>
         property.DataType == ResultValueKind.Enum
             ? contract with
             {
-                LegacyAcceptedShapes = [new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single)]
+                LegacyAcceptedShapes = [new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single)],
+                EnumTypeName = property.EnumTypeName,
+                EnumPropertyId = property.StableId
             }
             : contract;
+
+    public static InputContractNode ComparisonInputContract(string key, StepValueKind kind,
+        ResultPropertyDescriptor? property = null)
+    {
+        var options = kind == StepValueKind.Enum && property?.EnumValues is { } values
+            ? values.Select(value => new StepFieldOptionDescriptor(value, string.Empty)).ToArray() : null;
+        var field = new StepFieldDescriptor(key, string.Empty, kind,
+            Constraints: options is { Length: > 0 }
+                ? new StepFieldConstraints(AllowedValues: options.Select(option => option.Value).ToArray()) : null,
+            Options: options);
+        var contract = InputContractRegistry.ForField(field);
+        return property is null ? contract : ComparisonInputContract(contract, property);
+    }
 
     private static readonly ConditionOperator[] BoolOperators =
         [ConditionOperator.Equals, ConditionOperator.NotEquals];
@@ -62,7 +95,7 @@ public static class ConditionRules
         bool isDirectLocalValue,
         string? comparisonValue)
     {
-        if (StepResultMetadata.AreComparable(property, comparisonProperty))
+        if (CanCompare(property, comparisonProperty))
             return property.DataType != ResultValueKind.Enum || !isDirectLocalValue
                    || IsComparisonValueValid(property, ConditionOperator.Equals, comparisonValue);
         if (property.DataType != ResultValueKind.Enum
@@ -93,7 +126,8 @@ public static class ConditionRules
             ResultValueKind.Integer => Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
             ResultValueKind.DateTime => ((DateTime)value).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
             ResultValueKind.Boolean => Convert.ToBoolean(value, CultureInfo.InvariantCulture).ToString(),
-            ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath => value.ToString(),
+            ResultValueKind.Text => TextValueFormatter.Format(value),
+            ResultValueKind.Color or ResultValueKind.FilePath => value.ToString(),
             ResultValueKind.Enum => value.ToString(),
             _ => null
         };

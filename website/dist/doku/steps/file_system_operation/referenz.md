@@ -16,7 +16,7 @@ Abbildung: [Vollständige Feld-Ausschnitte der echten Oberfläche mit Beispielwe
 
 1. Aktion: Dateiaktion Copy, Move, Rename oder Delete. Quelle und benötigte Zusatzfelder ändern sich mit der Aktion.
 2. Quelle: Datei- oder Ordnerpfad, auf den die Dateiaktion angewendet wird. Der Pfad ist auf dem Zielrechner zu prüfen, nicht nur auf dem Rechner eines Agenten.
-3. Neuer Name: Neuer Dateiname für Rename. Hier wird ein Name angegeben; die Quelle bestimmt den umzubenennenden Eintrag.
+3. Neuer Name: Neuer Dateiname für Rename. Hier wird ein Name angegeben; die Quelle bestimmt den umzubenennenden Eintrag. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 4. Bei gesperrten Dateien wiederholen: Wiederholt eine wegen Dateisperre fehlgeschlagene Dateiaktion nach konfigurierter Wartezeit. Andere Konfigurationsfehler werden dadurch nicht behoben.
 5. Anzahl der Wiederholungen: Anzahl zusätzlicher Wiederholungsversuche nach einer Dateisperre; 0 deaktiviert zusätzliche Versuche.
 6. Wartezeit zwischen Versuchen (ms): Pause zwischen Wiederholungsversuchen in Millisekunden. Ein höherer Wert gibt dem anderen Programm mehr Zeit zur Freigabe.
@@ -24,7 +24,7 @@ Abbildung: [Vollständige Feld-Ausschnitte der echten Oberfläche mit Beispielwe
 
 1. Aktion: Dateiaktion Copy, Move, Rename oder Delete. Quelle und benötigte Zusatzfelder ändern sich mit der Aktion.
 2. Quelle: Datei- oder Ordnerpfad, auf den die Dateiaktion angewendet wird. Der Pfad ist auf dem Zielrechner zu prüfen, nicht nur auf dem Rechner eines Agenten.
-3. Optionaler Filter: Nur bei Aktion „Löschen“ sichtbar: Dateimuster wie *.txt für passende Dateien innerhalb eines Ordners. Mehrere Muster mit Semikolon trennen; keine Ordnertrennzeichen eintragen. Leer beschränkt die Auswahl nicht durch ein Muster.
+3. Optionaler Filter: Nur bei Aktion „Löschen“ sichtbar: Dateimuster wie *.txt für passende Dateien innerhalb eines Ordners. Mehrere Muster mit Semikolon trennen; keine Ordnertrennzeichen eintragen. Leer beschränkt die Auswahl nicht durch ein Muster. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 4. Bei gesperrten Dateien wiederholen: Wiederholt eine wegen Dateisperre fehlgeschlagene Dateiaktion nach konfigurierter Wartezeit. Andere Konfigurationsfehler werden dadurch nicht behoben.
 5. Anzahl der Wiederholungen: Anzahl zusätzlicher Wiederholungsversuche nach einer Dateisperre; 0 deaktiviert zusätzliche Versuche.
 6. Wartezeit zwischen Versuchen (ms): Pause zwischen Wiederholungsversuchen in Millisekunden. Ein höherer Wert gibt dem anderen Programm mehr Zeit zur Freigabe.
@@ -42,11 +42,11 @@ Legt fehlende übergeordnete Zielordner bei den unterstützten Kopier-/Verschieb
 
 ### field.filter
 
-Nur bei Aktion „Löschen“ sichtbar: Dateimuster wie *.txt für passende Dateien innerhalb eines Ordners. Mehrere Muster mit Semikolon trennen; keine Ordnertrennzeichen eintragen. Leer beschränkt die Auswahl nicht durch ein Muster.
+Nur bei Aktion „Löschen“ sichtbar: Dateimuster wie *.txt für passende Dateien innerhalb eines Ordners. Mehrere Muster mit Semikolon trennen; keine Ordnertrennzeichen eintragen. Leer beschränkt die Auswahl nicht durch ein Muster. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.new_name
 
-Neuer Dateiname für Rename. Hier wird ein Name angegeben; die Quelle bestimmt den umzubenennenden Eintrag.
+Neuer Dateiname für Rename. Hier wird ein Name angegeben; die Quelle bestimmt den umzubenennenden Eintrag. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.operation
 
@@ -102,35 +102,35 @@ Wähle Kopieren, Verschieben, Umbenennen oder Löschen. Trage Quelle und die fü
 
 ### result.affected_bytes
 
-Umfang der betroffenen Dateidaten in Bytes. Einzelwert dieses Ergebnisses.
+Datenmenge der von der Aktion erfassten Dateien in Bytes. Beispiel: 3.
 
 ### result.affected_count
 
-Gesamtzahl betroffener Einträge der Dateiaktion. Einzelwert dieses Ergebnisses.
+Gesamtanzahl der von der Aktion erfassten Elemente. Beispiel: 3.
 
 ### result.affected_directory_count
 
-Anzahl betroffener Ordner, getrennt von Dateien. Einzelwert dieses Ergebnisses.
+Anzahl der von der Aktion erfassten Ordner. Beispiel: 3.
 
 ### result.affected_file_count
 
-Anzahl betroffener Dateien, getrennt von Ordnern. Einzelwert dieses Ergebnisses.
+Anzahl der von der Aktion erfassten Dateien. Beispiel: 3.
 
 ### result.affected_paths
 
-Liste der von der Dateiaktion betroffenen Pfade. Ein erfolgreicher Zähler ist nicht automatisch ein Backup-Versionsnachweis. Geordnete Liste; ein Verbraucher entscheidet gemäß seinem Eingabevertrag über erstes Element oder alle Elemente.
+Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.
 
 ### result.affected_paths.count
 
-Anzahl der Elemente der referenzierten Sammlung, automatisch als zusätzlicher Ergebniswert verfügbar. Einzelwert dieses Ergebnisses.
+Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0. Beispiel: 3.
 
 ### result.completed_at_utc
 
-UTC-Abschlusszeitpunkt der Aktion. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.item_type
 
-Ob Datei, Ordner oder mehrere Einträge von der Dateiaktion betroffen waren. Einzelwert dieses Ergebnisses.
+Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.
 
 ### result.item_type.option.Directory
 
@@ -146,7 +146,7 @@ Mehrere Einträge wurden bearbeitet.
 
 ### result.operation
 
-Tatsächlich angeforderte Dateiaktion. Zusammen mit den Zählern und Pfaden lesen, um deren Auswirkungen zu verstehen. Einzelwert dieses Ergebnisses.
+Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.
 
 ### result.operation.option.Copy
 
@@ -166,11 +166,11 @@ Benennt den Quelleintrag mit new_name um.
 
 ### result.source_path
 
-Verwendeter Quellpfad der Dateiaktion. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Quellpfad der ausgeführten Datei- oder Ordneraktion. Beispiel: C:\Data\example.png.
 
 ### result.target_path
 
-Verwendeter Zielpfad der Dateiaktion, soweit die gewählte Aktion ein Ziel besitzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein. Beispiel: C:\Data\example.png.
 
 ### schema.id
 
@@ -198,11 +198,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -402,6 +402,8 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
     {
       "id": "operation",
       "name": "Aktion",
+      "helpKey": "Ui.Step.FileSystem.Operation.Help",
+      "help": "Wählt die Dateiaktion. Je nach Aktion werden Quelle, Ziel oder ein neuer Name benötigt.",
       "descriptor": {
         "Id": "operation",
         "LabelKey": "Ui.Step.FileSystem.Operation",
@@ -458,12 +460,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "source_path",
       "name": "Quelle",
+      "helpKey": "Ui.Step.FileSystem.Source.Help",
+      "help": "Datei oder Ordner, auf den die gewählte Aktion angewendet wird.",
       "descriptor": {
         "Id": "source_path",
         "LabelKey": "Ui.Step.FileSystem.Source",
@@ -488,12 +495,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "target_path",
       "name": "Ziel",
+      "helpKey": "Ui.Step.FileSystem.Target.Help",
+      "help": "Zielpfad für die gewählte Dateiaktion.",
       "descriptor": {
         "Id": "target_path",
         "LabelKey": "Ui.Step.FileSystem.Target",
@@ -525,12 +537,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "new_name",
       "name": "Neuer Name",
+      "helpKey": "Ui.Step.FileSystem.NewName.Help",
+      "help": "Neuer Name für die umzubenennende Datei oder den Ordner.",
       "descriptor": {
         "Id": "new_name",
         "LabelKey": "Ui.Step.FileSystem.NewName",
@@ -559,12 +576,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "filter",
       "name": "Optionaler Filter",
+      "helpKey": "Ui.Step.FileSystem.FilterHint",
+      "help": "Mehrere Filter mit Semikolon trennen, zum Beispiel *.tmp;*.log. Der Filter gilt nur für direkte Einträge im gewählten Ordner.",
       "descriptor": {
         "Id": "filter",
         "LabelKey": "Ui.Step.FileSystem.Filter",
@@ -593,12 +615,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "create_parent_directories",
       "name": "Fehlende übergeordnete Ordner automatisch erstellen",
+      "helpKey": "Ui.Step.FileSystem.CreateParents.Help",
+      "help": "Erstellt fehlende übergeordnete Ordner für das Ziel der Dateiaktion.",
       "descriptor": {
         "Id": "create_parent_directories",
         "LabelKey": "Ui.Step.FileSystem.CreateParents",
@@ -630,12 +657,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "retry_locked_files",
       "name": "Bei gesperrten Dateien wiederholen",
+      "helpKey": "Ui.Step.FileSystem.RetryLocked.Help",
+      "help": "Versucht die Dateiaktion bei gesperrten Dateien erneut, entsprechend Anzahl und Wartezeit.",
       "descriptor": {
         "Id": "retry_locked_files",
         "LabelKey": "Ui.Step.FileSystem.RetryLocked",
@@ -660,12 +692,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "retry_count",
       "name": "Anzahl der Wiederholungen",
+      "helpKey": "Ui.Step.FileSystem.RetryCount.Help",
+      "help": "Anzahl zusätzlicher Versuche, wenn die Dateiaktion wegen einer Sperre nicht ausgeführt werden kann.",
       "descriptor": {
         "Id": "retry_count",
         "LabelKey": "Ui.Step.FileSystem.RetryCount",
@@ -700,12 +737,17 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "retry_delay_ms",
       "name": "Wartezeit zwischen Versuchen (ms)",
+      "helpKey": "Ui.Step.FileSystem.RetryDelay.Help",
+      "help": "Wartezeit zwischen erneuten Versuchen in Millisekunden.",
       "descriptor": {
         "Id": "retry_delay_ms",
         "LabelKey": "Ui.Step.FileSystem.RetryDelay",
@@ -740,7 +782,10 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -1133,9 +1178,9 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
     "Properties": [
       {
         "Name": "Operation",
-        "DisplayName": "Operation",
+        "DisplayName": "Ausgeführte Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -1148,41 +1193,44 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         ],
         "Id": "operation",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "operation"
       },
       {
         "Name": "SourcePath",
-        "DisplayName": "Source Path",
+        "DisplayName": "Vollständiger Quellpfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Quellpfad der ausgeführten Datei- oder Ordneraktion.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "source_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "source_path"
       },
       {
         "Name": "TargetPath",
-        "DisplayName": "Target Path",
+        "DisplayName": "Vollständiger Zielpfad",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "C:\\Data\\example.png",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "target_path",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "target_path"
       },
       {
         "Name": "ItemType",
-        "DisplayName": "Item Type",
+        "DisplayName": "Art des Eintrags",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -1194,69 +1242,74 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         ],
         "Id": "item_type",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "item_type"
       },
       {
         "Name": "AffectedCount",
-        "DisplayName": "Affected Count",
+        "DisplayName": "Bearbeitete Einträge",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Gesamtanzahl der von der Aktion erfassten Elemente.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_count"
       },
       {
         "Name": "AffectedFileCount",
-        "DisplayName": "Affected File Count",
+        "DisplayName": "Bearbeitete Dateien",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der von der Aktion erfassten Dateien.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_file_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_file_count"
       },
       {
         "Name": "AffectedDirectoryCount",
-        "DisplayName": "Affected Directory Count",
+        "DisplayName": "Bearbeitete Ordner",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der von der Aktion erfassten Ordner.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_directory_count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_directory_count"
       },
       {
         "Name": "AffectedBytes",
-        "DisplayName": "Affected Bytes",
+        "DisplayName": "Bearbeitete Bytes",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Datenmenge der von der Aktion erfassten Dateien in Bytes.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_bytes",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_bytes"
       },
       {
         "Name": "AffectedPaths",
-        "DisplayName": "Affected Paths",
+        "DisplayName": "Bearbeitete Pfade",
         "DataType": "Text",
-        "Description": "Text",
+        "Description": "Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Collection",
@@ -1264,46 +1317,49 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
         "EnumValues": null,
         "Id": "affected_paths",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_paths"
       },
       {
         "Name": "AffectedPaths.Count",
-        "DisplayName": "Affected Paths / Count",
+        "DisplayName": "Betroffene Pfade / Anzahl",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "affected_paths.count",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "affected_paths.count"
       },
       {
         "Name": "CompletedAtUtc",
-        "DisplayName": "Completed At Utc",
+        "DisplayName": "Abgeschlossen am (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "completed_at_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "completed_at_utc"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Operation",
-        "DisplayName": "Operation",
+        "DisplayName": "Ausgeführte Aktion",
         "Property": {
           "Name": "Operation",
-          "DisplayName": "Operation",
+          "DisplayName": "Ausgeführte Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Art der ausgeführten Aktion, etwa Kopieren, Verschieben oder Löschen.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -1316,56 +1372,59 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
           ],
           "Id": "operation",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "operation"
         },
         "Children": []
       },
       {
         "Segment": "SourcePath",
-        "DisplayName": "Source Path",
+        "DisplayName": "Vollständiger Quellpfad",
         "Property": {
           "Name": "SourcePath",
-          "DisplayName": "Source Path",
+          "DisplayName": "Vollständiger Quellpfad",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Quellpfad der ausgeführten Datei- oder Ordneraktion.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "C:\\Data\\example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "source_path",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "source_path"
         },
         "Children": []
       },
       {
         "Segment": "TargetPath",
-        "DisplayName": "Target Path",
+        "DisplayName": "Vollständiger Zielpfad",
         "Property": {
           "Name": "TargetPath",
-          "DisplayName": "Target Path",
+          "DisplayName": "Vollständiger Zielpfad",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Zielpfad der Datei- oder Ordneraktion. Bei Aktionen ohne Ziel kann der Wert leer sein.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "C:\\Data\\example.png",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "target_path",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "target_path"
         },
         "Children": []
       },
       {
         "Segment": "ItemType",
-        "DisplayName": "Item Type",
+        "DisplayName": "Art des Eintrags",
         "Property": {
           "Name": "ItemType",
-          "DisplayName": "Item Type",
+          "DisplayName": "Art des Eintrags",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Gibt an, ob Dateien, Ordner oder mehrere Arten von Elementen betroffen waren.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -1377,94 +1436,99 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
           ],
           "Id": "item_type",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "item_type"
         },
         "Children": []
       },
       {
         "Segment": "AffectedCount",
-        "DisplayName": "Affected Count",
+        "DisplayName": "Bearbeitete Einträge",
         "Property": {
           "Name": "AffectedCount",
-          "DisplayName": "Affected Count",
+          "DisplayName": "Bearbeitete Einträge",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Gesamtanzahl der von der Aktion erfassten Elemente.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_count"
         },
         "Children": []
       },
       {
         "Segment": "AffectedFileCount",
-        "DisplayName": "Affected File Count",
+        "DisplayName": "Bearbeitete Dateien",
         "Property": {
           "Name": "AffectedFileCount",
-          "DisplayName": "Affected File Count",
+          "DisplayName": "Bearbeitete Dateien",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der von der Aktion erfassten Dateien.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_file_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_file_count"
         },
         "Children": []
       },
       {
         "Segment": "AffectedDirectoryCount",
-        "DisplayName": "Affected Directory Count",
+        "DisplayName": "Bearbeitete Ordner",
         "Property": {
           "Name": "AffectedDirectoryCount",
-          "DisplayName": "Affected Directory Count",
+          "DisplayName": "Bearbeitete Ordner",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Anzahl der von der Aktion erfassten Ordner.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_directory_count",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_directory_count"
         },
         "Children": []
       },
       {
         "Segment": "AffectedBytes",
-        "DisplayName": "Affected Bytes",
+        "DisplayName": "Bearbeitete Bytes",
         "Property": {
           "Name": "AffectedBytes",
-          "DisplayName": "Affected Bytes",
+          "DisplayName": "Bearbeitete Bytes",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Datenmenge der von der Aktion erfassten Dateien in Bytes.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "affected_bytes",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_bytes"
         },
         "Children": []
       },
       {
         "Segment": "AffectedPaths",
-        "DisplayName": "Affected Paths",
+        "DisplayName": "Bearbeitete Pfade",
         "Property": {
           "Name": "AffectedPaths",
-          "DisplayName": "Affected Paths",
+          "DisplayName": "Bearbeitete Pfade",
           "DataType": "Text",
-          "Description": "Text",
+          "Description": "Liste der von der Dateiaktion erfassten Pfade. Ohne betroffene Elemente ist sie leer.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Collection",
@@ -1472,24 +1536,26 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
           "EnumValues": null,
           "Id": "affected_paths",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "affected_paths"
         },
         "Children": [
           {
             "Segment": "Count",
-            "DisplayName": "Count",
+            "DisplayName": "Anzahl",
             "Property": {
               "Name": "AffectedPaths.Count",
-              "DisplayName": "Affected Paths / Count",
+              "DisplayName": "Betroffene Pfade / Anzahl",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Anzahl der Elemente in „Betroffene Pfade“. Eine leere Liste hat die Anzahl 0.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "affected_paths.count",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "affected_paths.count"
             },
             "Children": []
@@ -1498,19 +1564,20 @@ Optionaler Pfad unterhalb einer Anbieterquelle, zum Beispiel zu einem typisierte
       },
       {
         "Segment": "CompletedAtUtc",
-        "DisplayName": "Completed At Utc",
+        "DisplayName": "Abgeschlossen am (UTC)",
         "Property": {
           "Name": "CompletedAtUtc",
-          "DisplayName": "Completed At Utc",
+          "DisplayName": "Abgeschlossen am (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem die Dateiaktion abgeschlossen wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "completed_at_utc",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "completed_at_utc"
         },
         "Children": []

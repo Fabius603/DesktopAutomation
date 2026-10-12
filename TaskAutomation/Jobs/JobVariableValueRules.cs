@@ -45,8 +45,7 @@ public static class JobVariableValueRules
             {
                 ResultValueKind.Boolean => value.TryGetValue<bool>(out _),
                 ResultValueKind.Integer => Integer(value),
-                ResultValueKind.Number => value.TryGetValue<double>(out var number) && double.IsFinite(number)
-                    || value.TryGetValue<decimal>(out _) || Integer(value),
+                ResultValueKind.Number => JsonNumberRules.TryReadFiniteDouble(value, out _),
                 ResultValueKind.Color => value.TryGetValue<string>(out var color) && TaskAutomation.Steps.ColorValueRules.TryParse(color, out _),
                 ResultValueKind.DateTime => value.TryGetValue<DateTime>(out _),
                 ResultValueKind.Enum => value.TryGetValue<string>(out var token)

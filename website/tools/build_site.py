@@ -610,6 +610,7 @@ def main():
     files = build(meta, content)
     files.update(build_examples(meta))
     files.update(build_static_pages())
+    files.update(build_retired_windows_settings(meta))
     for relative, value in files.items():
         path = DIST / relative
         value = value.encode('utf-8') if isinstance(value, str) else value
@@ -630,6 +631,17 @@ def main():
         manifest.write_text(json.dumps(sorted(files), indent=2) + '\n', encoding='utf-8')
     validate_links()
     print(f'{len(files)} generated outputs valid; {len(missing)} explicitly deferred explanations remain.')
+
+
+def build_retired_windows_settings(meta):
+    output = {}
+    for setting in meta.get('retiredWindowsSettings', []):
+        base = 'doku/werte/' + setting + '/'
+        message = 'Diese automatische Windows-Einstellung ist ab der nächsten Version entfernt. Alte Jobs bleiben lesbar, müssen aber korrigiert werden. Die Ausführung meldet Unsupported und setting.removed.'
+        output[base + 'index.html'] = '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><title>Entfernte Windows-Einstellung</title></head><body><h1>' + esc(setting) + '</h1><p>' + message + '</p><p><a href="/doku/steps/windows_setting_change/">Unterstützte Windows-Einstellungen</a></p></body></html>'
+        output[base + 'referenz.md'] = '# ' + setting + '\n\n' + message + '\n\n[Unterstützte Windows-Einstellungen](/doku/steps/windows_setting_change/)\n'
+        output[base + 'vertrag.json'] = json.dumps(dict(id=setting, retired=True, status='Unsupported', errorCode='setting.removed', explanation=message), ensure_ascii=False, indent=2) + '\n'
+    return output
 
 
 def build_examples(meta):

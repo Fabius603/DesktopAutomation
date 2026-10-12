@@ -25,7 +25,7 @@ internal static class ImageDetectionStepDefinitionSupport
         "Ui.Step.Settings.ROI",
         StepValueKind.Object,
         DefaultValue: JsonSerializer.SerializeToNode(new StepRoiSelectionValue(false, 0, 0, 0, 0, null)),
-        EditorHint: StepEditorHints.RoiPicker,
+        EditorHint: StepEditorHints.RoiPicker, InputSchemaId: InputSchemaIds.Roi, OwnsStructuredInputContract: true,
         Advanced: true,
         Order: order,
         RoiPickerOptions: new StepRoiPickerOptions("dynamicRoi"));

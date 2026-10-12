@@ -5,7 +5,7 @@ Website: /doku/steps/timeout/
 
 Abbildung: [Detailansicht: Warten. Markierte Beschriftungen zeigen die Einstellungen im Editor. Die Abbildung zeigt eine Beispielkonfiguration, keine ausgeführte Aktion. Zusammengestellte Ausschnitte echter Einstellungsfelder mit Beispielwerten; die Nummer markiert Beschriftung und Eingabe gemeinsam.](/ref-step-timeout.detail.png)
 
-1. Wartezeit (ms): Wartezeit in Millisekunden. 1000 entspricht einer Sekunde; eine Zeitpause ersetzt keine Statusprüfung eines Programms.
+1. Wartezeit (ms): Wartezeit in Millisekunden. 1000 entspricht einer Sekunde; eine Zeitpause ersetzt keine Statusprüfung eines Programms. Ab dem kommenden Update 1.6.2 erscheint die Feldhilfe beim Hover über die Bezeichnung oder das Eingabefeld. Hilfetexte verändern weder delay_ms noch die typisierte inputs-Bindung.
 ### errors
 
 Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
@@ -16,7 +16,7 @@ Nach einer Rückmeldung 1000 ms warten und erst dann den nächsten Step ausführ
 
 ### field.delay_ms
 
-Wartezeit in Millisekunden. 1000 entspricht einer Sekunde; eine Zeitpause ersetzt keine Statusprüfung eines Programms.
+Wartezeit in Millisekunden. 1000 entspricht einer Sekunde; eine Zeitpause ersetzt keine Statusprüfung eines Programms. Ab dem kommenden Update 1.6.2 erscheint die Feldhilfe beim Hover über die Bezeichnung oder das Eingabefeld. Hilfetexte verändern weder delay_ms noch die typisierte inputs-Bindung.
 
 ### purpose
 
@@ -48,11 +48,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -92,6 +92,8 @@ Wartezeit in Millisekunden. 1000 entspricht einer Sekunde; eine Zeitpause ersetz
     {
       "id": "delay_ms",
       "name": "Wartezeit (ms)",
+      "helpKey": "Ui.Step.Settings.WaitTimeMs.Help",
+      "help": "Pause in Millisekunden. 1000 ms entsprechen einer Sekunde. Eine Pause bestätigt nicht, dass ein anderes Programm bereit ist.",
       "descriptor": {
         "Id": "delay_ms",
         "LabelKey": "Ui.Step.Settings.WaitTimeMs",
@@ -122,7 +124,10 @@ Wartezeit in Millisekunden. 1000 entspricht einer Sekunde; eine Zeitpause ersetz
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],

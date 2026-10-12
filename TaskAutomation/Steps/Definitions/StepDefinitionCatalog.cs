@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps.Definitions;
@@ -29,6 +30,8 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
 
         foreach (var definition in Definitions)
             ValidateDefinition(definition);
+        var schemaErrors = InputContractRegistry.ValidateSchemas();
+        if (schemaErrors.Count > 0) throw new InvalidOperationException(string.Join(Environment.NewLine, schemaErrors));
     }
 
     public IReadOnlyList<IStepDefinition> Definitions { get; }
@@ -67,6 +70,8 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
         var fieldIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var field in descriptor.Fields)
         {
+            if (field.InputSchemaId is { } schemaId && !InputContractRegistry.TryGetSchema(schemaId, out _))
+                throw new InvalidOperationException($"{definition.StepType.Name}.{field.Id}: unknown input schema '{schemaId}'.");
             if (string.IsNullOrWhiteSpace(field.Id) || !fieldIds.Add(field.Id))
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} contains an empty or duplicate field ID '{field.Id}'.");
@@ -121,7 +126,7 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has no input-contract ID.");
             if (field.InputContractId is { } inputContractId
-                && StepInputContractRegistry.Get(definition.StepType, inputContractId) is null)
+                && InputContractRegistry.Find(definition.StepType, inputContractId) is null)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' references unknown input contract '{inputContractId}'.");
             if (string.Equals(field.EditorHint, TaskAutomation.Contracts.Steps.StepEditorHints.VisualOverlay,
@@ -130,8 +135,8 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has no visual-overlay options.");
             if (field.VisualOverlayOptions is { } overlayOptions
-                && (StepInputContractRegistry.Get(definition.StepType, overlayOptions.DetectionInputContractId) is null
-                    || StepInputContractRegistry.Get(definition.StepType, overlayOptions.TextInputContractId) is null))
+                && (InputContractRegistry.Find(definition.StepType, overlayOptions.DetectionInputContractId) is null
+                    || InputContractRegistry.Find(definition.StepType, overlayOptions.TextInputContractId) is null))
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' references an unknown visual-overlay input contract.");
             if (string.Equals(field.EditorHint, TaskAutomation.Contracts.Steps.StepEditorHints.RoiPicker,
@@ -140,7 +145,7 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has no ROI-picker options.");
             if (field.RoiPickerOptions is { } roiOptions
-                && StepInputContractRegistry.Get(definition.StepType, roiOptions.DynamicInputContractId) is null)
+                && InputContractRegistry.Find(definition.StepType, roiOptions.DynamicInputContractId) is null)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' references an unknown dynamic-ROI input contract.");
             if (string.Equals(field.EditorHint, TaskAutomation.Contracts.Steps.StepEditorHints.YoloPicker,
@@ -163,7 +168,7 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has no screen-point picker options.");
             if (field.ScreenPointPickerOptions is { } screenPointOptions
-                && StepInputContractRegistry.Get(definition.StepType, screenPointOptions.WholeValueInputContractId) is null)
+                && InputContractRegistry.Find(definition.StepType, screenPointOptions.WholeValueInputContractId) is null)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' references an unknown point input contract.");
         }

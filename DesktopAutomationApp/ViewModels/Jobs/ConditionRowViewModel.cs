@@ -161,7 +161,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         SelectedProperty is null
             ? []
             : BuildSelectionTree(_availableSourceSteps, _availableVariables,
-                property => StepResultMetadata.AreComparable(SelectedProperty, property),
+                property => ConditionRules.CanCompare(SelectedProperty, property),
                 SelectComparisonPath,
                 SelectComparisonVariable);
     public ObservableCollection<ConditionOperator> AvailableOperators { get; } = [];
@@ -311,10 +311,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool CanRemove => _owner.Count > ConditionRules.MinimumConditions;
     public string SelectedPath => SelectedProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
-        : $"{SelectedSourceStep.DisplayName}  →  {SelectedProperty.DisplayName}";
+        : StepLocalization.ResultPath(SelectedSourceStep.DisplayName, SelectedProperty.DisplayName);
     public string ComparisonPath => SelectedComparisonProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
-        : $"{SelectedComparisonSourceStep.DisplayName}  →  {SelectedComparisonProperty.DisplayName}";
+        : StepLocalization.ResultPath(SelectedComparisonSourceStep.DisplayName, SelectedComparisonProperty.DisplayName);
     public string InputHint => SelectedProperty?.Description ?? "";
     public string InputExample => SelectedProperty?.Example ?? (SelectedProperty?.DataType switch
     {
@@ -330,12 +330,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 ? ConditionRules.IsComparisonValueValid(
                     SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
                 : picker.SelectedResultProperty is { } comparisonProperty
-                  && StepResultMetadata.AreComparable(SelectedProperty, comparisonProperty))
+                  && ConditionRules.CanCompare(SelectedProperty, comparisonProperty))
             : ComparisonIsLiteral
             ? ConditionRules.IsComparisonValueValid(SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
             : (SelectedComparisonSourceStep is not null || _selectedComparisonVariable is not null)
                 && SelectedComparisonProperty is not null
-                && StepResultMetadata.AreComparable(SelectedProperty, SelectedComparisonProperty)));
+                && ConditionRules.CanCompare(SelectedProperty, SelectedComparisonProperty)));
     public string ComparisonValueValidationError => IsComparisonValueValid
         ? string.Empty
         : Loc.Get("Ui.Step.IfEditor.InvalidValue");
@@ -386,6 +386,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 sourceCatalog, CreateConditionSourceContract(), false);
         SourceField = new GeneratedStepFieldViewModel(
             new StepFieldDescriptor("condition_source", string.Empty, StepValueKind.ResultBinding,
+                DescriptionKey: "Ui.Step.IfEditor.ResultPath.Help",
                 Required: true, AllowsDirectValue: false),
             null,
             inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
@@ -409,19 +410,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         }
     }
 
-    private static StepInputDescriptor CreateConditionSourceContract() => new(
-        "condition", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.NotApplicable,
-        new AcceptedResultShape(ResultValueKind.Boolean, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.Number, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.DateTime, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.Color, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.FilePath, ResultCardinality.Single, ResultCardinality.OptionalSingle),
-        new AcceptedResultShape(ResultValueKind.Enum, ResultCardinality.Single, ResultCardinality.OptionalSingle))
-    {
-        AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable, ValueProviderIds.StepResult }
-    };
+    private static InputContractNode CreateConditionSourceContract() => ConditionRules.SourceInputContract();
 
     private void SyncSourceFromPicker()
     {
@@ -465,7 +454,6 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     {
         var nodes = new List<ConditionSelectionNode>();
         var variableNodes = variables
-            .Where(IsConditionValue)
             .Select(variable => (Variable: variable, Property: Describe(variable)))
             .Where(item => filter is null || filter(item.Property))
             .Select(item => new ConditionSelectionNode(
@@ -477,14 +465,19 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             .ToArray();
         if (variableNodes.Length > 0)
             nodes.Add(new ConditionSelectionNode(Loc.Get("Ui.ValueReference.JobVariables"), variableNodes));
-        nodes.AddRange(sources.Select(source => new ConditionSelectionNode(
-            source.DisplayName,
-            source.ResultType.PropertyTree
-                .Select(node => CreateSelectionNode(source, node, filter, selection))
-                .Where(node => node is not null)
-                .Cast<ConditionSelectionNode>()
-                .ToArray()))
-            .Where(node => node.Children.Count > 0));
+        foreach (var source in sources)
+        {
+            var children = new List<ConditionSelectionNode>();
+            var diagnostic = new List<ConditionSelectionNode>();
+            foreach (var propertyNode in source.ResultType.PropertyTree)
+            {
+                if (CreateSelectionNode(source, propertyNode, filter, selection) is not { } node) continue;
+                (propertyNode.Property?.IsDiagnostic == true ? diagnostic : children).Add(node);
+            }
+            if (diagnostic.Count > 0)
+                children.Add(new ConditionSelectionNode(Loc.Get("Ui.ValueReference.ResultDiagnostics"), diagnostic));
+            if (children.Count > 0) nodes.Add(new ConditionSelectionNode(source.DisplayName, children));
+        }
         return nodes;
     }
 
@@ -508,14 +501,16 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             var completeValue = new ConditionSelectionNode(
                 Loc.Get("Ui.Step.IfEditor.CompleteValue"),
                 selectCommand: new RelayCommand(() => select(source, node.Property)),
-                secondaryText: StepLocalization.ResultValueType(node.Property));
+                secondaryText: StepLocalization.ResultValueType(node.Property),
+                description: StepLocalization.PropertyHelp(node.Property));
             return new ConditionSelectionNode(node.DisplayName, new[] { completeValue }.Concat(children).ToArray());
         }
         return new ConditionSelectionNode(
             node.DisplayName,
             children,
             new RelayCommand(() => select(source, node.Property)),
-            StepLocalization.ResultValueType(node.Property));
+            StepLocalization.ResultValueType(node.Property),
+            description: StepLocalization.PropertyHelp(node.Property));
     }
 
     private void SelectPath(SourceStepItem source, ResultPropertyDescriptor property)
@@ -564,7 +559,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         OnChange(nameof(ComparisonSelectionTree));
 
         if (SelectedProperty is null || SelectedComparisonProperty is not null
-            && !StepResultMetadata.AreComparable(SelectedProperty, SelectedComparisonProperty))
+            && !ConditionRules.CanCompare(SelectedProperty, SelectedComparisonProperty))
         {
             SelectedComparisonSourceStep = null;
             _selectedComparisonVariable = null;
@@ -574,16 +569,9 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     }
 
     private static bool IsConditionValue(ValueProviderSourceDescriptor variable) =>
-        variable.Cardinality != ResultCardinality.Collection
-        && variable.ValueKind is ResultValueKind.Boolean or ResultValueKind.Integer
-            or ResultValueKind.Number or ResultValueKind.Text or ResultValueKind.DateTime
-            or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath;
+        ConditionRules.IsConditionSource(variable.ToResultProperty());
 
-    private static bool IsConditionProperty(ResultPropertyDescriptor property) =>
-        property.Cardinality != ResultCardinality.Collection
-        && property.DataType is ResultValueKind.Boolean or ResultValueKind.Integer
-            or ResultValueKind.Number or ResultValueKind.Text or ResultValueKind.DateTime
-            or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath;
+    private static bool IsConditionProperty(ResultPropertyDescriptor property) => ConditionRules.IsConditionSource(property);
 
     private ResultPropertyDescriptor Describe(ValueProviderSourceDescriptor variable, string? valuePath = null) =>
         !string.IsNullOrWhiteSpace(valuePath)
@@ -727,6 +715,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             }).ToArray()
             : null;
         var descriptor = new StepFieldDescriptor(_comparisonInputKey, string.Empty, kind,
+            DescriptionKey: "Ui.Step.Settings.Value.Help",
             Required: true, DefaultValue: node,
             EditorHint: kind switch
             {
@@ -870,7 +859,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                               && p.StableId.Equals(comparison.PropertyId, StringComparison.OrdinalIgnoreCase))
                              || p.Name.Equals(comparison.PropertyPath, StringComparison.OrdinalIgnoreCase))
                             && _selectedProperty is not null
-                            && StepResultMetadata.AreComparable(_selectedProperty, p));
+                            && ConditionRules.CanCompare(_selectedProperty, p));
                 }
             }
             RefreshComparisonField(comparison.Value,

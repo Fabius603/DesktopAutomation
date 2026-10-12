@@ -7,6 +7,29 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class StepResultMetadataTests
 {
     [Fact]
+    public void ResultPresentation_PutsPayloadBeforeDiagnosticsWithoutDroppingValues()
+    {
+        var contract = StepResultMetadata.GetResultType(nameof(TemplateMatchingResult))!;
+        var diagnostics = contract.Properties.Where(property => property.IsDiagnostic).ToArray();
+        Assert.Equal(new[] { "source_frame_version", "source_frame_timestamp" }, diagnostics.Select(property => property.StableId));
+        Assert.Equal(diagnostics, contract.Properties.TakeLast(diagnostics.Length));
+        Assert.Contains(contract.Properties, property => property.Name == "Point" && property.Example is not null);
+        Assert.False(contract.Properties.Single(property => property.Name == "Found").IsDiagnostic);
+    }
+
+    [Fact]
+    public void PropertyTree_PreservesLocalizedLeafLabelsForNestedCollections()
+    {
+        var tree = ResultPropertyTree.Create([
+            new("Words.Count", "Erkannte Wörter / Anzahl", ResultValueKind.Integer),
+            new("Words[].Text", "Worttext", ResultValueKind.Text, Cardinality: ResultCardinality.Collection)]);
+        var words = Assert.Single(tree);
+        Assert.Equal("Erkannte Wörter", words.DisplayName);
+        Assert.Equal("Worttext", words.Children.Single(child => child.Segment == "Text").DisplayName);
+        Assert.Equal("Words[].Text", words.Children.Single(child => child.Segment == "Text").Property!.Name);
+    }
+
+    [Fact]
     public void CaptureAndDetectionContracts_ExposeStableFrameProvenanceIds()
     {
         foreach (var type in new[] { typeof(DesktopDuplicationResult), typeof(CameraCaptureResult) })

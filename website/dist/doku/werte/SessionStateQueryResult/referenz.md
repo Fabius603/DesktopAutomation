@@ -17,31 +17,31 @@ Typisierter Ergebnisvertrag SessionStateQueryResult. Wird von der zugehörigen W
 
 ### result.captured_at
 
-Zeitpunkt der Windows-Abfrage beziehungsweise Erfassung im Ergebnis. Er zeigt den Beobachtungsstand, nicht einen garantierten späteren Systemzustand. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.error_message
 
-Lesbare Diagnose der Windows-Operation. Für Entscheidungen vorzugsweise Status und stabilen Code verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.id
 
-System-/Geräteidentität des jeweiligen Ergebnisobjekts. Ihre Lebensdauer und Form hängen von der abgefragten Windows-Funktion ab. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+ID der Sitzung, in der die Anwendung läuft, als Text.
 
 ### result.is_active
 
-Ob das geprüfte Fenster zum Abfragezeitpunkt im Vordergrund ist. Einzelwert dieses Ergebnisses.
+Gibt an, ob die abgefragte Windows-Sitzung aktiv ist. Beispiel: true.
 
 ### result.name
 
-Lesbarer Name des abgefragten Geräts, Monitors, Laufwerks oder Objekts. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Benutzername der Sitzung, in der die Anwendung läuft.
 
 ### result.session_state
 
-Aktueller Zustand der Windows-Sitzung, etwa gesperrt oder entsperrt gemäß Systemmeldung. Einzelwert dieses Ergebnisses.
+Zustand der abgefragten Windows-Sitzung, beispielsweise aktiv oder getrennt.
 
 ### result.session_state.option.Active
 
@@ -61,7 +61,7 @@ Die vorhandenen Daten erlauben keinen eindeutigeren Zustand.
 
 ### result.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.
 
 ### result.status.option.AccessDenied
 
@@ -94,23 +94,24 @@ Funktion auf diesem Zielsystem nicht unterstützt.
     "Properties": [
       {
         "Name": "IsActive",
-        "DisplayName": "Is Active",
+        "DisplayName": "Sitzung ist aktiv",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob die abgefragte Windows-Sitzung aktiv ist.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "is_active",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "is_active"
       },
       {
         "Name": "Name",
-        "DisplayName": "Name",
+        "DisplayName": "Name des angemeldeten Benutzers",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Benutzername der Sitzung, in der die Anwendung läuft.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -118,13 +119,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "name",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "name"
       },
       {
         "Name": "Id",
-        "DisplayName": "Id",
+        "DisplayName": "Windows-Sitzungs-ID",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "ID der Sitzung, in der die Anwendung läuft, als Text.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -132,13 +134,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "id"
       },
       {
         "Name": "SessionState",
-        "DisplayName": "Session State",
+        "DisplayName": "Sitzungszustand",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zustand der abgefragten Windows-Sitzung, beispielsweise aktiv oder getrennt.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -151,13 +154,14 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "session_state",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "session_state"
       },
       {
         "Name": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -171,27 +175,29 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         ],
         "Id": "status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "status"
       },
       {
         "Name": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "captured_at",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "captured_at"
       },
       {
         "Name": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -199,51 +205,54 @@ Funktion auf diesem Zielsystem nicht unterstützt.
         "EnumValues": null,
         "Id": "error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_code"
       },
       {
         "Name": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
         "IsNullable": true,
-        "Example": "No detection point available",
+        "Example": null,
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "error_message",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "error_message"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "IsActive",
-        "DisplayName": "Is Active",
+        "DisplayName": "Sitzung ist aktiv",
         "Property": {
           "Name": "IsActive",
-          "DisplayName": "Is Active",
+          "DisplayName": "Sitzung ist aktiv",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob die abgefragte Windows-Sitzung aktiv ist.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "is_active",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "is_active"
         },
         "Children": []
       },
       {
         "Segment": "Name",
-        "DisplayName": "Name",
+        "DisplayName": "Name des angemeldeten Benutzers",
         "Property": {
           "Name": "Name",
-          "DisplayName": "Name",
+          "DisplayName": "Name des angemeldeten Benutzers",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Benutzername der Sitzung, in der die Anwendung läuft.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -251,18 +260,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "name",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "name"
         },
         "Children": []
       },
       {
         "Segment": "Id",
-        "DisplayName": "Id",
+        "DisplayName": "Windows-Sitzungs-ID",
         "Property": {
           "Name": "Id",
-          "DisplayName": "Id",
+          "DisplayName": "Windows-Sitzungs-ID",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "ID der Sitzung, in der die Anwendung läuft, als Text.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -270,18 +280,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "id",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "id"
         },
         "Children": []
       },
       {
         "Segment": "SessionState",
-        "DisplayName": "Session State",
+        "DisplayName": "Sitzungszustand",
         "Property": {
           "Name": "SessionState",
-          "DisplayName": "Session State",
+          "DisplayName": "Sitzungszustand",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zustand der abgefragten Windows-Sitzung, beispielsweise aktiv oder getrennt.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -294,18 +305,19 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "session_state",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "session_state"
         },
         "Children": []
       },
       {
         "Segment": "Status",
-        "DisplayName": "Status",
+        "DisplayName": "Ergebnis der Windows-Aktion",
         "Property": {
           "Name": "Status",
-          "DisplayName": "Status",
+          "DisplayName": "Ergebnis der Windows-Aktion",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Fehler der Windows-Aktion.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -319,37 +331,39 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           ],
           "Id": "status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "status"
         },
         "Children": []
       },
       {
         "Segment": "CapturedAt",
-        "DisplayName": "Captured At",
+        "DisplayName": "Abfragezeit (UTC)",
         "Property": {
           "Name": "CapturedAt",
-          "DisplayName": "Captured At",
+          "DisplayName": "Abfragezeit (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt, zu dem der Windows-Zustand ermittelt wurde.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "captured_at",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "captured_at"
         },
         "Children": []
       },
       {
         "Segment": "ErrorCode",
-        "DisplayName": "Error Code",
+        "DisplayName": "Technischer Fehlercode",
         "Property": {
           "Name": "ErrorCode",
-          "DisplayName": "Error Code",
+          "DisplayName": "Technischer Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -357,25 +371,27 @@ Funktion auf diesem Zielsystem nicht unterstützt.
           "EnumValues": null,
           "Id": "error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_code"
         },
         "Children": []
       },
       {
         "Segment": "ErrorMessage",
-        "DisplayName": "Error Message",
+        "DisplayName": "Fehlerbeschreibung",
         "Property": {
           "Name": "ErrorMessage",
-          "DisplayName": "Error Message",
+          "DisplayName": "Fehlerbeschreibung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Beschreibung des Windows-Fehlers. Bei erfolgreicher Aktion leer.",
           "IsNullable": true,
-          "Example": "No detection point available",
+          "Example": null,
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "error_message",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "error_message"
         },
         "Children": []

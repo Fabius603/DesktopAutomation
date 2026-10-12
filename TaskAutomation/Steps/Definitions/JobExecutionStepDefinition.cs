@@ -22,7 +22,7 @@ public sealed class JobExecutionStepDefinition : StepDefinition<JobExecutionStep
                 "Ui.Step.Settings.Job",
                 StepValueKind.Object,
                 Required: true,
-                EditorHint: StepEditorHints.JobPicker,
+                InputValueKind: ResultValueKind.JobReference, EditorHint: StepEditorHints.JobPicker,
                 Order: 0),
             new StepFieldDescriptor(
                 WaitForCompletionFieldId,

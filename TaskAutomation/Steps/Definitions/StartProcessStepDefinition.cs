@@ -43,7 +43,7 @@ public sealed class StartProcessStepDefinition : StepDefinition<StartProcessStep
                     new(nameof(StartProcessAction.Terminate), "Enum.StartProcessAction.Terminate")
                 ]),
             new StepFieldDescriptor(ProcessTargetFieldId, "Ui.Step.Settings.ProcessSource", StepValueKind.Object,
-                Required: true, EditorHint: StepEditorHints.ProcessTargetPicker, InputContractId: "process", Order: -1,
+                Required: true, EditorHint: StepEditorHints.ProcessTargetPicker, InputSchemaId: InputSchemaIds.ProcessTarget, OwnsStructuredInputContract: true, InputContractId: "process", Order: -1,
                 VisibleWhen: new StepVisibilityRule(ActionFieldId, JsonValue.Create(nameof(StartProcessAction.Terminate)))),
             new StepFieldDescriptor(ExecutablePathFieldId, "Ui.Step.Settings.PathProgram", StepValueKind.FilePath,
                 Required: true, DefaultValue: JsonValue.Create(string.Empty),

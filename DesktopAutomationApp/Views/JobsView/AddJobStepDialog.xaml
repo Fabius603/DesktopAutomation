@@ -1,8 +1,9 @@
-﻿<mah:MetroWindow x:Class="DesktopAutomationApp.Views.AddJobStepDialog"
+<mah:MetroWindow x:Class="DesktopAutomationApp.Views.AddJobStepDialog"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
  xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+ xmlns:help="clr-namespace:DesktopAutomationApp.Behaviors"
  xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
  xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
  Width="1120" Height="610" MinWidth="940" MinHeight="480"
@@ -69,11 +70,10 @@
      ItemContainerStyle="{StaticResource PickerRow}" Background="Transparent" BorderThickness="0"
      AutomationProperties.AutomationId="JobStepTypePickerList" AutomationProperties.Name="{loc:Translate Key=Ui.Step.Settings.StepType}"
      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
-     <ListBox.ItemTemplate><DataTemplate><Grid>
+     <ListBox.ItemTemplate><DataTemplate><Grid Background="Transparent" help:HoverHelp.Text="{Binding Description}">
       <Grid.ColumnDefinitions><ColumnDefinition Width="50"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
       <Border Style="{StaticResource PickerIcon}" HorizontalAlignment="Left" VerticalAlignment="Center"><icons:PackIconMaterial Kind="{Binding Icon}" Width="23" Height="23" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="{Binding DisplayLabel}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap"/>
-       <TextBlock Text="{Binding Description}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap" FontSize="13" Margin="0,3,0,0"/>
       </StackPanel>
      </Grid></DataTemplate></ListBox.ItemTemplate>
     </ListBox>
@@ -84,9 +84,8 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <StackPanel Visibility="{Binding HasMatchingStepTypes, Converter={StaticResource BooleanToVisibilityConverter}}">
       <Border Width="46" Height="46" CornerRadius="8" HorizontalAlignment="Left"><Border.Background><MultiBinding Converter="{StaticResource PickerStepPresentation}" ConverterParameter="color"><Binding Path="SelectedStepCategoryKey"/><Binding RelativeSource="{RelativeSource Self}"/></MultiBinding></Border.Background><icons:PackIconMaterial Kind="{Binding SelectedStepIcon}" Foreground="White" Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-      <TextBlock Text="{Binding SelectedStepDisplayName}" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,14,0,6"/>
+      <TextBlock help:HoverHelp.Text="{Binding StepTypeDescription}" Text="{Binding SelectedStepDisplayName}" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,14,0,6"/>
       <TextBlock Text="{Binding SelectedStepCategory}" Foreground="{DynamicResource App.Brush.Accent}" TextWrapping="Wrap"/>
-      <TextBlock Text="{Binding StepTypeDescription}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap" LineHeight="22" Margin="0,22,0,0"/>
       <Border Height="1" Background="{DynamicResource App.Brush.CardBorder}" Margin="0,24,0,14"/>
       <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Picker.EditLater}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap" LineHeight="21"/>
      </StackPanel>

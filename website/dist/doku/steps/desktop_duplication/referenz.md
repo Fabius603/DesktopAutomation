@@ -10,7 +10,7 @@ Abbildung: [Detailansicht: Bildschirm aufnehmen. Markierte Beschriftungen zeigen
 3. Auf neues Bild warten: Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame zu übernehmen.
 4. Zeitlimit (ms): Zeitlimit in Millisekunden für den betreffenden Vorgang. Das jeweilige Fehler-/Skip-Verhalten steht im Step-Text; es ist keine allgemeine Job-Gesamtdauer.
 5. Bei Zeitlimit letztes Bild verwenden: Erlaubt nach Ablauf des Aufnahmezeitlimits den zuletzt verfügbaren Frame. Prüfe dessen is_fresh, bevor eine zeitkritische Folgeaktion ausgeführt wird.
-6. Monitor-Kennung: Optional gespeicherte Monitor-Gerätekennung zur Wiedererkennung des gewünschten Bildschirms. Bei Umbau der Monitoranordnung prüfen.
+6. Monitor-Kennung: Optional gespeicherte Monitor-Gerätekennung zur Wiedererkennung des gewünschten Bildschirms. Bei Umbau der Monitoranordnung prüfen. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 ### errors
 
 Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
@@ -33,7 +33,7 @@ Nullbasierter Monitorindex der Bildschirmaufnahme. Auf einem anderen Rechner kan
 
 ### field.monitor_device_name
 
-Optional gespeicherte Monitor-Gerätekennung zur Wiedererkennung des gewünschten Bildschirms. Bei Umbau der Monitoranordnung prüfen.
+Optional gespeicherte Monitor-Gerätekennung zur Wiedererkennung des gewünschten Bildschirms. Bei Umbau der Monitoranordnung prüfen. Ab dem kommenden Update 1.6.2 akzeptiert dieses Textfeld auch Zahlen, Wahrheitswerte, Listen und strukturierte Werte; die Quelle bleibt typisiert, ihr Inhalt wird für die Eingabe in Text umgewandelt. Bilddaten sind keine Textquelle.
 
 ### field.timeout_ms
 
@@ -49,103 +49,103 @@ Wähle einen Monitor als Bildquelle. Optional wartet die Aufnahme auf ein neues 
 
 ### result.bounds
 
-Ermitteltes Rechteck im Koordinatenraum des entsprechenden Ergebnisobjekts. Einzelwert dieses Ergebnisses.
+Bereich der Aufnahme in Pixeln. Bei Bildschirmaufnahmen Desktopkoordinaten, bei Kameraaufnahmen Bildkoordinaten ab (0, 0). Beispiel: {X=10,Y=20,Width=300,Height=200}.
 
 ### result.bounds.bottom
 
-Untere Rechteckkante in Pixeln, aus Ursprung und Höhe abgeleitet. Einzelwert dieses Ergebnisses.
+Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.center
 
-Mittelpunkt einer einzelnen Erkennung in Pixeln. Einzelwert dieses Ergebnisses.
+Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.bounds.center.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.center.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.height
 
-Höhe des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.is_empty
 
-Ob die Zwischenablage im abgefragten Kontext leer ist. Einzelwert dieses Ergebnisses.
+Gibt an, ob der Bereich keine positive Breite oder Höhe hat. Beispiel: true.
 
 ### result.bounds.left
 
-Linke Rechteckkante in Pixeln. Einzelwert dieses Ergebnisses.
+Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.location
 
-Pixelposition/-bereich eines erkannten Wortes oder Trefferobjekts; verwende den im Ergebnis ausgewiesenen Koordinatenraum. Einzelwert dieses Ergebnisses.
+Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: {X=100,Y=200}.
 
 ### result.bounds.location.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.location.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.right
 
-Rechte Rechteckkante in Pixeln, aus Ursprung und Breite abgeleitet. Einzelwert dieses Ergebnisses.
+Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.top
 
-Obere Rechteckkante in Pixeln. Einzelwert dieses Ergebnisses.
+Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.width
 
-Breite des Ergebnisrechtecks in Pixeln. Einzelwert dieses Ergebnisses.
+Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.bounds.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.capture_timestamp_utc
 
-UTC-Zeitpunkt des erfassten Bildes; bei wiederverwendeten Frames bleibt der ursprüngliche Zeitpunkt erhalten. Einzelwert dieses Ergebnisses.
+UTC-Zeitpunkt der Aufnahme. Bei einem wiederverwendeten Bild bleibt die ursprüngliche Aufnahmezeit erhalten. Beispiel: 2030-01-01T08:00:00Z.
 
 ### result.frame_timestamp
 
-Monotoner Stopwatch/QPC-Zeitstempel des Frames. 0 bedeutet unbekannt; dies ist kein Datum in Millisekunden seit 1970. Einzelwert dieses Ergebnisses.
+Monotoner Bildzeitstempel zur Diagnose der zeitlichen Reihenfolge. 0 bedeutet unbekannt; kein Kalenderdatum. Beispiel: 3. In der App unter Diagnose aufgeführt.
 
 ### result.frame_version
 
-Laufzeit-Identität des Frames innerhalb seines Aufnahmeproduzenten. Cache-/Zeigeraktualisierungen sind keine neuen Desktop-Bildversionen; nicht zwischen unabhängigen Kameras/Monitorquellen vergleichen. Einzelwert dieses Ergebnisses.
+Kennung des Bildes innerhalb dieser Aufnahmequelle. Gleiche Kennungen stehen für dasselbe Bild; Kennungen unterschiedlicher Quellen sind nicht vergleichbar. Beispiel: 3. In der App unter Diagnose aufgeführt.
 
 ### result.has_image
 
-Ob die Zwischenablage ein Bild enthält. Daraus folgt nicht automatisch, dass ein Bild als persistierbares JSON-Literal vorliegt. Einzelwert dieses Ergebnisses.
+Gibt an, ob diese Aufnahme ein Bild bereitstellt. Vor der Weiterverwendung des Bildes prüfbar. Beispiel: true.
 
 ### result.image
 
-Laufzeit-Bildobjekt für Bildverbraucher. Es wird nicht als Bitmap-Payload in der Jobdatei gespeichert. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Das aufgenommene Bild zur Weitergabe an Erkennung, Bildanzeige oder Speicherung. Kann fehlen, wenn kein Bild verfügbar ist.
 
 ### result.is_fresh
 
-Ob die Aufnahme einen frischen Frame statt einer zwischengespeicherten Aufnahme geliefert hat. Einzelwert dieses Ergebnisses.
+Gibt an, ob ein frisches Bild geliefert wurde. false kennzeichnet eine wiederverwendete Aufnahme. Beispiel: true.
 
 ### result.offset
 
-Pixelversatz der Bildquelle gegenüber dem globalen Desktop. Bei bildlokalen Punkten addieren, bevor sie global verwendet werden. Einzelwert dieses Ergebnisses.
+Pixelversatz des Bildursprungs zum Desktop. Für bildlokale Punkte zu X und Y addieren; bei Kameras ist der Versatz (0, 0). Bereits globale Erkennungspunkte nicht erneut verschieben. Beispiel: {X=100,Y=200}.
 
 ### result.offset.x
 
-Horizontale Punkt-/Versatzkoordinate in Pixeln; den im übergeordneten Ergebnis beschriebenen Koordinatenraum beachten. Einzelwert dieses Ergebnisses.
+Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### result.offset.y
 
-Vertikale Punkt-/Versatzkoordinate in Pixeln; nicht ungeprüft bildlokale und globale Werte mischen. Einzelwert dieses Ergebnisses.
+Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert. Beispiel: 3.
 
 ### schema.id
 
@@ -173,11 +173,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -242,6 +242,8 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
     {
       "id": "desktop_idx",
       "name": "Monitor",
+      "helpKey": "Ui.Step.Settings.DesktopIndex.Help",
+      "help": "Monitor, auf den sich die Aufnahme oder Anzeige bezieht.",
       "descriptor": {
         "Id": "desktop_idx",
         "LabelKey": "Ui.Step.Settings.DesktopIndex",
@@ -272,12 +274,17 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": "monitor_device_name"
+        "MonitorDeviceNameFieldId": "monitor_device_name",
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "capture_cursor",
       "name": "Mauszeiger aufnehmen",
+      "helpKey": "Ui.Step.Settings.CaptureMousePointer.Help",
+      "help": "Nimmt den Mauszeiger in das erfasste Bildschirmbild auf.",
       "descriptor": {
         "Id": "capture_cursor",
         "LabelKey": "Ui.Step.Settings.CaptureMousePointer",
@@ -302,12 +309,17 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "wait_for_new_frame",
       "name": "Auf neues Bild warten",
+      "helpKey": "Ui.Step.Capture.WaitForNewFrame.Help",
+      "help": "Wartet auf ein neues Bild statt sofort ein bereits vorhandenes Bild zu verwenden.",
       "descriptor": {
         "Id": "wait_for_new_frame",
         "LabelKey": "Ui.Step.Capture.WaitForNewFrame",
@@ -332,12 +344,17 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "timeout_ms",
       "name": "Zeitlimit (ms)",
+      "helpKey": "Ui.Step.Capture.TimeoutHelp",
+      "help": "Begrenzt Wartezeiten und Wiederholungen. Die Initialisierung des Monitors und die Bildverarbeitung können zusätzliche Zeit benötigen.",
       "descriptor": {
         "Id": "timeout_ms",
         "LabelKey": "Ui.Step.Capture.Timeout",
@@ -368,12 +385,17 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "allow_cached_fallback",
       "name": "Bei Zeitlimit letztes Bild verwenden",
+      "helpKey": "Ui.Step.Capture.AllowCachedFallback.Help",
+      "help": "Verwendet bei Ablauf des Zeitlimits das zuletzt verfügbare Bild. Dieses kann älter als der aktuelle Durchlauf sein.",
       "descriptor": {
         "Id": "allow_cached_fallback",
         "LabelKey": "Ui.Step.Capture.AllowCachedFallback",
@@ -398,12 +420,17 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "monitor_device_name",
       "name": "Monitor-Kennung",
+      "helpKey": "Ui.Step.Capture.MonitorIdentityHelp",
+      "help": "Die Monitorauswahl speichert diese Kennung. Leer verwendet den Monitorindex; ein getrennter Monitor führt zu einem Fehler.",
       "descriptor": {
         "Id": "monitor_device_name",
         "LabelKey": "Ui.Step.Capture.MonitorIdentity",
@@ -428,7 +455,10 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -574,9 +604,9 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
     "Properties": [
       {
         "Name": "Image",
-        "DisplayName": "Image",
+        "DisplayName": "Aufgenommenes Bild",
         "DataType": "Image",
-        "Description": "Image, kann leer sein",
+        "Description": "Das aufgenommene Bild zur Weitergabe an Erkennung, Bildanzeige oder Speicherung. Kann fehlen, wenn kein Bild verfügbar ist.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -584,354 +614,379 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
         "EnumValues": null,
         "Id": "image",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "image"
       },
       {
         "Name": "Bounds",
-        "DisplayName": "Bounds",
+        "DisplayName": "Aufgenommener Bereich",
         "DataType": "Rectangle",
-        "Description": "Rectangle",
+        "Description": "Bereich der Aufnahme in Pixeln. Bei Bildschirmaufnahmen Desktopkoordinaten, bei Kameraaufnahmen Bildkoordinaten ab (0, 0).",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=10,Y=20,Width=300,Height=200}",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds"
       },
       {
         "Name": "Bounds.X",
-        "DisplayName": "Bounds / X",
+        "DisplayName": "Aufgenommener Bereich / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.x"
       },
       {
         "Name": "Bounds.Y",
-        "DisplayName": "Bounds / Y",
+        "DisplayName": "Aufgenommener Bereich / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.y"
       },
       {
         "Name": "Bounds.Width",
-        "DisplayName": "Bounds / Width",
+        "DisplayName": "Aufgenommener Bereich / Breite (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.width",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.width"
       },
       {
         "Name": "Bounds.Height",
-        "DisplayName": "Bounds / Height",
+        "DisplayName": "Aufgenommener Bereich / Höhe (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.height",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.height"
       },
       {
         "Name": "Bounds.Left",
-        "DisplayName": "Bounds / Left",
+        "DisplayName": "Aufgenommener Bereich / Linke Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.left",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.left"
       },
       {
         "Name": "Bounds.Top",
-        "DisplayName": "Bounds / Top",
+        "DisplayName": "Aufgenommener Bereich / Obere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.top",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.top"
       },
       {
         "Name": "Bounds.Right",
-        "DisplayName": "Bounds / Right",
+        "DisplayName": "Aufgenommener Bereich / Rechte Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.right",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.right"
       },
       {
         "Name": "Bounds.Bottom",
-        "DisplayName": "Bounds / Bottom",
+        "DisplayName": "Aufgenommener Bereich / Untere Kante (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.bottom",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.bottom"
       },
       {
         "Name": "Bounds.IsEmpty",
-        "DisplayName": "Bounds / Is Empty",
+        "DisplayName": "Aufgenommener Bereich / Bereich ist leer",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.is_empty",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.is_empty"
       },
       {
         "Name": "Bounds.Location",
-        "DisplayName": "Bounds / Location",
+        "DisplayName": "Aufgenommener Bereich / Linke obere Ecke",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.location",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.location"
       },
       {
         "Name": "Bounds.Location.X",
-        "DisplayName": "Bounds / Location / X",
+        "DisplayName": "Aufgenommener Bereich / Linke obere Ecke / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.location.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.location.x"
       },
       {
         "Name": "Bounds.Location.Y",
-        "DisplayName": "Bounds / Location / Y",
+        "DisplayName": "Aufgenommener Bereich / Linke obere Ecke / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.location.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.location.y"
       },
       {
         "Name": "Bounds.Center",
-        "DisplayName": "Bounds / Center",
+        "DisplayName": "Aufgenommener Bereich / Mittelpunkt",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.center",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.center"
       },
       {
         "Name": "Bounds.Center.X",
-        "DisplayName": "Bounds / Center / X",
+        "DisplayName": "Aufgenommener Bereich / Mittelpunkt / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.center.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.center.x"
       },
       {
         "Name": "Bounds.Center.Y",
-        "DisplayName": "Bounds / Center / Y",
+        "DisplayName": "Aufgenommener Bereich / Mittelpunkt / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "bounds.center.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "bounds.center.y"
       },
       {
         "Name": "Offset",
-        "DisplayName": "Offset",
+        "DisplayName": "Versatz zum Desktop",
         "DataType": "Point",
-        "Description": "Point",
+        "Description": "Pixelversatz des Bildursprungs zum Desktop. Für bildlokale Punkte zu X und Y addieren; bei Kameras ist der Versatz (0, 0). Bereits globale Erkennungspunkte nicht erneut verschieben.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "{X=100,Y=200}",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "offset",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "offset"
       },
       {
         "Name": "Offset.X",
-        "DisplayName": "Offset / X",
+        "DisplayName": "Versatz zum Desktop / X-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "offset.x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "offset.x"
       },
       {
         "Name": "Offset.Y",
-        "DisplayName": "Offset / Y",
+        "DisplayName": "Versatz zum Desktop / Y-Koordinate (px)",
         "DataType": "Integer",
-        "Description": "Integer",
+        "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "offset.y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "offset.y"
       },
       {
         "Name": "IsFresh",
-        "DisplayName": "Is Fresh",
+        "DisplayName": "Aufnahme ist frisch",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob ein frisches Bild geliefert wurde. false kennzeichnet eine wiederverwendete Aufnahme.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "is_fresh",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "is_fresh"
       },
       {
         "Name": "CaptureTimestampUtc",
-        "DisplayName": "Capture Timestamp Utc",
+        "DisplayName": "Aufnahmezeit (UTC)",
         "DataType": "DateTime",
-        "Description": "DateTime",
+        "Description": "UTC-Zeitpunkt der Aufnahme. Bei einem wiederverwendeten Bild bleibt die ursprüngliche Aufnahmezeit erhalten.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "2030-01-01T08:00:00Z",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "capture_timestamp_utc",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "capture_timestamp_utc"
       },
       {
-        "Name": "FrameVersion",
-        "DisplayName": "Frame Version",
-        "DataType": "Integer",
-        "Description": "Integer",
-        "IsNullable": false,
-        "Example": null,
-        "Cardinality": "Single",
-        "EnumTypeName": null,
-        "EnumValues": null,
-        "Id": "frame_version",
-        "EnumDisplayNames": null,
-        "StableId": "frame_version"
-      },
-      {
-        "Name": "FrameTimestamp",
-        "DisplayName": "Frame Timestamp",
-        "DataType": "Integer",
-        "Description": "Integer",
-        "IsNullable": false,
-        "Example": null,
-        "Cardinality": "Single",
-        "EnumTypeName": null,
-        "EnumValues": null,
-        "Id": "frame_timestamp",
-        "EnumDisplayNames": null,
-        "StableId": "frame_timestamp"
-      },
-      {
         "Name": "HasImage",
-        "DisplayName": "Has Image",
+        "DisplayName": "Bild vorhanden",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob diese Aufnahme ein Bild bereitstellt. Vor der Weiterverwendung des Bildes prüfbar.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "has_image",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "has_image"
+      },
+      {
+        "Name": "FrameVersion",
+        "DisplayName": "Bildversion",
+        "DataType": "Integer",
+        "Description": "Kennung des Bildes innerhalb dieser Aufnahmequelle. Gleiche Kennungen stehen für dasselbe Bild; Kennungen unterschiedlicher Quellen sind nicht vergleichbar.",
+        "IsNullable": false,
+        "Example": "3",
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "frame_version",
+        "EnumDisplayNames": null,
+        "IsDiagnostic": true,
+        "StableId": "frame_version"
+      },
+      {
+        "Name": "FrameTimestamp",
+        "DisplayName": "Bildzeitstempel (Ticks)",
+        "DataType": "Integer",
+        "Description": "Monotoner Bildzeitstempel zur Diagnose der zeitlichen Reihenfolge. 0 bedeutet unbekannt; kein Kalenderdatum.",
+        "IsNullable": false,
+        "Example": "3",
+        "Cardinality": "Single",
+        "EnumTypeName": null,
+        "EnumValues": null,
+        "Id": "frame_timestamp",
+        "EnumDisplayNames": null,
+        "IsDiagnostic": true,
+        "StableId": "frame_timestamp"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "Image",
-        "DisplayName": "Image",
+        "DisplayName": "Aufgenommenes Bild",
         "Property": {
           "Name": "Image",
-          "DisplayName": "Image",
+          "DisplayName": "Aufgenommenes Bild",
           "DataType": "Image",
-          "Description": "Image, kann leer sein",
+          "Description": "Das aufgenommene Bild zur Weitergabe an Erkennung, Bildanzeige oder Speicherung. Kann fehlen, wenn kein Bild verfügbar ist.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -939,251 +994,265 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
           "EnumValues": null,
           "Id": "image",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "image"
         },
         "Children": []
       },
       {
         "Segment": "Bounds",
-        "DisplayName": "Bounds",
+        "DisplayName": "Aufgenommener Bereich",
         "Property": {
           "Name": "Bounds",
-          "DisplayName": "Bounds",
+          "DisplayName": "Aufgenommener Bereich",
           "DataType": "Rectangle",
-          "Description": "Rectangle",
+          "Description": "Bereich der Aufnahme in Pixeln. Bei Bildschirmaufnahmen Desktopkoordinaten, bei Kameraaufnahmen Bildkoordinaten ab (0, 0).",
           "IsNullable": false,
-          "Example": null,
+          "Example": "{X=10,Y=20,Width=300,Height=200}",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "bounds",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "bounds"
         },
         "Children": [
           {
             "Segment": "X",
-            "DisplayName": "X",
+            "DisplayName": "X-Koordinate (px)",
             "Property": {
               "Name": "Bounds.X",
-              "DisplayName": "Bounds / X",
+              "DisplayName": "Aufgenommener Bereich / X-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.x",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.x"
             },
             "Children": []
           },
           {
             "Segment": "Y",
-            "DisplayName": "Y",
+            "DisplayName": "Y-Koordinate (px)",
             "Property": {
               "Name": "Bounds.Y",
-              "DisplayName": "Bounds / Y",
+              "DisplayName": "Aufgenommener Bereich / Y-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.y",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.y"
             },
             "Children": []
           },
           {
             "Segment": "Width",
-            "DisplayName": "Width",
+            "DisplayName": "Breite (px)",
             "Property": {
               "Name": "Bounds.Width",
-              "DisplayName": "Bounds / Width",
+              "DisplayName": "Aufgenommener Bereich / Breite (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Breite des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.width",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.width"
             },
             "Children": []
           },
           {
             "Segment": "Height",
-            "DisplayName": "Height",
+            "DisplayName": "Höhe (px)",
             "Property": {
               "Name": "Bounds.Height",
-              "DisplayName": "Bounds / Height",
+              "DisplayName": "Aufgenommener Bereich / Höhe (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Höhe des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.height",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.height"
             },
             "Children": []
           },
           {
             "Segment": "Left",
-            "DisplayName": "Left",
+            "DisplayName": "Linke Kante (px)",
             "Property": {
               "Name": "Bounds.Left",
-              "DisplayName": "Bounds / Left",
+              "DisplayName": "Aufgenommener Bereich / Linke Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Linke Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.left",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.left"
             },
             "Children": []
           },
           {
             "Segment": "Top",
-            "DisplayName": "Top",
+            "DisplayName": "Obere Kante (px)",
             "Property": {
               "Name": "Bounds.Top",
-              "DisplayName": "Bounds / Top",
+              "DisplayName": "Aufgenommener Bereich / Obere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Obere Kante des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.top",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.top"
             },
             "Children": []
           },
           {
             "Segment": "Right",
-            "DisplayName": "Right",
+            "DisplayName": "Rechte Kante (px)",
             "Property": {
               "Name": "Bounds.Right",
-              "DisplayName": "Bounds / Right",
+              "DisplayName": "Aufgenommener Bereich / Rechte Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Rechte Kante, berechnet als X + Breite in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.right",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.right"
             },
             "Children": []
           },
           {
             "Segment": "Bottom",
-            "DisplayName": "Bottom",
+            "DisplayName": "Untere Kante (px)",
             "Property": {
               "Name": "Bounds.Bottom",
-              "DisplayName": "Bounds / Bottom",
+              "DisplayName": "Aufgenommener Bereich / Untere Kante (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Untere Kante, berechnet als Y + Höhe in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.bottom",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.bottom"
             },
             "Children": []
           },
           {
             "Segment": "IsEmpty",
-            "DisplayName": "Is Empty",
+            "DisplayName": "Bereich ist leer",
             "Property": {
               "Name": "Bounds.IsEmpty",
-              "DisplayName": "Bounds / Is Empty",
+              "DisplayName": "Aufgenommener Bereich / Bereich ist leer",
               "DataType": "Boolean",
-              "Description": "Boolean",
+              "Description": "Gibt an, ob der Bereich keine positive Breite oder Höhe hat.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "true",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.is_empty",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.is_empty"
             },
             "Children": []
           },
           {
             "Segment": "Location",
-            "DisplayName": "Location",
+            "DisplayName": "Linke obere Ecke",
             "Property": {
               "Name": "Bounds.Location",
-              "DisplayName": "Bounds / Location",
+              "DisplayName": "Aufgenommener Bereich / Linke obere Ecke",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Position der linken oberen Ecke in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.location",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.location"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "Bounds.Location.X",
-                  "DisplayName": "Bounds / Location / X",
+                  "DisplayName": "Aufgenommener Bereich / Linke obere Ecke / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "Single",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounds.location.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounds.location.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "Bounds.Location.Y",
-                  "DisplayName": "Bounds / Location / Y",
+                  "DisplayName": "Aufgenommener Bereich / Linke obere Ecke / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "Single",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounds.location.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounds.location.y"
                 },
                 "Children": []
@@ -1192,56 +1261,59 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
           },
           {
             "Segment": "Center",
-            "DisplayName": "Center",
+            "DisplayName": "Mittelpunkt",
             "Property": {
               "Name": "Bounds.Center",
-              "DisplayName": "Bounds / Center",
+              "DisplayName": "Aufgenommener Bereich / Mittelpunkt",
               "DataType": "Point",
-              "Description": "Point",
+              "Description": "Mittelpunkt des Bereichs in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "{X=100,Y=200}",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "bounds.center",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "bounds.center"
             },
             "Children": [
               {
                 "Segment": "X",
-                "DisplayName": "X",
+                "DisplayName": "X-Koordinate (px)",
                 "Property": {
                   "Name": "Bounds.Center.X",
-                  "DisplayName": "Bounds / Center / X",
+                  "DisplayName": "Aufgenommener Bereich / Mittelpunkt / X-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "Single",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounds.center.x",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounds.center.x"
                 },
                 "Children": []
               },
               {
                 "Segment": "Y",
-                "DisplayName": "Y",
+                "DisplayName": "Y-Koordinate (px)",
                 "Property": {
                   "Name": "Bounds.Center.Y",
-                  "DisplayName": "Bounds / Center / Y",
+                  "DisplayName": "Aufgenommener Bereich / Mittelpunkt / Y-Koordinate (px)",
                   "DataType": "Integer",
-                  "Description": "Integer",
+                  "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
                   "IsNullable": false,
-                  "Example": null,
+                  "Example": "3",
                   "Cardinality": "Single",
                   "EnumTypeName": null,
                   "EnumValues": null,
                   "Id": "bounds.center.y",
                   "EnumDisplayNames": null,
+                  "IsDiagnostic": false,
                   "StableId": "bounds.center.y"
                 },
                 "Children": []
@@ -1252,56 +1324,59 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
       },
       {
         "Segment": "Offset",
-        "DisplayName": "Offset",
+        "DisplayName": "Versatz zum Desktop",
         "Property": {
           "Name": "Offset",
-          "DisplayName": "Offset",
+          "DisplayName": "Versatz zum Desktop",
           "DataType": "Point",
-          "Description": "Point",
+          "Description": "Pixelversatz des Bildursprungs zum Desktop. Für bildlokale Punkte zu X und Y addieren; bei Kameras ist der Versatz (0, 0). Bereits globale Erkennungspunkte nicht erneut verschieben.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "{X=100,Y=200}",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "offset",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "offset"
         },
         "Children": [
           {
             "Segment": "X",
-            "DisplayName": "X",
+            "DisplayName": "X-Koordinate (px)",
             "Property": {
               "Name": "Offset.X",
-              "DisplayName": "Offset / X",
+              "DisplayName": "Versatz zum Desktop / X-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Horizontale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "offset.x",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "offset.x"
             },
             "Children": []
           },
           {
             "Segment": "Y",
-            "DisplayName": "Y",
+            "DisplayName": "Y-Koordinate (px)",
             "Property": {
               "Name": "Offset.Y",
-              "DisplayName": "Offset / Y",
+              "DisplayName": "Versatz zum Desktop / Y-Koordinate (px)",
               "DataType": "Integer",
-              "Description": "Integer",
+              "Description": "Vertikale Koordinate in Pixeln; verwendet denselben Koordinatenraum wie der übergeordnete Wert.",
               "IsNullable": false,
-              "Example": null,
+              "Example": "3",
               "Cardinality": "Single",
               "EnumTypeName": null,
               "EnumValues": null,
               "Id": "offset.y",
               "EnumDisplayNames": null,
+              "IsDiagnostic": false,
               "StableId": "offset.y"
             },
             "Children": []
@@ -1310,96 +1385,101 @@ Wartet auf einen neuen Desktop-Frame statt sofort den zuletzt verfügbaren Frame
       },
       {
         "Segment": "IsFresh",
-        "DisplayName": "Is Fresh",
+        "DisplayName": "Aufnahme ist frisch",
         "Property": {
           "Name": "IsFresh",
-          "DisplayName": "Is Fresh",
+          "DisplayName": "Aufnahme ist frisch",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob ein frisches Bild geliefert wurde. false kennzeichnet eine wiederverwendete Aufnahme.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "is_fresh",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "is_fresh"
         },
         "Children": []
       },
       {
         "Segment": "CaptureTimestampUtc",
-        "DisplayName": "Capture Timestamp Utc",
+        "DisplayName": "Aufnahmezeit (UTC)",
         "Property": {
           "Name": "CaptureTimestampUtc",
-          "DisplayName": "Capture Timestamp Utc",
+          "DisplayName": "Aufnahmezeit (UTC)",
           "DataType": "DateTime",
-          "Description": "DateTime",
+          "Description": "UTC-Zeitpunkt der Aufnahme. Bei einem wiederverwendeten Bild bleibt die ursprüngliche Aufnahmezeit erhalten.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "2030-01-01T08:00:00Z",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "capture_timestamp_utc",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "capture_timestamp_utc"
         },
         "Children": []
       },
       {
+        "Segment": "HasImage",
+        "DisplayName": "Bild vorhanden",
+        "Property": {
+          "Name": "HasImage",
+          "DisplayName": "Bild vorhanden",
+          "DataType": "Boolean",
+          "Description": "Gibt an, ob diese Aufnahme ein Bild bereitstellt. Vor der Weiterverwendung des Bildes prüfbar.",
+          "IsNullable": false,
+          "Example": "true",
+          "Cardinality": "Single",
+          "EnumTypeName": null,
+          "EnumValues": null,
+          "Id": "has_image",
+          "EnumDisplayNames": null,
+          "IsDiagnostic": false,
+          "StableId": "has_image"
+        },
+        "Children": []
+      },
+      {
         "Segment": "FrameVersion",
-        "DisplayName": "Frame Version",
+        "DisplayName": "Bildversion",
         "Property": {
           "Name": "FrameVersion",
-          "DisplayName": "Frame Version",
+          "DisplayName": "Bildversion",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Kennung des Bildes innerhalb dieser Aufnahmequelle. Gleiche Kennungen stehen für dasselbe Bild; Kennungen unterschiedlicher Quellen sind nicht vergleichbar.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "frame_version",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "frame_version"
         },
         "Children": []
       },
       {
         "Segment": "FrameTimestamp",
-        "DisplayName": "Frame Timestamp",
+        "DisplayName": "Bildzeitstempel (Ticks)",
         "Property": {
           "Name": "FrameTimestamp",
-          "DisplayName": "Frame Timestamp",
+          "DisplayName": "Bildzeitstempel (Ticks)",
           "DataType": "Integer",
-          "Description": "Integer",
+          "Description": "Monotoner Bildzeitstempel zur Diagnose der zeitlichen Reihenfolge. 0 bedeutet unbekannt; kein Kalenderdatum.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "frame_timestamp",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "frame_timestamp"
-        },
-        "Children": []
-      },
-      {
-        "Segment": "HasImage",
-        "DisplayName": "Has Image",
-        "Property": {
-          "Name": "HasImage",
-          "DisplayName": "Has Image",
-          "DataType": "Boolean",
-          "Description": "Boolean",
-          "IsNullable": false,
-          "Example": null,
-          "Cardinality": "Single",
-          "EnumTypeName": null,
-          "EnumValues": null,
-          "Id": "has_image",
-          "EnumDisplayNames": null,
-          "StableId": "has_image"
         },
         "Children": []
       }

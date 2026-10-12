@@ -19,6 +19,17 @@ public static class WindowsCapabilityLocalization
         return GetOrFallback($"Windows.Parameter.{typeKey}", descriptor.DisplayName);
     }
 
+    public static string ParameterDescription(WindowsParameterDescriptor descriptor)
+    {
+        var typeKey = descriptor.Type switch
+        {
+            WindowsParameterType.ProcessName => "ProcessName",
+            WindowsParameterType.Drive => "Drive",
+            _ => descriptor.Name
+        };
+        return Loc.Get($"Windows.Parameter.{typeKey}.Help");
+    }
+
     public static string? ParameterPlaceholder(WindowsParameterDescriptor descriptor)
     {
         if (string.IsNullOrWhiteSpace(descriptor.Placeholder)) return null;

@@ -604,7 +604,7 @@ namespace DesktopAutomationApp.ViewModels
             ResultBinding? binding,
             JobStep? step = null)
         {
-            var contract = StepInputContractRegistry.Resolve(definition.StepType, field);
+            var contract = InputContractRegistry.Resolve(definition.StepType, field);
             if (binding?.IsConfigured == true
                 && FindStoredVariable(binding) is { } storedVariable)
             {
@@ -630,7 +630,7 @@ namespace DesktopAutomationApp.ViewModels
         private JobVariable CreateDraftStepVariable(
             IStepDefinition definition,
             StepFieldDescriptor field,
-            StepInputDescriptor? contract = null,
+            InputContractNode? contract = null,
             JsonNode? initialValue = null)
         {
             var stem = $"{Loc.Get(definition.Descriptor.DisplayNameKey)} · {Loc.Get(field.LabelKey)}";
@@ -638,7 +638,7 @@ namespace DesktopAutomationApp.ViewModels
                 .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
             var name = stem;
             for (var suffix = 2; names.Contains(name); suffix++) name = $"{stem} {suffix}";
-            contract ??= StepInputContractRegistry.Resolve(definition.StepType, field);
+            contract ??= InputContractRegistry.Resolve(definition.StepType, field);
             var shape = field.ValueKind == StepValueKind.ResultBinding
                 ? contract.AcceptedShapes.FirstOrDefault()
                 : null;
@@ -713,7 +713,7 @@ namespace DesktopAutomationApp.ViewModels
             if (!string.Equals(field.EditorHint, StepEditorHints.ProcessTargetPicker, StringComparison.Ordinal)
                 && !string.Equals(field.EditorHint, StepEditorHints.ExecutableProcessTargetPicker, StringComparison.Ordinal))
                 return null;
-            var contract = StepInputContractRegistry.Get(definition.StepType, "process")
+            var contract = InputContractRegistry.Find(definition.StepType, "process")
                 ?? throw new InvalidOperationException(
                     $"Eingabevertrag 'process' für {definition.StepType.Name} fehlt.");
             return new GeneratedProcessTargetEditorViewModel(
@@ -735,26 +735,11 @@ namespace DesktopAutomationApp.ViewModels
             ResultPropertyDescriptor? enumProperty = null,
             ResultBinding? explicitBinding = null)
         {
-            var enumOptions = kind == StepValueKind.Enum && enumProperty is not null
-                ? (enumProperty.EnumValues ?? []).Select(value => new StepFieldOptionDescriptor(
-                    value,
-                    $"Enum.{EnumValueLocalization.ShortTypeName(enumProperty.EnumTypeName)}.{value}",
-                    EnumValueLocalization.ForResultValue(enumProperty, value))).ToArray()
-                : null;
-            var descriptor = new StepFieldDescriptor(
-                key,
-                owner.LabelKey,
-                kind,
-                DefaultValue: literal?.DeepClone(),
-                Constraints: enumOptions is { Length: > 0 }
-                    ? new StepFieldConstraints(AllowedValues: enumOptions.Select(option => option.Value).ToArray())
-                    : null,
-                Options: enumOptions);
-            var contract = StepInputContractRegistry.ForField(descriptor);
-            if (enumProperty is not null)
-                contract = ConditionRules.ComparisonInputContract(contract, enumProperty);
-            if (string.Equals(owner.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
-                contract = contract with { AllowedProviderIds = new HashSet<string>() };
+            var contract = owner.InputSchemaId is null
+                ? ConditionRules.ComparisonInputContract(key, kind, enumProperty)
+                : InputContractRegistry.ResolvePath(definition.StepType, owner, key)
+                    with
+                { Key = key };
             JobVariable CreateStepValue() => CreateDraftNestedVariable(
                 definition, owner, key, kind, literal, enumProperty);
             var stepName = Loc.Get(definition.Descriptor.DisplayNameKey);
@@ -847,7 +832,7 @@ namespace DesktopAutomationApp.ViewModels
                 return null;
             if (string.IsNullOrWhiteSpace(field.InputContractId))
                 throw new InvalidOperationException($"Eingabevertrag für {definition.StepType.Name} fehlt im Descriptor.");
-            var contract = StepInputContractRegistry.Get(definition.StepType, field.InputContractId)
+            var contract = InputContractRegistry.Find(definition.StepType, field.InputContractId)
                 ?? throw new InvalidOperationException(
                     $"Eingabevertrag '{field.InputContractId}' für {definition.StepType.Name} fehlt.");
             return new GeneratedResultBindingEditorViewModel(
@@ -873,11 +858,11 @@ namespace DesktopAutomationApp.ViewModels
             var options = field.VisualOverlayOptions
                 ?? throw new InvalidOperationException(
                     $"Visual-overlay options for {definition.StepType.Name}.{field.Id} are missing.");
-            var detectionContract = StepInputContractRegistry.Get(
+            var detectionContract = InputContractRegistry.Find(
                 definition.StepType, options.DetectionInputContractId)
                 ?? throw new InvalidOperationException(
                     $"Input contract '{options.DetectionInputContractId}' for {definition.StepType.Name} is missing.");
-            var textContract = StepInputContractRegistry.Get(
+            var textContract = InputContractRegistry.Find(
                 definition.StepType, options.TextInputContractId)
                 ?? throw new InvalidOperationException(
                     $"Input contract '{options.TextInputContractId}' for {definition.StepType.Name} is missing.");
@@ -924,7 +909,7 @@ namespace DesktopAutomationApp.ViewModels
             var options = field.RoiPickerOptions
                 ?? throw new InvalidOperationException(
                     $"ROI-picker options for {definition.StepType.Name}.{field.Id} are missing.");
-            var contract = StepInputContractRegistry.Get(definition.StepType, options.DynamicInputContractId)
+            var contract = InputContractRegistry.Find(definition.StepType, options.DynamicInputContractId)
                 ?? throw new InvalidOperationException(
                     $"Input contract '{options.DynamicInputContractId}' for {definition.StepType.Name} is missing.");
             return new GeneratedRoiEditorViewModel(
@@ -937,7 +922,7 @@ namespace DesktopAutomationApp.ViewModels
         private ValueReferencePickerViewModel CreateValueReferencePicker(
             IStepDefinition definition,
             StepFieldDescriptor field,
-            StepInputDescriptor contract,
+            InputContractNode contract,
             bool selectDefault)
         {
             var sources = contract.Key == "dynamicRoi"
@@ -1025,7 +1010,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         private JobVariable? CreateJobVariable(
-            StepInputDescriptor contract,
+            InputContractNode contract,
             string stepName,
             string fieldName)
         {
@@ -1120,7 +1105,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (field.EditorHint != StepEditorHints.ScreenPointPicker) return null;
             var contractId = field.ScreenPointPickerOptions?.WholeValueInputContractId ?? "origin";
-            var contract = StepInputContractRegistry.Get(definition.StepType, contractId)
+            var contract = InputContractRegistry.Find(definition.StepType, contractId)
                 ?? throw new InvalidOperationException(
                     $"Eingabevertrag '{contractId}' für {definition.StepType.Name} fehlt.");
             return new GeneratedScreenPointEditorViewModel(
@@ -1234,7 +1219,7 @@ namespace DesktopAutomationApp.ViewModels
 
         // Beschreibung kommt direkt aus dem StepTypeItem – kein separates switch mehr nötig.
         public string StepTypeDescription => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
-            ? Loc.Get(definition.Descriptor.DescriptionKey) : string.Empty;
+            ? StepLocalization.Description(definition.Descriptor) : string.Empty;
         public string SelectedStepDisplayName => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
             ? Loc.Get(definition.Descriptor.DisplayNameKey) : SelectedType;
         public string SelectedStepCategory => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
@@ -1507,14 +1492,14 @@ namespace DesktopAutomationApp.ViewModels
         // ===== UserChoice Felder =====
         // ===== PointComparison Felder =====
 
-        // ── Comparison mode ──
-        // ── Match requirement ──
-        // ── Offset settings: reference point ──
-        // ── Expression settings ──
-        // ── Points list ──
+        // â”€â”€ Comparison mode â”€â”€
+        // â”€â”€ Match requirement â”€â”€
+        // â”€â”€ Offset settings: reference point â”€â”€
+        // â”€â”€ Expression settings â”€â”€
+        // â”€â”€ Points list â”€â”€
         // ===== If / ElseIf Felder =====
 
-        // ── MatchMode ──
+        // â”€â”€ MatchMode â”€â”€
         // ===== Fabrik =====
         public void CreateStep()
         {

@@ -8,7 +8,7 @@ Abbildung: [Die Desktop-Textausgabe übernimmt die Beschriftung der Benutzerausw
 1. Text: Text oder kompatibler Anzeige-Wert aus einer Quelle. Für Benutzerauswahlen eignet sich selected_label.
 2. Monitor: Nullbasierter Zielmonitor der Desktop-Anzeige oder Benutzerauswahl. Prüfe ihn auf dem Zielrechner.
 3. Schriftgröße (pt): Schriftgröße der Textanzeige in Punkten. Prüfe Lesbarkeit auf dem tatsächlichen Monitor und dessen Skalierung.
-4. Schriftfarbe: Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund.
+4. Schriftfarbe: Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund. Ab dem kommenden Update 1.6.2 bleiben vorhandene Text-Farbreferenzen mit gültigem Farbtoken auch in verschachtelten Einblendungen zulässig. Neue Farbquellen verwenden Color.
 5. Deckkraft (%): Deckkraft als Anteil von 0 bis 1, auch im referenzierten localValues-Wert. 1 bedeutet vollständig sichtbar, 0 unsichtbar. Der Editor zeigt Prozent an.
 6. Anzeigedauer (ms): Anzeigedauer in Millisekunden. Beachte die vom Editor angebotenen Grenzen und die zusätzliche Entfernung beim Job-Ende.
 7. Bei Job-Ende entfernen: Entfernt die durch diesen Job erzeugte Anzeige beim regulären Aufräumen.
@@ -35,7 +35,7 @@ Anzeigedauer in Millisekunden. Beachte die vom Editor angebotenen Grenzen und di
 
 ### field.font_color
 
-Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund.
+Hex-Farbwert der Textanzeige. Wähle einen ausreichenden Kontrast zum Hintergrund. Ab dem kommenden Update 1.6.2 bleiben vorhandene Text-Farbreferenzen mit gültigem Farbtoken auch in verschachtelten Einblendungen zulässig. Neue Farbquellen verwenden Color.
 
 ### field.font_size
 
@@ -59,7 +59,7 @@ Text oder kompatibler Anzeige-Wert aus einer Quelle. Für Benutzerauswahlen eign
 
 ### input.text
 
-Text beziehungsweise darstellbarer Wert. Fehlende erforderliche Werte führen zum Fehler. Bei kompatiblen Listen wird der erste Wert verwendet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung.
+Text beziehungsweise darstellbarer Wert. Fehlende erforderliche Werte führen zum Fehler. Bei kompatiblen Listen wird der erste Wert verwendet. Akzeptierte Typen und Anbieter stehen in den Vertragsspalten; unbegrenzte Anbieterwahl bedeutet weiterhin Typprüfung. Ab dem kommenden Update 1.6.2 werden alle darstellbaren Werttypen einschließlich strukturierter Objekte und Listen akzeptiert. Listen erscheinen zeilenweise vollständig, Objekte als JSON und Zahlen im aktuellen Zahlenformat. Bilddaten sind ausgeschlossen.
 
 ### purpose
 
@@ -91,11 +91,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -227,6 +227,8 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
     {
       "id": "text_result",
       "name": "Text",
+      "helpKey": "Ui.Step.Settings.DisplayText.Help",
+      "help": "Text der Einblendung. Er kann direkt eingegeben oder aus einer kompatiblen Wertequelle übernommen werden.",
       "descriptor": {
         "Id": "text_result",
         "LabelKey": "Ui.Step.Settings.DisplayText",
@@ -251,12 +253,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": true,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "desktop_index",
       "name": "Monitor",
+      "helpKey": "Ui.Step.Settings.DesktopIndex.Help",
+      "help": "Monitor, auf den sich die Aufnahme oder Anzeige bezieht.",
       "descriptor": {
         "Id": "desktop_index",
         "LabelKey": "Ui.Step.Settings.DesktopIndex",
@@ -287,12 +294,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "font_size",
       "name": "Schriftgröße (pt)",
+      "helpKey": "Ui.Step.Settings.FontSizePt.Help",
+      "help": "Schriftgröße des eingeblendeten Texts in Punkt.",
       "descriptor": {
         "Id": "font_size",
         "LabelKey": "Ui.Step.Settings.FontSizePt",
@@ -323,12 +335,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "font_color",
       "name": "Schriftfarbe",
+      "helpKey": "Ui.Step.Settings.FontColor.Help",
+      "help": "Farbe des eingeblendeten Texts.",
       "descriptor": {
         "Id": "font_color",
         "LabelKey": "Ui.Step.Settings.FontColor",
@@ -353,12 +370,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "opacity",
       "name": "Deckkraft (%)",
+      "helpKey": "Ui.Step.Settings.OpacityPercent.Help",
+      "help": "Deckkraft der Einblendung. 100 % ist vollständig sichtbar, 0 % vollständig transparent.",
       "descriptor": {
         "Id": "opacity",
         "LabelKey": "Ui.Step.Settings.OpacityPercent",
@@ -389,12 +411,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "duration_ms",
       "name": "Anzeigedauer (ms)",
+      "helpKey": "Ui.Step.Settings.DisplayDurationMs.Help",
+      "help": "Anzeigedauer der Einblendung in Millisekunden. 1000 ms entsprechen einer Sekunde.",
       "descriptor": {
         "Id": "duration_ms",
         "LabelKey": "Ui.Step.Settings.DisplayDurationMs",
@@ -425,12 +452,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "clear_on_job_end",
       "name": "Bei Job-Ende entfernen",
+      "helpKey": "Ui.Step.Settings.RemoveWhenJobEnds.Help",
+      "help": "Entfernt diese Einblendung beim Ende des Jobs.",
       "descriptor": {
         "Id": "clear_on_job_end",
         "LabelKey": "Ui.Step.Settings.RemoveWhenJobEnds",
@@ -455,12 +487,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_x",
       "name": "Versatz X (px)",
+      "helpKey": "Ui.Step.Settings.XOffsetPixels.Help",
+      "help": "Horizontaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_x",
         "LabelKey": "Ui.Step.Settings.XOffsetPixels",
@@ -485,12 +522,17 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     },
     {
       "id": "offset_y",
       "name": "Versatz Y (px)",
+      "helpKey": "Ui.Step.Settings.YOffsetPixels.Help",
+      "help": "Vertikaler Versatz der Zielposition in Pixeln.",
       "descriptor": {
         "Id": "offset_y",
         "LabelKey": "Ui.Step.Settings.YOffsetPixels",
@@ -515,7 +557,10 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         "WindowsCapabilityPickerOptions": null,
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -760,62 +805,46 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
       "Key": "text",
       "Required": true,
       "MissingValuePolicy": "FailStep",
-      "CollectionConsumption": "FirstValue",
+      "CollectionConsumption": "AllValues",
       "AcceptedShapes": [
         {
           "ValueKind": "Text",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "Boolean",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "Integer",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "Number",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
           "ValueKind": "DateTime",
           "Cardinalities": [
             "Single",
-            "OptionalSingle"
-          ]
-        },
-        {
-          "ValueKind": "Color",
-          "Cardinalities": [
-            "Single",
-            "OptionalSingle"
-          ]
-        },
-        {
-          "ValueKind": "FilePath",
-          "Cardinalities": [
-            "Single",
-            "OptionalSingle"
-          ]
-        },
-        {
-          "ValueKind": "Enum",
-          "Cardinalities": [
-            "Single",
-            "OptionalSingle"
+            "OptionalSingle",
+            "Collection"
           ]
         },
         {
@@ -844,6 +873,54 @@ Verwendet den verbundenen Step-Ergebniswert statt des direkten Literals.
         },
         {
           "ValueKind": "ProcessReference",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "ResultObject",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "Enum",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "JobReference",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "MacroReference",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "Color",
+          "Cardinalities": [
+            "Single",
+            "OptionalSingle",
+            "Collection"
+          ]
+        },
+        {
+          "ValueKind": "FilePath",
           "Cardinalities": [
             "Single",
             "OptionalSingle",

@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,6 +10,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Logging;
 using TaskAutomation.Makros;
 using TaskAutomation.Steps.Definitions;
+using TaskAutomation.Steps;
 
 internal static class Documentation
 {
@@ -29,9 +31,9 @@ internal static class Documentation
                 a => Template(Activator.CreateInstance(a.DerivedType)!, type, a.TypeDiscriminator!.ToString()!));
         var contractOptions = new JsonSerializerOptions { WriteIndented = true };
         contractOptions.Converters.Add(new JsonStringEnumConverter());
-        var bindingSchemas = typeof(ValueBindingSchemaRegistry).GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.IsLiteral && f.FieldType == typeof(string)).Select(f => (string)f.GetRawConstantValue()!)
-            .Order().Select(id => ValueBindingSchemaRegistry.TryGet(id, out var schema) ? schema : null).ToArray();
+        var bindingSchemas = InputContractRegistry.SchemaIds.Order(StringComparer.Ordinal)
+            .Select(id => InputContractRegistry.TryGetSchema(id, out var schema)
+                ? InputContractExport.Schema(schema) : throw new InvalidOperationException(id)).ToArray();
         var bindingExample = new Job { Id = Guid.Parse("11111111-1111-4111-8111-111111111111"), Name = "Werteverbindung: 250 ms warten",
             Steps = [new TimeoutStep { Id = "warten", Settings = new() { DelayMs = 250 } }] };
         JobVariableInputMigration.Migrate(bindingExample);
@@ -51,8 +53,18 @@ internal static class Documentation
             examples = new { valueBindingJob = bindingJson, logEvent = JsonSerializer.SerializeToNode(logExample, LogRepository.JsonOptions) },
             bindingSchemas = JsonSerializer.SerializeToNode(bindingSchemas, contractOptions),
             fieldSchemas = BuiltInStepDefinitions.Instance.Definitions.ToDictionary(d => d.Descriptor.TypeId,
-                d => d.Descriptor.Fields.Where(f => ValueBindingSchemaRegistry.ForField(f) is not null)
-                    .ToDictionary(f => f.Id, f => ValueBindingSchemaRegistry.ForField(f))),
+                d => d.Descriptor.Fields.Where(f => InputContractRegistry.SchemaForField(f) is not null)
+                    .ToDictionary(f => f.Id, f => InputContractRegistry.SchemaForField(f))),
+            inputContracts = new
+            {
+                version = 1,
+                schemas = JsonSerializer.SerializeToNode(InputContractRegistry.SchemaIds.Order(StringComparer.Ordinal)
+                    .Select(id => InputContractRegistry.TryGetSchema(id, out var schema) ? schema : null), contractOptions),
+                fields = JsonSerializer.SerializeToNode(BuiltInStepDefinitions.Instance.Definitions
+                    .OrderBy(d => d.Descriptor.TypeId).ToDictionary(d => d.Descriptor.TypeId,
+                        d => d.Descriptor.Fields.ToDictionary(f => f.Id,
+                            f => InputContractRegistry.Resolve(d.StepType, f))), contractOptions)
+            },
             templates = new { steps, automations = Derived(typeof(AutomationTrigger)), macros = Derived(typeof(MakroBefehl)),
                 job = Template(new Job { Name = "Mein Job" }, typeof(Job), "job"),
                 macro = Template(new Makro { Name = "Mein Makro" }, typeof(Makro), "macro"),

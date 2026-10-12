@@ -8,7 +8,7 @@ Abbildung: [Detailansicht: Windows-Einstellung ändern. Markierte Beschriftungen
 1. Windows-Funktion: Windows-Funktion und dazugehörige Parameter im Editor. Wähle eine Funktion, die die gewünschte Abfrage/Änderung tatsächlich unterstützt.
 ### errors
 
-Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status.
+Prüfe die in dieser Referenz beschriebenen aktiven Pflichtfelder, kompatible Wertequellen und die Voraussetzungen auf dem Zielrechner. Ungültige Quellen oder Typen sind Fehler; eine gültige, aber nicht verfügbare optionale Quelle kann gemäß Eingabevertrag zum Überspringen führen. Ein Fehler beendet die Start-/Hauptphase; die vorgesehene Endphase wird zum Aufräumen behandelt. Der Verlauf zeigt den tatsächlich belegten Status. Alte Optionen audio.default_output, audio.default_input, personalization.theme und notifications.focus_mode verursachen StepValidation.WindowsSettingRemoved; direkte Ausführung liefert Unsupported mit setting.removed. Entferne den betroffenen Step oder wähle eine unterstützte Einstellung. display.mode verwendet die Windows-Anzeigekonfiguration; Windows kann eine nicht verfügbare Topologie ablehnen.
 
 ### example
 
@@ -20,31 +20,31 @@ Windows-Funktion und dazugehörige Parameter im Editor. Wähle eine Funktion, di
 
 ### purpose
 
-Wähle eine Windows-Funktion, die Einstellungsänderungen unterstützt, und ergänze deren Parameter. Der Step meldet vorherigen und angewendeten Wert sowie Erfolg oder Fehler. Administratorrechte und gerätespezifische Voraussetzungen stehen auf der jeweiligen Funktionsseite; sie können nicht durch eine JSON-Einstellung ersetzt werden.
+Wähle eine Windows-Funktion, die Einstellungsänderungen unterstützt, und ergänze deren Parameter. Der Step meldet vorherigen und angewendeten Wert sowie Erfolg oder Fehler. Administratorrechte und gerätespezifische Voraussetzungen stehen auf der jeweiligen Funktionsseite; sie können nicht durch eine JSON-Einstellung ersetzt werden. Ab der nächsten Version werden nur dokumentiert unterstützte automatische Änderungen angeboten, identisch für MSIX und Download-Version. Windows-Theme, Nicht stören und Standard-Audiogeräte sind entfernt; alte IDs bleiben lesbar.
 
 ### result.windows_setting.applied_value
 
-Vom Windows-Provider gemeldeter angewendeter Wert nach der Änderung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Der tatsächlich angewendete Wert.
 
 ### result.windows_setting.error_code
 
-Maschinenlesbarer Fehlercode einer Windows-Operation; bei Erfolg entsprechend dem Vertrag leer beziehungsweise nicht gesetzt. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer. In der App unter Diagnose aufgeführt.
 
 ### result.windows_setting.previous_value
 
-Vor der Windows-Änderung beobachteter Wert. Für eine Wiederherstellung nur mit derselben Funktion und kompatibler Darstellung verwenden. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Der vor der Ausführung ermittelte Wert, sofern Windows ihn bereitstellt.
 
 ### result.windows_setting.restart_required
 
-Ob die abgefragte Funktion beziehungsweise Windows Update einen Neustartbedarf meldet. Einzelwert dieses Ergebnisses.
+Zeigt, ob Windows für die vollständige Übernahme einen Neustart verlangt. Beispiel: true.
 
 ### result.windows_setting.setting_id
 
-Kennung der geänderten Windows-Funktion. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Stabile Kennung der angeforderten Windows-Einstellung.
 
 ### result.windows_setting.status
 
-Vom zuständigen Windows-Dienst gemeldeter Zustand. Nicht durch frei erfundene Statusnamen ersetzen. Einzelwert dieses Ergebnisses.
+Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Ausführungsfehler.
 
 ### result.windows_setting.status.option.AccessDenied
 
@@ -92,11 +92,11 @@ Stabile Ergebnis-ID einer älteren Step-Referenz. Neue Dateien kodieren sie in s
 
 ### schema.inputs.provider_id
 
-Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen.
+Anbieter der Wertequelle: local_value, job_variable, step_result oder secret. Ein Quellwert benötigt zusätzlich source_id und muss zum Eingabetyp passen. Neue Verbindungen müssen die aktuellen Anbieter- und Quellformen erfüllen. Legacy-Regeln erhalten bestehende Referenzen und erweitern nicht automatisch die neue Auswahl.
 
 ### schema.inputs.schema_id
 
-Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID.
+Versionierte Form eines zusammengesetzten Eingabewerts. Sie gehört zum Bindungsbaum, nicht als frei erfundener Schlüssel in die Variable. Übernimm die für dieses Feld exportierte Schema-ID. Die gemeinsame Eingabereferenz inputContracts/version=1 beschreibt erlaubte Member- und Itemverträge unabhängig vom Editor; bindingSchemas und fieldSchemas bleiben verfügbar.
 
 ### schema.inputs.source_id
 
@@ -140,6 +140,8 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
     {
       "id": "capability",
       "name": "Windows-Funktion",
+      "helpKey": "Ui.Windows.Capability.Help",
+      "help": "Windows-Funktion, die abgefragt oder geändert wird. Die Auswahl bestimmt die weiteren verfügbaren Felder.",
       "descriptor": {
         "Id": "capability",
         "LabelKey": "Ui.Windows.Capability",
@@ -171,7 +173,10 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         },
         "ScreenPointPickerOptions": null,
         "AllowsDirectValue": null,
-        "MonitorDeviceNameFieldId": null
+        "MonitorDeviceNameFieldId": null,
+        "InputSchemaId": null,
+        "OwnsStructuredInputContract": false,
+        "InputValueKind": null
       }
     }
   ],
@@ -291,7 +296,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         "Name": "Status",
         "DisplayName": "Status",
         "DataType": "Enum",
-        "Description": "Enum",
+        "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Ausführungsfehler.",
         "IsNullable": false,
         "Example": null,
         "Cardinality": "Single",
@@ -305,13 +310,14 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         ],
         "Id": "windows_setting.status",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.status"
       },
       {
         "Name": "SettingId",
         "DisplayName": "Einstellung",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Stabile Kennung der angeforderten Windows-Einstellung.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -319,13 +325,14 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         "EnumValues": null,
         "Id": "windows_setting.setting_id",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.setting_id"
       },
       {
         "Name": "PreviousValue",
         "DisplayName": "Vorheriger Wert",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Der vor der Ausführung ermittelte Wert, sofern Windows ihn bereitstellt.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -333,13 +340,14 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         "EnumValues": null,
         "Id": "windows_setting.previous_value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.previous_value"
       },
       {
         "Name": "AppliedValue",
         "DisplayName": "Angewendeter Wert",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Der tatsächlich angewendete Wert.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -347,27 +355,29 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         "EnumValues": null,
         "Id": "windows_setting.applied_value",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.applied_value"
       },
       {
         "Name": "RestartRequired",
         "DisplayName": "Neustart erforderlich",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Zeigt, ob Windows für die vollständige Übernahme einen Neustart verlangt.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "windows_setting.restart_required",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "windows_setting.restart_required"
       },
       {
         "Name": "ErrorCode",
         "DisplayName": "Fehlercode",
         "DataType": "Text",
-        "Description": "Text, kann leer sein",
+        "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
         "IsNullable": true,
         "Example": null,
         "Cardinality": "OptionalSingle",
@@ -375,6 +385,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
         "EnumValues": null,
         "Id": "windows_setting.error_code",
         "EnumDisplayNames": null,
+        "IsDiagnostic": true,
         "StableId": "windows_setting.error_code"
       }
     ],
@@ -386,7 +397,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "Name": "Status",
           "DisplayName": "Status",
           "DataType": "Enum",
-          "Description": "Enum",
+          "Description": "Zeigt Erfolg, fehlende Unterstützung, verweigerten Zugriff oder einen Ausführungsfehler.",
           "IsNullable": false,
           "Example": null,
           "Cardinality": "Single",
@@ -400,6 +411,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           ],
           "Id": "windows_setting.status",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.status"
         },
         "Children": []
@@ -411,7 +423,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "Name": "SettingId",
           "DisplayName": "Einstellung",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Stabile Kennung der angeforderten Windows-Einstellung.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -419,6 +431,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "EnumValues": null,
           "Id": "windows_setting.setting_id",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.setting_id"
         },
         "Children": []
@@ -430,7 +443,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "Name": "PreviousValue",
           "DisplayName": "Vorheriger Wert",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Der vor der Ausführung ermittelte Wert, sofern Windows ihn bereitstellt.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -438,6 +451,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "EnumValues": null,
           "Id": "windows_setting.previous_value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.previous_value"
         },
         "Children": []
@@ -449,7 +463,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "Name": "AppliedValue",
           "DisplayName": "Angewendeter Wert",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Der tatsächlich angewendete Wert.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -457,6 +471,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "EnumValues": null,
           "Id": "windows_setting.applied_value",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.applied_value"
         },
         "Children": []
@@ -468,14 +483,15 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "Name": "RestartRequired",
           "DisplayName": "Neustart erforderlich",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Zeigt, ob Windows für die vollständige Übernahme einen Neustart verlangt.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "windows_setting.restart_required",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "windows_setting.restart_required"
         },
         "Children": []
@@ -487,7 +503,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "Name": "ErrorCode",
           "DisplayName": "Fehlercode",
           "DataType": "Text",
-          "Description": "Text, kann leer sein",
+          "Description": "Code zur Fehlerdiagnose. Bei erfolgreicher Windows-Aktion leer.",
           "IsNullable": true,
           "Example": null,
           "Cardinality": "OptionalSingle",
@@ -495,6 +511,7 @@ Stabile Kennung der zu ändernden Windows-Einstellung. Ihre Parameter sind im Wi
           "EnumValues": null,
           "Id": "windows_setting.error_code",
           "EnumDisplayNames": null,
+          "IsDiagnostic": true,
           "StableId": "windows_setting.error_code"
         },
         "Children": []

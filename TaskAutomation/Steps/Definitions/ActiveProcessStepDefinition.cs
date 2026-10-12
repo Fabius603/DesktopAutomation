@@ -20,7 +20,7 @@ public sealed class ActiveProcessStepDefinition : StepDefinition<ActiveProcessSt
                 "Ui.Step.Settings.ProcessSource",
                 StepValueKind.Object,
                 Required: true,
-                EditorHint: StepEditorHints.ProcessTargetPicker,
+                EditorHint: StepEditorHints.ProcessTargetPicker, InputSchemaId: InputSchemaIds.ProcessTarget, OwnsStructuredInputContract: true,
                 InputContractId: "process")
         ],
         Presentation: new StepPresentationDescriptor(

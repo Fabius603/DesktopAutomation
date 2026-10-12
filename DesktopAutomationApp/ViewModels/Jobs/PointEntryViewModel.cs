@@ -1,3 +1,4 @@
+using TaskAutomation.Contracts.Steps;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -112,7 +113,7 @@ namespace DesktopAutomationApp.ViewModels
             ValueReferencePickerContext? pickerContext = null,
             ValueReferenceSourceCatalog? sourceCatalog = null)
         {
-            var contract = StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!;
+            var contract = InputContractRegistry.Find(typeof(PointComparisonStep), "points")!;
             PointsSource = sourceCatalog is null
                 ? new ValueReferencePickerViewModel(
                     detectionSteps, contract, true, variables, providerSources, pickerContext)

@@ -17,31 +17,31 @@ Typisierter Ergebnisvertrag KlickOnPoint3DResult. Wird von 3D-Ziel anklicken gel
 
 ### result.click_on_point_3d.applied_delta_x
 
-Tatsächlich angewendeter ganzzahliger horizontaler Mausversatz nach Skalierung und Rundung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.applied_delta_y
 
-Tatsächlich angewendeter ganzzahliger vertikaler Mausversatz nach Skalierung und Rundung. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.delta_x
 
-Horizontale Abweichung beziehungsweise Bewegungsanteil in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.delta_y
 
-Vertikale Abweichung beziehungsweise Bewegungsanteil in Pixeln. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen. Beispiel: 3.
 
 ### result.click_on_point_3d.movement_blocked
 
-Ob die 3D-Eingabe wegen Bewegungstoleranz oder nicht neuerem Quell-Frame unterdrückt wurde. Es wurde dabei keine neue Bewegung und kein Klick gesendet. Einzelwert dieses Ergebnisses.
+Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden. Beispiel: true.
 
 ### result.click_on_point_3d.movement_factor_x
 
-Horizontaler Skalierungsfaktor, der für diese Eingabe verwendet wurde. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen. Beispiel: 0.92.
 
 ### result.click_on_point_3d.movement_factor_y
 
-Vertikaler Skalierungsfaktor, der für diese Eingabe verwendet wurde. Optionaler Einzelwert: bei fehlender Information keine Eigenschaft erfinden.
+Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen. Beispiel: 0.92.
 
 ### Vertrag (Metadaten; keine Konfigurationsdatei)
 ```json
@@ -54,233 +54,247 @@ Vertikaler Skalierungsfaktor, der für diese Eingabe verwendet wurde. Optionaler
     "Properties": [
       {
         "Name": "DeltaX",
-        "DisplayName": "Delta X",
+        "DisplayName": "Horizontaler Zielversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.delta_x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.delta_x"
       },
       {
         "Name": "DeltaY",
-        "DisplayName": "Delta Y",
+        "DisplayName": "Vertikaler Zielversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.delta_y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.delta_y"
       },
       {
         "Name": "MovementFactorX",
-        "DisplayName": "Movement Factor X",
+        "DisplayName": "Horizontaler Bewegungsfaktor",
         "DataType": "Number",
-        "Description": "Number, kann leer sein",
+        "Description": "Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "0.92",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.movement_factor_x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.movement_factor_x"
       },
       {
         "Name": "MovementFactorY",
-        "DisplayName": "Movement Factor Y",
+        "DisplayName": "Vertikaler Bewegungsfaktor",
         "DataType": "Number",
-        "Description": "Number, kann leer sein",
+        "Description": "Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "0.92",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.movement_factor_y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.movement_factor_y"
       },
       {
         "Name": "AppliedDeltaX",
-        "DisplayName": "Applied Delta X",
+        "DisplayName": "Horizontaler Mausversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.applied_delta_x",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.applied_delta_x"
       },
       {
         "Name": "AppliedDeltaY",
-        "DisplayName": "Applied Delta Y",
+        "DisplayName": "Vertikaler Mausversatz (px)",
         "DataType": "Integer",
-        "Description": "Integer, kann leer sein",
+        "Description": "Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
         "IsNullable": true,
-        "Example": null,
+        "Example": "3",
         "Cardinality": "OptionalSingle",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.applied_delta_y",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.applied_delta_y"
       },
       {
         "Name": "MovementBlocked",
-        "DisplayName": "Movement Blocked",
+        "DisplayName": "Bewegung und Klick unterdrückt",
         "DataType": "Boolean",
-        "Description": "Boolean",
+        "Description": "Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden.",
         "IsNullable": false,
-        "Example": null,
+        "Example": "true",
         "Cardinality": "Single",
         "EnumTypeName": null,
         "EnumValues": null,
         "Id": "click_on_point_3d.movement_blocked",
         "EnumDisplayNames": null,
+        "IsDiagnostic": false,
         "StableId": "click_on_point_3d.movement_blocked"
       }
     ],
     "PropertyTree": [
       {
         "Segment": "DeltaX",
-        "DisplayName": "Delta X",
+        "DisplayName": "Horizontaler Zielversatz (px)",
         "Property": {
           "Name": "DeltaX",
-          "DisplayName": "Delta X",
+          "DisplayName": "Horizontaler Zielversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Horizontaler Zielversatz vor Skalierung. Positive Werte zeigen nach rechts, negative nach links. Kann ohne Zielpunkt fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.delta_x",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.delta_x"
         },
         "Children": []
       },
       {
         "Segment": "DeltaY",
-        "DisplayName": "Delta Y",
+        "DisplayName": "Vertikaler Zielversatz (px)",
         "Property": {
           "Name": "DeltaY",
-          "DisplayName": "Delta Y",
+          "DisplayName": "Vertikaler Zielversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Vertikaler Zielversatz vor Skalierung. Positive Werte zeigen nach unten, negative nach oben. Kann ohne Zielpunkt fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.delta_y",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.delta_y"
         },
         "Children": []
       },
       {
         "Segment": "MovementFactorX",
-        "DisplayName": "Movement Factor X",
+        "DisplayName": "Horizontaler Bewegungsfaktor",
         "Property": {
           "Name": "MovementFactorX",
-          "DisplayName": "Movement Factor X",
+          "DisplayName": "Horizontaler Bewegungsfaktor",
           "DataType": "Number",
-          "Description": "Number, kann leer sein",
+          "Description": "Verwendeter Skalierungsfaktor für den horizontalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "0.92",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.movement_factor_x",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.movement_factor_x"
         },
         "Children": []
       },
       {
         "Segment": "MovementFactorY",
-        "DisplayName": "Movement Factor Y",
+        "DisplayName": "Vertikaler Bewegungsfaktor",
         "Property": {
           "Name": "MovementFactorY",
-          "DisplayName": "Movement Factor Y",
+          "DisplayName": "Vertikaler Bewegungsfaktor",
           "DataType": "Number",
-          "Description": "Number, kann leer sein",
+          "Description": "Verwendeter Skalierungsfaktor für den vertikalen Zielversatz. 1 bedeutet unveränderte Skalierung. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "0.92",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.movement_factor_y",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.movement_factor_y"
         },
         "Children": []
       },
       {
         "Segment": "AppliedDeltaX",
-        "DisplayName": "Applied Delta X",
+        "DisplayName": "Horizontaler Mausversatz (px)",
         "Property": {
           "Name": "AppliedDeltaX",
-          "DisplayName": "Applied Delta X",
+          "DisplayName": "Horizontaler Mausversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Berechneter horizontaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.applied_delta_x",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.applied_delta_x"
         },
         "Children": []
       },
       {
         "Segment": "AppliedDeltaY",
-        "DisplayName": "Applied Delta Y",
+        "DisplayName": "Vertikaler Mausversatz (px)",
         "Property": {
           "Name": "AppliedDeltaY",
-          "DisplayName": "Applied Delta Y",
+          "DisplayName": "Vertikaler Mausversatz (px)",
           "DataType": "Integer",
-          "Description": "Integer, kann leer sein",
+          "Description": "Berechneter vertikaler Mausversatz nach Skalierung und Rundung. Ob Eingaben unterdrückt wurden, zeigt der Unterdrückungswert. Kann fehlen.",
           "IsNullable": true,
-          "Example": null,
+          "Example": "3",
           "Cardinality": "OptionalSingle",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.applied_delta_y",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.applied_delta_y"
         },
         "Children": []
       },
       {
         "Segment": "MovementBlocked",
-        "DisplayName": "Movement Blocked",
+        "DisplayName": "Bewegung und Klick unterdrückt",
         "Property": {
           "Name": "MovementBlocked",
-          "DisplayName": "Movement Blocked",
+          "DisplayName": "Bewegung und Klick unterdrückt",
           "DataType": "Boolean",
-          "Description": "Boolean",
+          "Description": "Gibt an, ob Bewegung und Klick wegen der Wiederholungssperre oder eines zeitlich ungeeigneten Quellbildes unterdrückt wurden.",
           "IsNullable": false,
-          "Example": null,
+          "Example": "true",
           "Cardinality": "Single",
           "EnumTypeName": null,
           "EnumValues": null,
           "Id": "click_on_point_3d.movement_blocked",
           "EnumDisplayNames": null,
+          "IsDiagnostic": false,
           "StableId": "click_on_point_3d.movement_blocked"
         },
         "Children": []
