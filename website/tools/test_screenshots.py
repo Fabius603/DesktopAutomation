@@ -48,6 +48,19 @@ class ScreenshotChecks(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Screenshot stale.*jobs'):
             images.check(self.root)
 
+    def test_checkout_line_endings_preserve_visual_review_but_content_changes_do_not(self):
+        view = self.root / 'app/jobs/view.xaml'
+        view.write_bytes(b'view\nfield\n')
+        images.update(self.root, 'jobs')
+        images.update(self.root, 'jobs', approve=True)
+        before = images.state(self.root)
+        view.write_bytes(b'view\r\nfield\r\n')
+        images.check(self.root)
+        self.assertEqual(before, images.state(self.root))
+        view.write_bytes(b'view\r\nnew field\r\n')
+        with self.assertRaisesRegex(ValueError, 'Screenshot stale'):
+            images.check(self.root)
+
     def test_new_source_files_in_a_watched_directory_invalidate_capture(self):
         (self.root / 'app/jobs/new-editor.xaml').write_text('editor', encoding='utf-8')
         with self.assertRaisesRegex(ValueError, 'Screenshot stale'):

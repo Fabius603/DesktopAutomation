@@ -5,6 +5,8 @@ param(
 $ErrorActionPreference = 'Stop'
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepositoryRoot 'website/Build.ps1') -Check -Strict
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& python (Join-Path $RepositoryRoot 'website/tools/test_exporter.py') (Join-Path $RepositoryRoot 'artifacts/website-tools/bin/Exporter/debug/Exporter.dll')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & python (Join-Path $RepositoryRoot 'website/tools/test_build_site.py')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & python (Join-Path $RepositoryRoot 'website/tools/test_screenshots.py')

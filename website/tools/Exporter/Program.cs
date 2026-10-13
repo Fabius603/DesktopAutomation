@@ -118,7 +118,8 @@ var metadata = new
     windowsCapabilities = new WindowsCapabilityCatalog().Capabilities.OrderBy(c => c.Id).Select(c => new { descriptor = c, result = LocalizedResult(WindowsQueryResultRegistry.GetContract(c.Id)) }),
     retiredWindowsSettings = RetiredWindowsSettings.Ids,
     sources = SourceFiles(root).ToDictionary(p => Path.GetRelativePath(root, p).Replace('\\', '/'),
-        p => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))).ToLowerInvariant())
+        p => Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(
+            System.Text.Encoding.UTF8.GetString(File.ReadAllBytes(p)).Replace("\r\n", "\n")))).ToLowerInvariant())
 };
 File.WriteAllText(Path.Combine(output, "metadata.json"), JsonSerializer.Serialize(metadata, options) + "\n");
 Examples.Export(output);

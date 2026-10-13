@@ -54,6 +54,11 @@ Der verbindliche Website-Check verwendet `website/Build.ps1 -Check -Strict` und 
 
 ## Version und Veröffentlichung
 
+Quell-Prüfsummen, Screenshot-Abhängigkeiten und erzeugte Textseiten werden unabhängig von
+LF-/CRLF-Zeilenenden verglichen. Git-Checkout-Einstellungen ändern dadurch nicht den
+Dokumentations- oder Screenshot-Status. Inhaltliche Änderungen bleiben prüfpflichtig;
+Bilddateien und binäre Downloads werden weiterhin unverändert geprüft.
+
 Die vollständigen Referenzen beschreiben ausdrücklich den aktuellen Arbeitsbaum. Referenz- und Beispiel-Detailseiten behalten `noindex,follow`, solange diese Versionszuordnung nicht als Release-Dokumentation veröffentlicht wird. Vor einer Veröffentlichung den passenden App-Stand auswählen und die Versionszuordnung prüfen. Veröffentlichung bleibt ein gesonderter Auftrag.
 
 ## Bilder pflegen

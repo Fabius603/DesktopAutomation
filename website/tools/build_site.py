@@ -579,8 +579,9 @@ def main():
     parser.add_argument('--init-content', action='store_true')
     args = parser.parse_args()
     meta = read(DOCS / 'metadata.json')
+    from content_hash import normalize_line_endings, source_hash
     for relative, expected in meta['sources'].items():
-        if not (ROOT / relative).exists() or hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() != expected:
+        if not (ROOT / relative).exists() or source_hash(ROOT / relative) != expected:
             raise ValueError('Contracts or behavior changed; export and review documentation: ' + relative)
     allkeys = {group + '/' + item['id']: required(item) for group, item in entries(meta)}
     allkeys.update({'guides/' + slug: {'purpose'} for slug in ('jobs', 'erste-schritte', 'kompatibilitaet')})
@@ -613,9 +614,13 @@ def main():
     files.update(build_retired_windows_settings(meta))
     for relative, value in files.items():
         path = DIST / relative
-        value = value.encode('utf-8') if isinstance(value, str) else value
+        is_text = isinstance(value, str)
+        value = value.encode('utf-8') if is_text else value
         if args.check:
-            if not path.exists() or path.read_bytes() != value:
+            actual = path.read_bytes() if path.exists() else None
+            if actual is not None and is_text:
+                actual = normalize_line_endings(actual)
+            if actual != value:
                 raise ValueError('Generated website output stale: ' + relative)
         else:
             path.parent.mkdir(parents=True, exist_ok=True)

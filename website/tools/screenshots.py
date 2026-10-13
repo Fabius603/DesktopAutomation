@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse
 import hashlib
+from content_hash import normalize_line_endings, source_hash
 import json
 import re
 import struct
@@ -44,7 +45,7 @@ def fingerprint(root, configuration, entry):
         if not matches:
             raise ValueError('Screenshot dependency matches no files: ' + pattern)
         for path in matches:
-            sources[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+            sources[path.relative_to(root).as_posix()] = source_hash(path)
     data = dict(id=entry['id'], file=entry['file'], width=entry['width'], height=entry['height'],
                 fieldDetails=entry.get('fieldDetails', False), crop=entry.get('crop'), labels=entry.get('markLabels'), notes=entry.get('markNotes'), caption=entry['caption'], pages=entry['pages'],
                 theme=configuration['theme'], culture=configuration['culture'], sources=sources)
@@ -79,7 +80,7 @@ def image_hash(root, entry):
                     raise ValueError('Field example contains an empty input: ' + base + ' / ' + marker['label'])
                 if w < 20 or h < 20 or min(x, y) < 0 or x+w > info['width'] or y+h > info['height']:
                     raise ValueError('Field annotation must contain the complete native field: ' + base)
-        data += bitmap + receipt.read_bytes()
+        data += bitmap + normalize_line_endings(receipt.read_bytes())
     return hashlib.sha256(data).hexdigest()
 
 

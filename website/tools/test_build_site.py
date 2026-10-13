@@ -100,6 +100,33 @@ class DocumentationChecks(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Generated website output stale'):
             self.run_site('--check')
 
+    def test_checkout_line_endings_do_not_invalidate_sources_or_generated_text(self):
+        contract = site.ROOT / 'contract.cs'
+        contract.write_bytes(b'contract\nsecond line\n')
+        self.metadata['sources']['contract.cs'] = hashlib.sha256(contract.read_bytes()).hexdigest()
+        self.write_meta()
+        self.run_site()
+        contract.write_bytes(b'contract\r\nsecond line\r\n')
+        for path in site.DIST.rglob('*'):
+            if path.is_file() and path.suffix in ('.html', '.md', '.txt', '.json', '.xml'):
+                path.write_bytes(path.read_bytes().replace(b'\r\n', b'\n').replace(b'\n', b'\r\n'))
+        self.run_site('--check')
+        contract.write_bytes(b'changed contract\r\nsecond line\r\n')
+        with self.assertRaisesRegex(ValueError, 'Contracts or behavior changed'):
+            self.run_site('--check')
+
+    def test_binary_downloads_remain_byte_exact(self):
+        original_build = site.build
+
+        def with_download(*args):
+            return {**original_build(*args), 'download.zip': b'archive\r\ncontent'}
+
+        with patch.object(site, 'build', side_effect=with_download):
+            self.run_site()
+            (site.DIST / 'download.zip').write_bytes(b'archive\ncontent')
+            with self.assertRaisesRegex(ValueError, 'Generated website output stale: download.zip'):
+                self.run_site('--check')
+
     def test_static_pages_cannot_bypass_shared_navigation(self):
         template = site.SITE / 'pages/impressum.html'
         template.write_text(template.read_text(encoding='utf-8').replace('{{HEADER}}', ''), encoding='utf-8')
