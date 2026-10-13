@@ -1,0 +1,74 @@
+{
+  "appVersion": "1.6.2",
+  "contract": {
+    "id": "LogContext",
+    "name": "LogContext",
+    "options": [],
+    "fields": [
+      {
+        "id": "AutomationId",
+        "name": "AutomationId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "InstanceId",
+        "name": "InstanceId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "ParentRunId",
+        "name": "ParentRunId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "RunId",
+        "name": "RunId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "StepExecutionId",
+        "name": "StepExecutionId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "StepId",
+        "name": "StepId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "TriggerId",
+        "name": "TriggerId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      }
+    ]
+  },
+  "explanations": {
+    "purpose": "Korrelationsobjekt zur Verknüpfung eines Ereignisses mit Run, Instanz, Trigger, Automation, Step-Ausführung und Elternlauf. Fehlende optionale IDs sind bei nicht zugeordneten Anwendungsmeldungen zulässig.",
+    "example": "Öffne Logs, filtere die Quelle und den Zeitraum, öffne einen Lauf und verknüpfe die Ereignisse über Context.RunId. Für eine technische Untersuchung den Bericht exportieren und runs.json zusammen mit den JSONL-Ereignissen lesen. Einzelereignisse und StepSummaries gemeinsam berücksichtigen.",
+    "errors": "Eine Datenlücke, nicht verfügbare Datei oder IsComplete=false begrenzt die Aussagekraft. Ein Start-/Dispatch-Ereignis beweist keinen Abschluss. Nicht ausgeführte, deaktivierte und übersprungene Steps getrennt behandeln; übersetzte Message-Texte nicht als stabile Statuscodes parsen.",
+    "field.AutomationId": "ID der auslösenden Automation, falls der Lauf aus einer Automation stammt.",
+    "field.InstanceId": "Dispatcher-Instanz-ID der Ausführung. Mehrere Ausführungen desselben Jobs besitzen unterschiedliche Instanzen.",
+    "field.ParentRunId": "Übergeordneter Lauf eines Unterjobs. Ermöglicht die Navigation von besitzender Arbeit zu Kindläufen.",
+    "field.RunId": "ID genau dieses Laufs. Verknüpft Starts, Steps, Probleme und Abschluss desselben Laufs.",
+    "field.StepExecutionId": "Identität einer tatsächlichen Step-Ausführung. Start und terminales Ereignis teilen sie; eine Wiederholung erhält eine neue Identität.",
+    "field.StepId": "Stabile ID des Job-Steps; derselbe Step kann in mehreren Durchläufen ausgeführt werden.",
+    "field.TriggerId": "Identität der konkreten Ereignisbeobachtung, nicht nur der gespeicherten Triggerkonfiguration."
+  },
+  "template": null,
+  "screenshots": [],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

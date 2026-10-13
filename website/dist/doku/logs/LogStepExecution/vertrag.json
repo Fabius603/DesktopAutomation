@@ -1,0 +1,1147 @@
+{
+  "appVersion": "1.6.2",
+  "contract": {
+    "id": "LogStepExecution",
+    "name": "LogStepExecution",
+    "options": [],
+    "fields": [
+      {
+        "id": "Cause",
+        "name": "Cause",
+        "type": "LogStepCause",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Cause.ExecutionId",
+        "name": "ExecutionId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Cause.Iteration",
+        "name": "Iteration",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Cause.Phase",
+        "name": "Phase",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Cause.Reason",
+        "name": "Reason",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Cause.StepId",
+        "name": "StepId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "DurationMs",
+        "name": "DurationMs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events",
+        "name": "Events",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Area",
+        "name": "Area",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision",
+        "name": "BranchDecision",
+        "type": "LogBranchDecision",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.BranchActive",
+        "name": "BranchActive",
+        "type": "Boolean",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.Conditions",
+        "name": "Conditions",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.Conditions.Operator",
+        "name": "Operator",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.Conditions.Position",
+        "name": "Position",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.Conditions.State",
+        "name": "State",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.MatchMode",
+        "name": "MatchMode",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.ParentActive",
+        "name": "ParentActive",
+        "type": "Boolean",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.BranchDecision.Reason",
+        "name": "Reason",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Category",
+        "name": "Category",
+        "type": "LogArea",
+        "options": [
+          "General",
+          "Execution",
+          "Automation",
+          "FileAccess",
+          "Capture",
+          "Detection",
+          "Process",
+          "Script",
+          "Video",
+          "Windows"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Code",
+        "name": "Code",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context",
+        "name": "Context",
+        "type": "LogContext",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.AutomationId",
+        "name": "AutomationId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.InstanceId",
+        "name": "InstanceId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.ParentRunId",
+        "name": "ParentRunId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.RunId",
+        "name": "RunId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.StepExecutionId",
+        "name": "StepExecutionId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.StepId",
+        "name": "StepId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Context.TriggerId",
+        "name": "TriggerId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Details",
+        "name": "Details",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.DiagnosticCode",
+        "name": "DiagnosticCode",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.DurationMs",
+        "name": "DurationMs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.FlowEffect",
+        "name": "FlowEffect",
+        "type": "LogFlowEffect",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.FlowEffect.Kind",
+        "name": "Kind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Id",
+        "name": "Id",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Iteration",
+        "name": "Iteration",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Level",
+        "name": "Level",
+        "type": "ExecutionLogLevel",
+        "options": [
+          "Debug",
+          "Information",
+          "Warning",
+          "Error"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Message",
+        "name": "Message",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Parameters",
+        "name": "Parameters",
+        "type": "Dictionary`2",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Paths",
+        "name": "Paths",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Paths.Kind",
+        "name": "Kind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Paths.Value",
+        "name": "Value",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Phase",
+        "name": "Phase",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.ProblemId",
+        "name": "ProblemId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.RelatedInstanceIds",
+        "name": "RelatedInstanceIds",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.SchemaVersion",
+        "name": "SchemaVersion",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Sequence",
+        "name": "Sequence",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Source",
+        "name": "Source",
+        "type": "LogSource",
+        "options": [
+          "Job",
+          "Automation",
+          "Application",
+          "Makro"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.SourceId",
+        "name": "SourceId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.SourceName",
+        "name": "SourceName",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Timestamp",
+        "name": "Timestamp",
+        "type": "DateTimeOffset",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger",
+        "name": "Trigger",
+        "type": "LogTriggerSnapshot",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger.EventKind",
+        "name": "EventKind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger.Kind",
+        "name": "Kind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger.TargetId",
+        "name": "TargetId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger.TargetKind",
+        "name": "TargetKind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger.TargetName",
+        "name": "TargetName",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Events.Trigger.WatchedDirectory",
+        "name": "WatchedDirectory",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "ExecutionId",
+        "name": "ExecutionId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Iteration",
+        "name": "Iteration",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Outcome",
+        "name": "Outcome",
+        "type": "StepLogOutcome",
+        "options": [
+          "Running",
+          "Successful",
+          "Warning",
+          "Failed",
+          "Skipped",
+          "Cancelled",
+          "NotExecuted",
+          "Pending",
+          "Unknown"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Phase",
+        "name": "Phase",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Reason",
+        "name": "Reason",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Step",
+        "name": "Step",
+        "type": "LogStepSnapshot",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Step.Enabled",
+        "name": "Enabled",
+        "type": "Boolean",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Step.Id",
+        "name": "Id",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Step.Phase",
+        "name": "Phase",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Step.Position",
+        "name": "Position",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Step.TypeId",
+        "name": "TypeId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary",
+        "name": "Summary",
+        "type": "LogStepSummary",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Code",
+        "name": "Code",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Count",
+        "name": "Count",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.IterationCoverageComplete",
+        "name": "IterationCoverageComplete",
+        "type": "Boolean",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Iterations",
+        "name": "Iterations",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Iterations.First",
+        "name": "First",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Iterations.Last",
+        "name": "Last",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent",
+        "name": "LastEvent",
+        "type": "LogEvent",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Area",
+        "name": "Area",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision",
+        "name": "BranchDecision",
+        "type": "LogBranchDecision",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.BranchActive",
+        "name": "BranchActive",
+        "type": "Boolean",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.Conditions",
+        "name": "Conditions",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.Conditions.Operator",
+        "name": "Operator",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.Conditions.Position",
+        "name": "Position",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.Conditions.State",
+        "name": "State",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.MatchMode",
+        "name": "MatchMode",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.ParentActive",
+        "name": "ParentActive",
+        "type": "Boolean",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.BranchDecision.Reason",
+        "name": "Reason",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Category",
+        "name": "Category",
+        "type": "LogArea",
+        "options": [
+          "General",
+          "Execution",
+          "Automation",
+          "FileAccess",
+          "Capture",
+          "Detection",
+          "Process",
+          "Script",
+          "Video",
+          "Windows"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Code",
+        "name": "Code",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context",
+        "name": "Context",
+        "type": "LogContext",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.AutomationId",
+        "name": "AutomationId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.InstanceId",
+        "name": "InstanceId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.ParentRunId",
+        "name": "ParentRunId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.RunId",
+        "name": "RunId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.StepExecutionId",
+        "name": "StepExecutionId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.StepId",
+        "name": "StepId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Context.TriggerId",
+        "name": "TriggerId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Details",
+        "name": "Details",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.DiagnosticCode",
+        "name": "DiagnosticCode",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.DurationMs",
+        "name": "DurationMs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.FlowEffect",
+        "name": "FlowEffect",
+        "type": "LogFlowEffect",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.FlowEffect.Kind",
+        "name": "Kind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Id",
+        "name": "Id",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Iteration",
+        "name": "Iteration",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Level",
+        "name": "Level",
+        "type": "ExecutionLogLevel",
+        "options": [
+          "Debug",
+          "Information",
+          "Warning",
+          "Error"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Message",
+        "name": "Message",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Parameters",
+        "name": "Parameters",
+        "type": "Dictionary`2",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Paths",
+        "name": "Paths",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Paths.Kind",
+        "name": "Kind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Paths.Value",
+        "name": "Value",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Phase",
+        "name": "Phase",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.ProblemId",
+        "name": "ProblemId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.RelatedInstanceIds",
+        "name": "RelatedInstanceIds",
+        "type": "IReadOnlyList`1",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.SchemaVersion",
+        "name": "SchemaVersion",
+        "type": "Int32",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Sequence",
+        "name": "Sequence",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Source",
+        "name": "Source",
+        "type": "LogSource",
+        "options": [
+          "Job",
+          "Automation",
+          "Application",
+          "Makro"
+        ],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.SourceId",
+        "name": "SourceId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.SourceName",
+        "name": "SourceName",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Timestamp",
+        "name": "Timestamp",
+        "type": "DateTimeOffset",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger",
+        "name": "Trigger",
+        "type": "LogTriggerSnapshot",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger.EventKind",
+        "name": "EventKind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger.Kind",
+        "name": "Kind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger.TargetId",
+        "name": "TargetId",
+        "type": "Guid",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger.TargetKind",
+        "name": "TargetKind",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger.TargetName",
+        "name": "TargetName",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.LastEvent.Trigger.WatchedDirectory",
+        "name": "WatchedDirectory",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Phase",
+        "name": "Phase",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.Reason",
+        "name": "Reason",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.StepId",
+        "name": "StepId",
+        "type": "String",
+        "options": [],
+        "defaultValue": null
+      },
+      {
+        "id": "Summary.TotalDurationMs",
+        "name": "TotalDurationMs",
+        "type": "Int64",
+        "options": [],
+        "defaultValue": null
+      }
+    ]
+  },
+  "explanations": {
+    "purpose": "Auswertung einer konkreten Step-Ausfuehrung: Konfigurationssnapshot, Status, Dauer, Ereignisse, Ursache und optionale aggregierte Summary. Nicht ausgefuehrte Steps koennen ohne ExecutionId erscheinen.",
+    "example": "Filtere einen konkreten RunId und lese LogPage mit unveraenderter SnapshotSequence bis NextBeforeSequence=null. Ordne danach StepExecutionId, StepSummaries und Laufstatus gemeinsam zu. Der Log-Leitfaden zeigt ein synthetisches Ereignis im echten Serializerformat.",
+    "errors": "State, Issues und IsComplete begrenzen die Aussagekraft. Ein leerer beziehungsweise nicht verfuegbarer Bestand ist kein Erfolgsbeleg. Fehlende ExecutionId oder Endzeitpunkte nicht erfinden.",
+    "field.Cause": "Strukturierte Ursache dieser Step-Ausfuehrung beziehungsweise Nichtausfuehrung mit StepId, ExecutionId, Reason, Phase und Iteration. Nicht aus Nachrichtentexten erraten.",
+    "field.Cause.ExecutionId": "Optionale konkrete Ausführungs-ID eines Steps. Bei nicht ausgefuehrten Steps kann sie fehlen; sie ist nicht die konfigurierte Step-ID.",
+    "field.Cause.Iteration": "Nummer des Hauptdurchlaufs, soweit das Ereignis einem Durchlauf zugeordnet ist.",
+    "field.Cause.Phase": "Bereich der Ausführung: Startphase, Hauptphase oder Endphase. Er beeinflusst die Bedeutung fehlender und übersprungener Steps.",
+    "field.Cause.Reason": "Stabiler Grund für Skip, Entscheidung oder Abschluss. Im Zusammenhang mit Code und Phase interpretieren.",
+    "field.Cause.StepId": "Stabile ID des Job-Steps; derselbe Step kann in mehreren Durchläufen ausgeführt werden.",
+    "field.DurationMs": "Gemessene Dauer in Millisekunden. Ein fehlender Wert ist keine Dauer von null.",
+    "field.Events": "Zugeordnete Ereignisse dieser konkreten Step-Ausfuehrung. Zusätzliche aggregierte Summary gemeinsam berücksichtigen.",
+    "field.Events.Area": "Textuelle Kontext-/Bereichsangabe. Für fachliche Filter zusätzlich die typisierte Category verwenden.",
+    "field.Events.BranchDecision": "Strukturierte Entscheidung eines Bedingungsblocks mit Aktivität, Grund und Operatoren ohne rohe Vergleichswerte.",
+    "field.Events.BranchDecision.BranchActive": "Ob der betreffende Zweig bei dieser Entscheidung gewählt wurde.",
+    "field.Events.BranchDecision.Conditions": "Ausgewertete Bedingungen mit Position, Zustand und Operator; bewusst ohne sensible Rohvergleichswerte.",
+    "field.Events.BranchDecision.Conditions.Operator": "Operator der ausgewerteten Bedingung, ohne deren rohen Vergleichsinhalt.",
+    "field.Events.BranchDecision.Conditions.Position": "Position des Steps beziehungsweise der Bedingung im gespeicherten Snapshot.",
+    "field.Events.BranchDecision.Conditions.State": "Zustand einer Bedingung/Beobachtung. Fehlende Belege nicht als false oder erfolgreich umdeuten.",
+    "field.Events.BranchDecision.MatchMode": "Verknüpfung der Bedingungsliste, soweit diese Entscheidung einen Vergleich besitzt.",
+    "field.Events.BranchDecision.ParentActive": "Ob der übergeordnete Block bei dieser Entscheidung aktiv war.",
+    "field.Events.BranchDecision.Reason": "Stabiler Grund für Skip, Entscheidung oder Abschluss. Im Zusammenhang mit Code und Phase interpretieren.",
+    "field.Events.Category": "Typisierter Fachbereich, zum Beispiel FileAccess, Capture oder Script. Daraus wird keine Ausführung anhand des Nachrichtentexts abgeleitet.",
+    "field.Events.Code": "Stabiler Ereignistoken wie step.completed. Für Auswertungen diesen Token verwenden statt übersetzte Nachrichtentexte zu parsen.",
+    "field.Events.Context": "Korrelationsobjekt mit Lauf-, Step-, Trigger- und gegebenenfalls Elternlauf-Identitäten.",
+    "field.Events.Context.AutomationId": "ID der auslösenden Automation, falls der Lauf aus einer Automation stammt.",
+    "field.Events.Context.InstanceId": "Dispatcher-Instanz-ID der Ausführung. Mehrere Ausführungen desselben Jobs besitzen unterschiedliche Instanzen.",
+    "field.Events.Context.ParentRunId": "Übergeordneter Lauf eines Unterjobs. Ermöglicht die Navigation von besitzender Arbeit zu Kindläufen.",
+    "field.Events.Context.RunId": "ID genau dieses Laufs. Verknüpft Starts, Steps, Probleme und Abschluss desselben Laufs.",
+    "field.Events.Context.StepExecutionId": "Identität einer tatsächlichen Step-Ausführung. Start und terminales Ereignis teilen sie; eine Wiederholung erhält eine neue Identität.",
+    "field.Events.Context.StepId": "Stabile ID des Job-Steps; derselbe Step kann in mehreren Durchläufen ausgeführt werden.",
+    "field.Events.Context.TriggerId": "Identität der konkreten Ereignisbeobachtung, nicht nur der gespeicherten Triggerkonfiguration.",
+    "field.Events.Details": "Optionale bereinigte Zusatzdiagnose. Eingabewerte, Skriptargumente und Secrets werden nicht vollständig hineinkopiert.",
+    "field.Events.DiagnosticCode": "Stabiler Diagnosecode für bekannte Fehler-/Speicherfälle, soweit vorhanden.",
+    "field.Events.DurationMs": "Gemessene Dauer in Millisekunden. Ein fehlender Wert ist keine Dauer von null.",
+    "field.Events.FlowEffect": "Strukturierter Einfluss auf den Ablauf, etwa beendete Hauptphase oder nächster Durchlauf.",
+    "field.Events.FlowEffect.Kind": "Art des Triggers beziehungsweise der strukturierten Beobachtung.",
+    "field.Events.Id": "Eindeutige Identität des Ereignisses beziehungsweise Laufs. Ereignis-ID und RunId haben unterschiedliche Aufgaben.",
+    "field.Events.Iteration": "Nummer des Hauptdurchlaufs, soweit das Ereignis einem Durchlauf zugeordnet ist.",
+    "field.Events.Level": "Schweregrad Debug, Information, Warning oder Error. Eine Warning ist nicht automatisch ein abgebrochener Lauf.",
+    "field.Events.Message": "Lesbare, bereinigte Nachricht. Sie ist eine Anzeige und keine stabile Programmierschnittstelle.",
+    "field.Events.Parameters": "Explizit erlaubte, bereinigte Diagnosewerte. Keine vollständige Kopie der Step-settings oder frei verfügbarer Eingabeinhalte.",
+    "field.Events.Paths": "Explizit erlaubte strukturierte Aktionspfade. Werden getrennt von beliebigen Eingabetexten erfasst und bei Export erneut bereinigt.",
+    "field.Events.Paths.Kind": "Art des Triggers beziehungsweise der strukturierten Beobachtung.",
+    "field.Events.Paths.Value": "Wert eines strukturierten erlaubten Pfad-/Diagnoseeintrags, entsprechend seinem umgebenden Typ.",
+    "field.Events.Phase": "Bereich der Ausführung: Startphase, Hauptphase oder Endphase. Er beeinflusst die Bedeutung fehlender und übersprungener Steps.",
+    "field.Events.ProblemId": "Gemeinsame Problemidentität für mehrere Diagnosen desselben Vorfalls; dadurch werden Probleme nicht anhand ihrer Textzeilen doppelt gezählt.",
+    "field.Events.RelatedInstanceIds": "Instanzen, die an einer Automationsentscheidung beteiligt waren, zum Beispiel bereits laufende Ziele bei Restart/Ignore.",
+    "field.Events.SchemaVersion": "Version des strukturierten Logformats; der aktuelle Repository-Vertrag ist Schema 2.",
+    "field.Events.Sequence": "Repositoryweit aufsteigende Ereignissequenz für Reihenfolge und Seitencursor, unabhängig von gleichzeitigen Zeitstempeln.",
+    "field.Events.Source": "Ursprungsart Job, Automation, Application oder Makro.",
+    "field.Events.SourceId": "Stabile ID des ursprünglichen Jobs/Makros/der Automation; sie ist nicht die Identität eines einzelnen Laufs.",
+    "field.Events.SourceName": "Zum Ereigniszeitpunkt gespeicherter Anzeigename der Quelle.",
+    "field.Events.Timestamp": "Zeitpunkt des Ereignisses mit Zeitzonenoffset. Für Vergleiche UTC verwenden.",
+    "field.Events.Trigger": "Snapshot der auslösenden Ereignisart und Zielzuordnung, soweit vorhanden.",
+    "field.Events.Trigger.EventKind": "Konkrete Ereignisart des Trigger-Snapshots.",
+    "field.Events.Trigger.Kind": "Art des Triggers beziehungsweise der strukturierten Beobachtung.",
+    "field.Events.Trigger.TargetId": "Stabile ID des von der Automation angesprochenen Jobs/Makros.",
+    "field.Events.Trigger.TargetKind": "Art des Automationsziels: Job oder Makro.",
+    "field.Events.Trigger.TargetName": "Gespeicherter Anzeigename des Ziels zum Zeitpunkt der Beobachtung.",
+    "field.Events.Trigger.WatchedDirectory": "Explizit erlaubter beobachteter Ordnerpfad für eine Datei-Automation.",
+    "field.ExecutionId": "Optionale konkrete Ausführungs-ID eines Steps. Bei nicht ausgefuehrten Steps kann sie fehlen; sie ist nicht die konfigurierte Step-ID.",
+    "field.Iteration": "Nummer des Hauptdurchlaufs, soweit das Ereignis einem Durchlauf zugeordnet ist.",
+    "field.Outcome": "Lebenszyklus und Qualität des Laufs. Successful, WithWarnings und WithErrors unterscheiden Abschluss von Problemfreiheit.",
+    "field.Phase": "Bereich der Ausführung: Startphase, Hauptphase oder Endphase. Er beeinflusst die Bedeutung fehlender und übersprungener Steps.",
+    "field.Reason": "Stabiler Grund für Skip, Entscheidung oder Abschluss. Im Zusammenhang mit Code und Phase interpretieren.",
+    "field.Step": "Snapshot der Step-Konfiguration: Id, TypeId, Position, Phase und Enabled zum Laufzeitpunkt.",
+    "field.Step.Enabled": "Ob der Step im Lauf-Snapshot aktiviert war. Disabled ist von einem aktivierten, aber nicht erreichten Step zu unterscheiden.",
+    "field.Step.Id": "Eindeutige Identität des Ereignisses beziehungsweise Laufs. Ereignis-ID und RunId haben unterschiedliche Aufgaben.",
+    "field.Step.Phase": "Bereich der Ausführung: Startphase, Hauptphase oder Endphase. Er beeinflusst die Bedeutung fehlender und übersprungener Steps.",
+    "field.Step.Position": "Position des Steps beziehungsweise der Bedingung im gespeicherten Snapshot.",
+    "field.Step.TypeId": "Kanonische Step-Typ-ID, zum Beispiel file_system_operation, unabhängig vom sichtbaren Label.",
+    "field.Summary": "Optionale aggregierte Step-Zusammenfassung, insbesondere für wiederholte Hauptphasen. Count, Iterations, LastEvent und IterationCoverageComplete gemeinsam lesen.",
+    "field.Summary.Code": "Stabiler Ereignistoken wie step.completed. Für Auswertungen diesen Token verwenden statt übersetzte Nachrichtentexte zu parsen.",
+    "field.Summary.Count": "Anzahl der in dieser Zusammenfassung enthaltenen Beobachtungen.",
+    "field.Summary.IterationCoverageComplete": "Ob die Zuordnung aller zusammengefassten Durchläufe vollständig belegt ist.",
+    "field.Summary.Iterations": "Zusammengefasste Durchlaufbereiche dieser Beobachtung; anhand First und Last lesen.",
+    "field.Summary.Iterations.First": "Erster Durchlauf eines zusammengefassten Bereichs.",
+    "field.Summary.Iterations.Last": "Letzter Durchlauf eines zusammengefassten Bereichs, einschließlich dieser Grenze.",
+    "field.Summary.LastEvent": "Letzte bereinigte Beobachtung der Zusammenfassung. Sie ist nicht automatisch ein zusätzliches individuelles Ereignis im JSONL-Strom.",
+    "field.Summary.LastEvent.Area": "Textuelle Kontext-/Bereichsangabe. Für fachliche Filter zusätzlich die typisierte Category verwenden.",
+    "field.Summary.LastEvent.BranchDecision": "Strukturierte Entscheidung eines Bedingungsblocks mit Aktivität, Grund und Operatoren ohne rohe Vergleichswerte.",
+    "field.Summary.LastEvent.BranchDecision.BranchActive": "Ob der betreffende Zweig bei dieser Entscheidung gewählt wurde.",
+    "field.Summary.LastEvent.BranchDecision.Conditions": "Ausgewertete Bedingungen mit Position, Zustand und Operator; bewusst ohne sensible Rohvergleichswerte.",
+    "field.Summary.LastEvent.BranchDecision.Conditions.Operator": "Operator der ausgewerteten Bedingung, ohne deren rohen Vergleichsinhalt.",
+    "field.Summary.LastEvent.BranchDecision.Conditions.Position": "Position des Steps beziehungsweise der Bedingung im gespeicherten Snapshot.",
+    "field.Summary.LastEvent.BranchDecision.Conditions.State": "Zustand einer Bedingung/Beobachtung. Fehlende Belege nicht als false oder erfolgreich umdeuten.",
+    "field.Summary.LastEvent.BranchDecision.MatchMode": "Verknüpfung der Bedingungsliste, soweit diese Entscheidung einen Vergleich besitzt.",
+    "field.Summary.LastEvent.BranchDecision.ParentActive": "Ob der übergeordnete Block bei dieser Entscheidung aktiv war.",
+    "field.Summary.LastEvent.BranchDecision.Reason": "Stabiler Grund für Skip, Entscheidung oder Abschluss. Im Zusammenhang mit Code und Phase interpretieren.",
+    "field.Summary.LastEvent.Category": "Typisierter Fachbereich, zum Beispiel FileAccess, Capture oder Script. Daraus wird keine Ausführung anhand des Nachrichtentexts abgeleitet.",
+    "field.Summary.LastEvent.Code": "Stabiler Ereignistoken wie step.completed. Für Auswertungen diesen Token verwenden statt übersetzte Nachrichtentexte zu parsen.",
+    "field.Summary.LastEvent.Context": "Korrelationsobjekt mit Lauf-, Step-, Trigger- und gegebenenfalls Elternlauf-Identitäten.",
+    "field.Summary.LastEvent.Context.AutomationId": "ID der auslösenden Automation, falls der Lauf aus einer Automation stammt.",
+    "field.Summary.LastEvent.Context.InstanceId": "Dispatcher-Instanz-ID der Ausführung. Mehrere Ausführungen desselben Jobs besitzen unterschiedliche Instanzen.",
+    "field.Summary.LastEvent.Context.ParentRunId": "Übergeordneter Lauf eines Unterjobs. Ermöglicht die Navigation von besitzender Arbeit zu Kindläufen.",
+    "field.Summary.LastEvent.Context.RunId": "ID genau dieses Laufs. Verknüpft Starts, Steps, Probleme und Abschluss desselben Laufs.",
+    "field.Summary.LastEvent.Context.StepExecutionId": "Identität einer tatsächlichen Step-Ausführung. Start und terminales Ereignis teilen sie; eine Wiederholung erhält eine neue Identität.",
+    "field.Summary.LastEvent.Context.StepId": "Stabile ID des Job-Steps; derselbe Step kann in mehreren Durchläufen ausgeführt werden.",
+    "field.Summary.LastEvent.Context.TriggerId": "Identität der konkreten Ereignisbeobachtung, nicht nur der gespeicherten Triggerkonfiguration.",
+    "field.Summary.LastEvent.Details": "Optionale bereinigte Zusatzdiagnose. Eingabewerte, Skriptargumente und Secrets werden nicht vollständig hineinkopiert.",
+    "field.Summary.LastEvent.DiagnosticCode": "Stabiler Diagnosecode für bekannte Fehler-/Speicherfälle, soweit vorhanden.",
+    "field.Summary.LastEvent.DurationMs": "Gemessene Dauer in Millisekunden. Ein fehlender Wert ist keine Dauer von null.",
+    "field.Summary.LastEvent.FlowEffect": "Strukturierter Einfluss auf den Ablauf, etwa beendete Hauptphase oder nächster Durchlauf.",
+    "field.Summary.LastEvent.FlowEffect.Kind": "Art des Triggers beziehungsweise der strukturierten Beobachtung.",
+    "field.Summary.LastEvent.Id": "Eindeutige Identität des Ereignisses beziehungsweise Laufs. Ereignis-ID und RunId haben unterschiedliche Aufgaben.",
+    "field.Summary.LastEvent.Iteration": "Nummer des Hauptdurchlaufs, soweit das Ereignis einem Durchlauf zugeordnet ist.",
+    "field.Summary.LastEvent.Level": "Schweregrad Debug, Information, Warning oder Error. Eine Warning ist nicht automatisch ein abgebrochener Lauf.",
+    "field.Summary.LastEvent.Message": "Lesbare, bereinigte Nachricht. Sie ist eine Anzeige und keine stabile Programmierschnittstelle.",
+    "field.Summary.LastEvent.Parameters": "Explizit erlaubte, bereinigte Diagnosewerte. Keine vollständige Kopie der Step-settings oder frei verfügbarer Eingabeinhalte.",
+    "field.Summary.LastEvent.Paths": "Explizit erlaubte strukturierte Aktionspfade. Werden getrennt von beliebigen Eingabetexten erfasst und bei Export erneut bereinigt.",
+    "field.Summary.LastEvent.Paths.Kind": "Art des Triggers beziehungsweise der strukturierten Beobachtung.",
+    "field.Summary.LastEvent.Paths.Value": "Wert eines strukturierten erlaubten Pfad-/Diagnoseeintrags, entsprechend seinem umgebenden Typ.",
+    "field.Summary.LastEvent.Phase": "Bereich der Ausführung: Startphase, Hauptphase oder Endphase. Er beeinflusst die Bedeutung fehlender und übersprungener Steps.",
+    "field.Summary.LastEvent.ProblemId": "Gemeinsame Problemidentität für mehrere Diagnosen desselben Vorfalls; dadurch werden Probleme nicht anhand ihrer Textzeilen doppelt gezählt.",
+    "field.Summary.LastEvent.RelatedInstanceIds": "Instanzen, die an einer Automationsentscheidung beteiligt waren, zum Beispiel bereits laufende Ziele bei Restart/Ignore.",
+    "field.Summary.LastEvent.SchemaVersion": "Version des strukturierten Logformats; der aktuelle Repository-Vertrag ist Schema 2.",
+    "field.Summary.LastEvent.Sequence": "Repositoryweit aufsteigende Ereignissequenz für Reihenfolge und Seitencursor, unabhängig von gleichzeitigen Zeitstempeln.",
+    "field.Summary.LastEvent.Source": "Ursprungsart Job, Automation, Application oder Makro.",
+    "field.Summary.LastEvent.SourceId": "Stabile ID des ursprünglichen Jobs/Makros/der Automation; sie ist nicht die Identität eines einzelnen Laufs.",
+    "field.Summary.LastEvent.SourceName": "Zum Ereigniszeitpunkt gespeicherter Anzeigename der Quelle.",
+    "field.Summary.LastEvent.Timestamp": "Zeitpunkt des Ereignisses mit Zeitzonenoffset. Für Vergleiche UTC verwenden.",
+    "field.Summary.LastEvent.Trigger": "Snapshot der auslösenden Ereignisart und Zielzuordnung, soweit vorhanden.",
+    "field.Summary.LastEvent.Trigger.EventKind": "Konkrete Ereignisart des Trigger-Snapshots.",
+    "field.Summary.LastEvent.Trigger.Kind": "Art des Triggers beziehungsweise der strukturierten Beobachtung.",
+    "field.Summary.LastEvent.Trigger.TargetId": "Stabile ID des von der Automation angesprochenen Jobs/Makros.",
+    "field.Summary.LastEvent.Trigger.TargetKind": "Art des Automationsziels: Job oder Makro.",
+    "field.Summary.LastEvent.Trigger.TargetName": "Gespeicherter Anzeigename des Ziels zum Zeitpunkt der Beobachtung.",
+    "field.Summary.LastEvent.Trigger.WatchedDirectory": "Explizit erlaubter beobachteter Ordnerpfad für eine Datei-Automation.",
+    "field.Summary.Phase": "Bereich der Ausführung: Startphase, Hauptphase oder Endphase. Er beeinflusst die Bedeutung fehlender und übersprungener Steps.",
+    "field.Summary.Reason": "Stabiler Grund für Skip, Entscheidung oder Abschluss. Im Zusammenhang mit Code und Phase interpretieren.",
+    "field.Summary.StepId": "Stabile ID des Job-Steps; derselbe Step kann in mehreren Durchläufen ausgeführt werden.",
+    "field.Summary.TotalDurationMs": "Summe der gemessenen Dauer der zusammengefassten Beobachtungen in Millisekunden.",
+    "field.Outcome.option.Successful": "Lauf erfolgreich beendet, ohne die Qualität als Warnung/Fehler einzustufen.",
+    "field.Events.Category.option.Video": "Videoaufnahme und Finalisierung.",
+    "field.Summary.LastEvent.Category.option.Process": "Programmstart, Suche, Fokus und Beenden.",
+    "field.Summary.LastEvent.Level.option.Warning": "Problemhinweis, der nicht zwingend den Lauf beendet.",
+    "field.Events.Level.option.Debug": "Technische Detailbeobachtung.",
+    "field.Outcome.option.Unknown": "Die vorhandenen Daten erlauben keinen eindeutigeren Zustand.",
+    "field.Summary.LastEvent.Category.option.Video": "Videoaufnahme und Finalisierung.",
+    "field.Events.Category.option.General": "Allgemeiner Log-Fachbereich ohne spezielleren Ausführungsbereich.",
+    "field.Events.Category.option.Process": "Programmstart, Suche, Fokus und Beenden.",
+    "field.Events.Source.option.Automation": "Triggerbeobachtung und Automationsentscheidungen.",
+    "field.Summary.LastEvent.Category.option.Capture": "Bildschirm-/Kameraaufnahme.",
+    "field.Events.Category.option.Automation": "Triggerbeobachtung und Automationsentscheidungen.",
+    "field.Summary.LastEvent.Source.option.Application": "Ereignis stammt aus der Anwendung selbst.",
+    "field.Summary.LastEvent.Source.option.Job": "Quelle beziehungsweise Ziel ist ein Job.",
+    "field.Events.Category.option.FileAccess": "Datei-/Ordnerzugriffe und ihre Diagnose.",
+    "field.Events.Level.option.Warning": "Problemhinweis, der nicht zwingend den Lauf beendet.",
+    "field.Summary.LastEvent.Level.option.Debug": "Technische Detailbeobachtung.",
+    "field.Events.Source.option.Job": "Quelle beziehungsweise Ziel ist ein Job.",
+    "field.Events.Source.option.Makro": "Quelle beziehungsweise Ziel ist ein Makro.",
+    "field.Summary.LastEvent.Category.option.Windows": "Windows-Taste als Modifikator (Bitmaske 8) beziehungsweise Windows-Fachbereich, wenn diese Option zu einem Log-Bereich gehört.",
+    "field.Summary.LastEvent.Category.option.Automation": "Triggerbeobachtung und Automationsentscheidungen.",
+    "field.Summary.LastEvent.Category.option.Script": "Skriptausführung und zugehörige Hintergrundarbeit.",
+    "field.Events.Category.option.Execution": "Ausführung und Ablaufsteuerung.",
+    "field.Summary.LastEvent.Category.option.Detection": "Bild-/Text-/Punkterkennung und Auswertung.",
+    "field.Events.Category.option.Detection": "Bild-/Text-/Punkterkennung und Auswertung.",
+    "field.Summary.LastEvent.Source.option.Makro": "Quelle beziehungsweise Ziel ist ein Makro.",
+    "field.Summary.LastEvent.Source.option.Automation": "Triggerbeobachtung und Automationsentscheidungen.",
+    "field.Outcome.option.Cancelled": "Eine begonnene Step-Ausführung wurde abgebrochen.",
+    "field.Events.Level.option.Error": "Fehlerbeobachtung; den tatsächlichen Laufabschluss zusätzlich über Outcome prüfen.",
+    "field.Events.Source.option.Application": "Ereignis stammt aus der Anwendung selbst.",
+    "field.Events.Level.option.Information": "Normale Lebenszyklus-/Aktionsinformation.",
+    "field.Outcome.option.Warning": "Problemhinweis, der nicht zwingend den Lauf beendet.",
+    "field.Events.Category.option.Capture": "Bildschirm-/Kameraaufnahme.",
+    "field.Outcome.option.Running": "Lauf ist noch aktiv und hat keinen belegten Abschluss.",
+    "field.Outcome.option.Skipped": "Der Step wurde übersprungen; Reason für deaktiviert, inaktiven Zweig oder fehlende Eingabe prüfen.",
+    "field.Summary.LastEvent.Category.option.FileAccess": "Datei-/Ordnerzugriffe und ihre Diagnose.",
+    "field.Outcome.option.Pending": "Noch kein terminales Step-Ergebnis vorhanden.",
+    "field.Outcome.option.Failed": "Lauf wegen Fehler fehlgeschlagen.",
+    "field.Events.Category.option.Script": "Skriptausführung und zugehörige Hintergrundarbeit.",
+    "field.Outcome.option.NotExecuted": "Der Step wurde in diesem Ablauf nicht ausgeführt.",
+    "field.Summary.LastEvent.Level.option.Error": "Fehlerbeobachtung; den tatsächlichen Laufabschluss zusätzlich über Outcome prüfen.",
+    "field.Events.Category.option.Windows": "Windows-Taste als Modifikator (Bitmaske 8) beziehungsweise Windows-Fachbereich, wenn diese Option zu einem Log-Bereich gehört.",
+    "field.Summary.LastEvent.Level.option.Information": "Normale Lebenszyklus-/Aktionsinformation.",
+    "field.Summary.LastEvent.Category.option.Execution": "Ausführung und Ablaufsteuerung.",
+    "field.Summary.LastEvent.Category.option.General": "Allgemeiner Log-Fachbereich ohne spezielleren Ausführungsbereich."
+  },
+  "template": null,
+  "screenshots": [],
+  "note": "Referenzdaten. Defaultvorlage vor Verwendung vervollständigen und fachlich validieren."
+}

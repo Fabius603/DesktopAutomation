@@ -1,0 +1,116 @@
+## Logs: LogDiagnostic
+
+ID: LogDiagnostic
+Website: /doku/logs/LogDiagnostic/
+
+### errors
+
+State, Issues und IsComplete begrenzen die Aussagekraft. Ein leerer beziehungsweise nicht verfuegbarer Bestand ist kein Erfolgsbeleg. Fehlende ExecutionId oder Endzeitpunkte nicht erfinden.
+
+### example
+
+Filtere einen konkreten RunId und lese LogPage mit unveraenderter SnapshotSequence bis NextBeforeSequence=null. Ordne danach StepExecutionId, StepSummaries und Laufstatus gemeinsam zu. Der Log-Leitfaden zeigt ein synthetisches Ereignis im echten Serializerformat.
+
+### field.Actions
+
+Angebotene Diagnoseaktionen mit Kind und optional RunId, StepId oder Path. Verweisen auf konkrete Hilfs-/Navigationsziele; sind keine ausgefuehrten Jobs.
+
+### field.Actions.Kind
+
+Art der jeweiligen Diagnose-Hilfsaktion; die optionalen Ziel-IDs und Pfade passend zu dieser Art interpretieren.
+
+### field.Actions.Path
+
+Optionaler strukturierter Pfad einer Diagnoseaktion. Nur im beschriebenen Aktionskontext verwenden; ein vorhandener Pfad beweist weder Existenz noch erfolgreiche Dateioperation.
+
+### field.Actions.RunId
+
+ID genau dieses Laufs. Verknüpft Starts, Steps, Probleme und Abschluss desselben Laufs.
+
+### field.Actions.StepId
+
+Stabile ID des Job-Steps; derselbe Step kann in mehreren Durchläufen ausgeführt werden.
+
+### field.CauseKey
+
+Lokalisierungsschlüssel der Diagnoseursache. Fuer Anzeige aufloesen, für maschinelle Identitaet den stabilen Code verwenden.
+
+### field.Code
+
+Stabiler Diagnosecode, unabhaengig von lokalisierter Ursache und Hilfe. Mit CauseKey, HelpKey und Actions für die Anzeige kombinieren.
+
+### field.HelpKey
+
+Lokalisierungsschlüssel des konkreten Hilfetexts zur Diagnose. Kein freier Skriptbefehl.
+
+### purpose
+
+Stabiler Diagnosecode mit lokalisierten Ursachen-/Hilfeschlüsseln und angebotenen Hilfsaktionen. Übersetzte Texte nicht als maschinelle Identitaet verwenden.
+
+### Vertrag (Metadaten; keine Konfigurationsdatei)
+```json
+{
+  "id": "LogDiagnostic",
+  "name": "LogDiagnostic",
+  "options": [],
+  "fields": [
+    {
+      "id": "Actions",
+      "name": "Actions",
+      "type": "IReadOnlyList`1",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "Actions.Kind",
+      "name": "Kind",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "Actions.Path",
+      "name": "Path",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "Actions.RunId",
+      "name": "RunId",
+      "type": "Guid",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "Actions.StepId",
+      "name": "StepId",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "CauseKey",
+      "name": "CauseKey",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "Code",
+      "name": "Code",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    },
+    {
+      "id": "HelpKey",
+      "name": "HelpKey",
+      "type": "String",
+      "options": [],
+      "defaultValue": null
+    }
+  ]
+}
+```
+

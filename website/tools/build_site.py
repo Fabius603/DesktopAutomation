@@ -5,6 +5,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit, unquote
 import argparse
 import hashlib
+import subprocess
 import json
 import sys
 from functools import lru_cache
@@ -572,6 +573,19 @@ def validate_links():
             raise ValueError('Invalid search target: ' + entry['url'])
 
 
+def validate_generated_tracking(root, files):
+    if not (root / '.git').exists():
+        return
+    result = subprocess.run(['git', 'check-ignore', '--no-index', '-z', '--stdin'],
+                            cwd=root, input='\0'.join('website/dist/' + path for path in files) + '\0',
+                            capture_output=True, text=True)
+    if result.returncode not in (0, 1):
+        raise ValueError('Cannot check generated website Git ignore rules: ' + result.stderr)
+    ignored = result.stdout.strip('\0').split('\0') if result.stdout else []
+    if ignored:
+        raise ValueError('Generated website files are excluded by Git ignore rules: ' + ', '.join(ignored))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
@@ -612,6 +626,7 @@ def main():
     files.update(build_examples(meta))
     files.update(build_static_pages())
     files.update(build_retired_windows_settings(meta))
+    validate_generated_tracking(ROOT, files)
     for relative, value in files.items():
         path = DIST / relative
         is_text = isinstance(value, str)

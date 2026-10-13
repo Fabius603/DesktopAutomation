@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import unittest
+import subprocess
 from html.parser import HTMLParser
 import build_site as site
 
@@ -29,6 +30,25 @@ class Navigation(HTMLParser):
     def handle_endtag(self, tag):
         if tag == 'nav':
             self.scope = None
+
+
+class GeneratedTrackingChecks(unittest.TestCase):
+    def test_published_log_reference_is_trackable_while_runtime_logs_stay_ignored(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['git', 'init', '--quiet', str(root)], check=True, capture_output=True)
+            ignore = Path(__file__).resolve().parents[2] / '.gitignore'
+            (root / '.gitignore').write_bytes(ignore.read_bytes())
+            pages = ['doku/logs/index.html', 'doku/logs/LogEvent/index.html',
+                     'doku/logs/LogEvent/referenz.md', 'doku/logs/LogEvent/vertrag.json']
+            site.validate_generated_tracking(root, pages)
+            runtime = subprocess.run(['git', 'check-ignore', '--no-index', 'TaskAutomation/Logs/runtime.json'],
+                                     cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, runtime.returncode)
+            with (root / '.gitignore').open('a', encoding='utf-8') as stream:
+                stream.write('\n/website/dist/doku/logs/\n')
+            with self.assertRaisesRegex(ValueError, 'excluded by Git ignore rules.*LogEvent'):
+                site.validate_generated_tracking(root, pages)
 
 
 class DocumentationChecks(unittest.TestCase):

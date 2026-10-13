@@ -59,6 +59,12 @@ LF-/CRLF-Zeilenenden verglichen. Git-Checkout-Einstellungen ändern dadurch nich
 Dokumentations- oder Screenshot-Status. Inhaltliche Änderungen bleiben prüfpflichtig;
 Bilddateien und binäre Downloads werden weiterhin unverändert geprüft.
 
+Der Website-Build prüft außerdem, dass keine erzeugte Datei durch Git-Ignore-Regeln
+ausgeschlossen wird. Alle erzeugten Dateien müssen zusammen mit den Quellen in den Commit
+aufgenommen werden; insbesondere gehören die Referenzen unter `dist/doku/logs` zur Website
+und sind keine Laufzeitprotokolle. Ein lokaler Prüflauf allein beweist noch nicht, dass der
+Commit alle Dateien enthält; dies lässt sich zusätzlich mit einem frischen Checkout prüfen.
+
 Die vollständigen Referenzen beschreiben ausdrücklich den aktuellen Arbeitsbaum. Referenz- und Beispiel-Detailseiten behalten `noindex,follow`, solange diese Versionszuordnung nicht als Release-Dokumentation veröffentlicht wird. Vor einer Veröffentlichung den passenden App-Stand auswählen und die Versionszuordnung prüfen. Veröffentlichung bleibt ein gesonderter Auftrag.
 
 ## Bilder pflegen
