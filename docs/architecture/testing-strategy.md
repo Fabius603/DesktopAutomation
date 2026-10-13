@@ -21,6 +21,12 @@ Filters are rejected in Full mode, preserving its complete coverage. Invalid sel
 before touching artifacts. The summary records mode, selection, filter, and executed results.
 Focused success does not establish that omitted suites passed.
 
+Off-screen window render hosts use `RenderWindowSizing` to establish their requested viewport
+independently of the runner's physical monitor. These tests assert actual dimensions before
+checking responsive panels and scaled layouts. The fixture sets minimum dimensions for each
+requested size, so it can also render beyond the native desktop tracking limit without changing
+the user's display configuration. Production window constraints remain unchanged.
+
 Checks use explicit environment settings, fixed output locations, bounded execution, and no
 reliance on test order. Both modes acquire a named mutex derived from the normalized repository path before
 cleaning the shared artifact directory. Parallel callers wait up to ten minutes; timeout fails

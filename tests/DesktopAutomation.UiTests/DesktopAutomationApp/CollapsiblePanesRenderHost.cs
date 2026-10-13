@@ -20,6 +20,7 @@ internal static class CollapsiblePanesRenderHost
         try
         {
             var app = StepListRenderHost.LoadResources(directory);
+            VerifyViewportBeyondDesktopLimit();
             foreach (var culture in new[] { "de-DE", "en-US" })
             {
                 LocalizationService.Instance.SetCulture(culture);
@@ -43,8 +44,12 @@ internal static class CollapsiblePanesRenderHost
                         Left = -20000,
                         Top = -20000
                     };
+                    var narrowWidth = window.MinWidth;
+                    var renderHeight = window.Height;
+                    RenderWindowSizing.Resize(window, 1520, renderHeight);
                     window.Show();
                     Pump();
+                    Assert.Equal(1520, window.ActualWidth, 1);
                     var transition = Descendants<global::DesktopAutomationApp.Controls.PageTransitionContentControl>(window).Single();
                     var deadline = DateTime.UtcNow.AddSeconds(2);
                     while (transition.Opacity < 0.999 && DateTime.UtcNow < deadline) { Thread.Sleep(10); Pump(); }
@@ -87,8 +92,9 @@ internal static class CollapsiblePanesRenderHost
                         Click(button);
                     }
                     Assert.Equal(6, shell.Navigations);
-                    window.Width = 1600;
+                    RenderWindowSizing.Resize(window, 1600, renderHeight);
                     Pump();
+                    Assert.Equal(1600, window.ActualWidth, 1);
                     Assert.True(pane.IsCollapsed);
                     pane.ToggleCommand.Execute(null);
                     Pump();
@@ -123,20 +129,22 @@ internal static class CollapsiblePanesRenderHost
                     VerifyInspectorBackground(view);
                     Assert.Same(second, vm.SelectedStep);
 
-                    window.Width = window.MinWidth;
+                    RenderWindowSizing.Resize(window, narrowWidth, renderHeight);
                     Pump();
+                    Assert.Equal(narrowWidth, window.ActualWidth, 1);
                     Assert.True(pane.IsCollapsed);
                     pane.ToggleCommand.Execute(null); // Explicitly open the navigation in the narrow window.
                     Pump();
                     Assert.True(pane.IsExpanded);
                     Assert.True(vm.InspectorPane.IsCollapsed);
-                    window.Width = 1520;
+                    RenderWindowSizing.Resize(window, 1520, renderHeight);
                     Pump();
+                    Assert.Equal(1520, window.ActualWidth, 1);
                     Assert.True(pane.IsExpanded);
                     Assert.True(vm.InspectorPane.IsExpanded);
                     pane.ToggleCommand.Execute(null);
                     vm.InspectorPane.ToggleCommand.Execute(null);
-                    window.Width = window.MinWidth;
+                    RenderWindowSizing.Resize(window, narrowWidth, renderHeight);
                     Pump();
                     Assert.True(pane.IsCollapsed);
                     Assert.True(vm.InspectorPane.IsCollapsed);
@@ -148,6 +156,24 @@ internal static class CollapsiblePanesRenderHost
             return 0;
         }
         catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+    }
+
+    private static void VerifyViewportBeyondDesktopLimit()
+    {
+        var width = SystemParameters.MaximumWindowTrackWidth + 128;
+        var window = new Window { Left = -20000, Top = -20000, ShowInTaskbar = false, ShowActivated = false };
+        try
+        {
+            RenderWindowSizing.Resize(window, width, 900);
+            window.Show();
+            Pump();
+            Assert.Equal(width, window.ActualWidth, 1);
+            Assert.Equal(900, window.ActualHeight, 1);
+            RenderWindowSizing.Resize(window, 1160, 840);
+            Pump();
+            Assert.Equal(1160, window.ActualWidth, 1);
+        }
+        finally { window.Close(); }
     }
 
     private static void VerifyInspectorBackground(JobStepsView view)

@@ -65,9 +65,12 @@ internal static class ResultHelpRenderHost
                         };
                         try
                         {
+                            RenderWindowSizing.Resize(window, 1360 * scale, 900 * scale);
                             window.Show();
                             ((TabControl)view.FindName("SelectedJobStepTabs")).SelectedIndex = 1;
                             Pump();
+                            Assert.Equal(1360 * scale, window.ActualWidth, 1);
+                            Assert.Equal(900 * scale, window.ActualHeight, 1);
                             var tree = Assert.Single(Descendants<TreeView>(view), item => item.IsVisible);
                             var descriptions = Descendants<TextBlock>(tree).Where(block => block.IsVisible
                                 && block.GetBindingExpression(TextBlock.TextProperty)?.ParentBinding.Path?.Path == "Description").ToArray();
