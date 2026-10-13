@@ -1,6 +1,6 @@
 # DesktopAutomation – vollständige Produktreferenz
 
-Entwicklungsstand 1.6.1 · 2026-10-08 · Arbeitsbaum, möglicherweise noch unveröffentlicht.
+Entwicklungsstand 1.6.2 · 2026-10-08 · Arbeitsbaum, möglicherweise noch unveröffentlicht.
 Formatversionen: Job 4, Makro 3, Automation 1. Defaultvorlagen sind strukturell, nicht vollständig lauffähig.
 Vertragsdaten mit Descriptoren, Typen, Standards, Kardinalitäten, bindingSchemas und Vorlagen: /doku/vertragsdaten.json
 
@@ -659,7 +659,7 @@ Prüfe ReadState, IsComplete, LostEntries und Issues. Ein Aufbewahrungsablauf, n
 
 Website: /doku/kompatibilitaet/
 
-Diese Referenz beschreibt den Repository-Entwicklungsstand 1.6.1 vom 8. Oktober 2026.
+Diese Referenz beschreibt den Repository-Entwicklungsstand 1.6.2 vom 8. Oktober 2026.
 
 Diese Dokumentation beschreibt den Repository-Entwicklungsstand 1.6.1 vom 8. Oktober 2026, einschließlich noch nicht separat veröffentlichter Änderungen. Sie ist keine Zusage, dass ein unverändertes älteres Download-Release jeden beschriebenen Vertrag besitzt. Gespeicherte Formate sind Job 4, Makro 3 und Automation 1; vorhandene ältere Formate werden über die vorgesehenen Kompatibilitätswege gelesen.
 

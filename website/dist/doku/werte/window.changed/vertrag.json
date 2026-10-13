@@ -1,5 +1,5 @@
 {
-  "appVersion": "1.6.1",
+  "appVersion": "1.6.2",
   "contract": {
     "id": "window.changed",
     "name": "Fenster geändert",

@@ -11,11 +11,12 @@ $headProject = & git -C $RepositoryRoot show HEAD:DesktopAutomationApp/DesktopAu
 if ($LASTEXITCODE -ne 0) { throw 'Unable to read the released version from Git HEAD.' }
 $versionMatch = [regex]::Match(($headProject -join "`n"), '<Version>(?<version>[^<]+)</Version>')
 if (-not $versionMatch.Success) { throw 'Git HEAD project version was not found.' }
-$released = [Version]$versionMatch.Groups['version'].Value
-$expected = [Version]::new($released.Major, $released.Minor, $released.Build + 1)
+$headVersion = [Version]$versionMatch.Groups['version'].Value
+$nextVersion = [Version]::new($headVersion.Major, $headVersion.Minor, $headVersion.Build + 1)
 $newestVersion = [Version]([string]$notes[0].version)
-if ($newestVersion -ne $expected) {
-    throw "Newest release-note version must be $expected based on Git HEAD, found $($notes[0].version)."
+# A release commit already contains its release version; development notes target the next patch.
+if ($newestVersion -ne $headVersion -and $newestVersion -ne $nextVersion) {
+    throw "Newest release-note version must be $headVersion (release) or $nextVersion (unreleased) based on Git HEAD, found $($notes[0].version)."
 }
 
 $previous = $null
@@ -39,4 +40,4 @@ foreach ($note in $notes) {
     }
 }
 
-Write-Output "Release notes valid: $($notes.Count) releases; unreleased version $expected."
+Write-Output "Release notes valid: $($notes.Count) releases; newest version $newestVersion."

@@ -37,7 +37,7 @@ Installiere zuerst die Upload-Abhängigkeiten mit `npm ci`. Öffne anschließend
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Deploy.ps1
 ```
 
-Das Skript prüft zuerst die Website gegen den aktuellen Repository-Stand und verwendet anschließend die vorhandene Cloudflare-Anmeldung. Bei fehlender Anmeldung startet es die Browserfreigabe. Es veröffentlicht `dist` als neue Produktionsversion des bestehenden Projekts `desktopautomation`. Zugangsdaten werden nicht in diesen Ordner geschrieben oder ausgegeben.
+Das Skript prüft zuerst die Website gegen den aktuellen Repository-Stand und verwendet anschließend die vorhandene Wrangler-Anmeldung. Bei fehlender Anmeldung startet es mit `wrangler login` die Browserfreigabe. Eine zusätzliche Installation der `cf`-CLI ist nicht erforderlich. Wrangler verwaltet und erneuert seine OAuth-Anmeldung selbst; das Skript liest keine Zugangsdaten aus CLI-Konfigurationsdateien. Bereits gesetzte Cloudflare-API-Zugangsdaten werden verwendet; bei ungültigen Zugangsdaten bricht das Skript mit einem Hinweis ab. Es veröffentlicht `dist` als neue Produktionsversion des bestehenden Projekts `desktopautomation`.
 
 ## Auf einem anderen PC
 
@@ -49,7 +49,7 @@ npx wrangler login
 npm run deploy
 ```
 
-Melde dich beim Cloudflare-Konto an, in dem das Projekt `desktopautomation` existiert. Die Veröffentlichung erfolgt mit Wrangler, weil `cf pages deploy` den Pages-Datei-Upload in der verwendeten Beta noch nicht unterstützt. Für Projekte mit Wrangler-Konfiguration ist das in den Benutzeranweisungen ausdrücklich vorgesehen.
+Melde dich beim Cloudflare-Konto an, in dem das Projekt `desktopautomation` existiert. Anmeldung und Veröffentlichung erfolgen mit der lokal installierten Wrangler-Version. Für Projekte mit Wrangler-Konfiguration ist das in den Benutzeranweisungen ausdrücklich vorgesehen.
 
 ## Über das Cloudflare-Dashboard
 

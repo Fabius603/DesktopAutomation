@@ -14,5 +14,9 @@ For every user-visible feature, behavior change, performance improvement, or bug
 Preserve every older release entry unchanged. A task with no user-visible effect needs no release
 note, but the final handoff must say so.
 
+The shared release-note check accepts the version in Git HEAD (a release commit) or its next
+patch version (prepared development notes). Older versions and skipped version increments fail.
+This applies to ordinary CI, release builds and manual MSIX packaging alike.
+
 Before an explicit release, compare against the previous release commit or tag and cover all
 user-visible committed and relevant uncommitted changes.

@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "appVersion": "1.6.1",
+  "appVersion": "1.6.2",
   "releaseChannel": "working-tree",
   "steps": [
     {
@@ -76412,6 +76412,6 @@
     "DesktopAutomationApp/ViewModels/Yolo/YoloDownloadsViewModel.cs": "dd36055d5c054bcdb61db28bb9365e83b60a59f3ab24caf4bbf25aac1dbe3368",
     "DesktopAutomationApp/Resources/Strings.resx": "0abbb62c0598c2171fe9fa7d173602be7657f96dc3a4a3e0766aaca3905e8175",
     "DesktopAutomationApp/Resources/Strings.en.resx": "0a17251dd557e715515170175e6ba3455020d1458bc2ff404514253bee4bcb05",
-    "DesktopAutomationApp/DesktopAutomationApp.csproj": "693d27475f6d18e34def96f1394216c49a1a027321324affefba5c427c4bce1d"
+    "DesktopAutomationApp/DesktopAutomationApp.csproj": "b4650ac09f8bf50b39a9fb016aed218a73f7872abe86c68234f3e7096a7caf6e"
   }
 }

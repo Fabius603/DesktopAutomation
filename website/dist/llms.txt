@@ -2,7 +2,7 @@
 
 Produktdokumentation für UI-Benutzer und Agenten.
 
-Entwicklungsstand 1.6.1 (Arbeitsbaum, 2026-10-08). Formatversionen: Job 4, Makro 3, Automation 1.
+Entwicklungsstand 1.6.2 (Arbeitsbaum, 2026-10-08). Formatversionen: Job 4, Makro 3, Automation 1.
 
 - [Erste Schritte in der UI](/doku/erste-schritte/): Einen Ablauf erstellen, kontrolliert ausprobieren und anschließend automatisieren – ohne JSON bearbeiten zu müssen.
 - [Jobs und Abläufe](/doku/jobs/): Ein Job besteht aus drei Phasen. Reihenfolge, Blockstruktur und Werteverbindungen bestimmen gemeinsam, was ausgeführt wird.
@@ -14,7 +14,7 @@ Entwicklungsstand 1.6.1 (Arbeitsbaum, 2026-10-08). Formatversionen: Job 4, Makro
 - [Windows-Funktionen verwenden](/doku/windows-funktionen/): Der Windows-Katalog unterscheidet Ereignisse, typisierte Zustandsabfragen und Einstellungsänderungen. Eine Funktion unterstützt nur die im Katalog gesetzten Fähigkeiten.
 - [Dokumentation für Agenten](/doku/agenten/): Ein Agent kann diese Referenz ohne Browser lesen und daraus Dateien erstellen oder bestehende Konfigurationen bearbeiten. Die UI- und Dateianleitungen verwenden dieselben kanonischen Verträge.
 - [Fehler systematisch eingrenzen](/doku/fehlerbehebung/): Beginne beim ersten belegten Fehler und prüfe Quelle, fachliche Voraussetzungen und Startentscheidung getrennt.
-- [Version und Kompatibilität](/doku/kompatibilitaet/): Diese Referenz beschreibt den Repository-Entwicklungsstand 1.6.1 vom 8. Oktober 2026.
+- [Version und Kompatibilität](/doku/kompatibilitaet/): Diese Referenz beschreibt den Repository-Entwicklungsstand 1.6.2 vom 8. Oktober 2026.
 
 - [Vollständige Referenz](/llms-full.txt)
 - [Verträge, Erklärungen und Serializer-Vorlagen](/doku/vertragsdaten.json)

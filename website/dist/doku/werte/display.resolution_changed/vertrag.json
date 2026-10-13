@@ -1,5 +1,5 @@
 {
-  "appVersion": "1.6.1",
+  "appVersion": "1.6.2",
   "contract": {
     "id": "display.resolution_changed",
     "name": "Bildschirmauflösung geändert",
